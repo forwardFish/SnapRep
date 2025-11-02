@@ -1,69 +1,24 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { PrismaService } from 'nestjs-prisma';
+import { PrismaBaseDao } from '../common/dao/prisma-base.dao';
 import { ResponseError } from '../exception/response-error';
 import { ErrorCodes } from '../exception/error-codes';
 
 /**
  * Equipment DAO 类
- * TEMPORARY IMPLEMENTATION: Using mock data until Prisma client is working
+ * 使用 Prisma ORM 进行数据库操作
  */
 @Injectable()
-export class EquipmentDao {
+export class EquipmentDao extends PrismaBaseDao<any> {
   private readonly logger = new Logger(EquipmentDao.name);
 
-  // Mock data until Prisma is working
-  private mockEquipment = [
-    {
-      id: 'eq-001',
-      code: 'chair',
-      name: 'Chair',
-      description: 'Standard office or dining chair',
-      category: 'FURNITURE',
-      imageUrl: '/equipment/chair.jpg',
-      displayOrder: 1,
-      isActive: true,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    },
-    {
-      id: 'eq-002',
-      code: 'wall',
-      name: 'Wall',
-      description: 'Any flat wall surface',
-      category: 'WALL',
-      imageUrl: '/equipment/wall.jpg',
-      displayOrder: 2,
-      isActive: true,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    },
-    {
-      id: 'eq-003',
-      code: 'bottle',
-      name: 'Water Bottle',
-      description: 'Water bottle or similar container',
-      category: 'BOTTLE',
-      imageUrl: '/equipment/bottle.jpg',
-      displayOrder: 3,
-      isActive: true,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    },
-    {
-      id: 'eq-004',
-      code: 'none',
-      name: 'No Equipment',
-      description: 'Bodyweight exercises requiring no equipment',
-      category: 'NONE',
-      imageUrl: '/equipment/none.jpg',
-      displayOrder: 0,
-      isActive: true,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    },
-  ];
+  constructor(prisma: PrismaService) {
+    super(prisma);
+    this.logger.log('EquipmentDao initialized with Prisma');
+  }
 
-  constructor() {
-    this.logger.log('EquipmentDao initialized (temporary mode without Prisma)');
+  protected getDelegate() {
+    return this.prisma.equipment;
   }
 
   /**
@@ -74,18 +29,12 @@ export class EquipmentDao {
    */
   async findById(id: string, includeInactive: boolean = false): Promise<any | null> {
     try {
-      const equipment = this.mockEquipment.find(item => item.id === id);
-
-      if (!equipment) {
-        return null;
+      const where: any = { id };
+      if (!includeInactive) {
+        where.isActive = true;
       }
 
-      // 检查是否为活跃器材
-      if (!includeInactive && !equipment.isActive) {
-        return null;
-      }
-
-      return equipment;
+      return await this.findUnique(where);
     } catch (error) {
       this.logger.error(`根据ID查找器材失败: id=${id}, error=${error.message}`);
       throw new ResponseError(ErrorCodes.EQUIPMENT.FETCH_FAILED, error, { equipmentId: id });
@@ -100,17 +49,12 @@ export class EquipmentDao {
    */
   async findByCode(code: string, includeInactive: boolean = false): Promise<any | null> {
     try {
-      let equipment = this.mockEquipment.find(item => item.code === code);
-
-      if (!equipment) {
-        return null;
+      const where: any = { code };
+      if (!includeInactive) {
+        where.isActive = true;
       }
 
-      if (!includeInactive && !equipment.isActive) {
-        return null;
-      }
-
-      return equipment;
+      return await this.findUnique(where);
     } catch (error) {
       this.logger.error(`根据代码查找器材失败: code=${code}, error=${error.message}`);
       throw new ResponseError(ErrorCodes.EQUIPMENT.FETCH_FAILED, error, { equipmentCode: code });
@@ -124,13 +68,17 @@ export class EquipmentDao {
    */
   async findActiveEquipment(category?: string): Promise<any[]> {
     try {
-      let equipment = this.mockEquipment.filter(item => item.isActive);
-
+      const where: any = { isActive: true };
       if (category) {
-        equipment = equipment.filter(item => item.category === category);
+        where.category = category;
       }
 
-      return equipment.sort((a, b) => a.displayOrder - b.displayOrder);
+      return await this.findMany(
+        where,
+        undefined,
+        undefined,
+        { displayOrder: 'asc' }
+      );
     } catch (error) {
       this.logger.error(`获取活跃器材列表失败: category=${category}, error=${error.message}`);
       throw new ResponseError(ErrorCodes.EQUIPMENT.LIST_FAILED, error, { category });
@@ -152,38 +100,24 @@ export class EquipmentDao {
     includeInactive: boolean = false
   ) {
     try {
-      let equipment = this.mockEquipment;
+      const where: any = {};
 
       if (!includeInactive) {
-        equipment = equipment.filter(item => item.isActive);
+        where.isActive = true;
       }
 
       if (category) {
-        equipment = equipment.filter(item => item.category === category);
+        where.category = category;
       }
 
-      // Sort by display order
-      equipment = equipment.sort((a, b) => a.displayOrder - b.displayOrder);
-
-      const total = equipment.length;
-      const skip = (page - 1) * pageSize;
-      const data = equipment.slice(skip, skip + pageSize);
-
-      const totalPages = Math.ceil(total / pageSize);
-      const hasNextPage = page < totalPages;
-      const hasPreviousPage = page > 1;
-
-      return {
-        data,
-        pagination: {
-          total,
-          page,
-          pageSize,
-          totalPages,
-          hasNextPage,
-          hasPreviousPage,
-        }
-      };
+      return await this.findByPage(
+        page,
+        pageSize,
+        where,
+        undefined,
+        undefined,
+        { displayOrder: 'asc' }
+      );
     } catch (error) {
       this.logger.error(
         `分页获取器材列表失败: page=${page}, pageSize=${pageSize}, category=${category}, error=${error.message}`
@@ -198,7 +132,12 @@ export class EquipmentDao {
    */
   async getEquipmentByCategory(): Promise<Record<string, any[]>> {
     try {
-      const equipment = this.mockEquipment.filter(item => item.isActive);
+      const equipment = await this.findMany(
+        { isActive: true },
+        undefined,
+        undefined,
+        { displayOrder: 'asc' }
+      );
 
       return equipment.reduce((groups: Record<string, any[]>, item: any) => {
         const category = item.category || 'OTHER';
@@ -220,9 +159,11 @@ export class EquipmentDao {
    */
   async getEquipmentStats(): Promise<any> {
     try {
-      const total = this.mockEquipment.length;
-      const active = this.mockEquipment.filter(item => item.isActive).length;
-      const byCategory = await this.getEquipmentByCategory();
+      const [total, active, byCategory] = await Promise.all([
+        this.count(),
+        this.count({ isActive: true }),
+        this.getEquipmentByCategory()
+      ]);
 
       const categoryStats = Object.entries(byCategory).map(([category, items]) => ({
         category,
@@ -243,6 +184,26 @@ export class EquipmentDao {
   }
 
   /**
+   * 检查器材代码是否存在
+   * @param code 器材代码
+   * @param excludeId 排除的器材ID
+   * @returns 是否存在
+   */
+  async isCodeExists(code: string, excludeId?: string): Promise<boolean> {
+    try {
+      const where: any = { code };
+      if (excludeId) {
+        where.NOT = { id: excludeId };
+      }
+
+      return await this.exists(where);
+    } catch (error) {
+      this.logger.error(`检查器材代码是否存在失败: code=${code}, error=${error.message}`);
+      throw new ResponseError(ErrorCodes.EQUIPMENT.FETCH_FAILED, error, { equipmentCode: code });
+    }
+  }
+
+  /**
    * 创建器材
    * @param data 器材数据
    * @returns 创建的器材
@@ -250,22 +211,15 @@ export class EquipmentDao {
   async createEquipment(data: any): Promise<any> {
     try {
       // 检查代码是否已存在
-      if (this.mockEquipment.some(item => item.code === data.code)) {
-        throw new ResponseError(ErrorCodes.EQUIPMENT.CODE_EXISTS, undefined, {
-          equipmentCode: data.code,
-        });
+      const exists = await this.isCodeExists(data.code);
+      if (exists) {
+        throw new ResponseError(ErrorCodes.EQUIPMENT.CODE_EXISTS, undefined, { equipmentCode: data.code });
       }
 
-      const newEquipment = {
-        id: `eq-${Date.now()}`,
+      return await this.create({
         ...data,
         isActive: data.isActive ?? true,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
-
-      this.mockEquipment.push(newEquipment);
-      return newEquipment;
+      });
     } catch (error) {
       if (error instanceof ResponseError) {
         throw error;
@@ -283,29 +237,15 @@ export class EquipmentDao {
    */
   async updateEquipment(id: string, data: any): Promise<any> {
     try {
-      const index = this.mockEquipment.findIndex(item => item.id === id);
-      if (index === -1) {
-        throw new ResponseError(ErrorCodes.EQUIPMENT.NOT_FOUND, undefined, { equipmentId: id });
-      }
-
-      // 如果更新了代码，检查是否已存在
-      if (data.code && typeof data.code === 'string') {
-        const existing = this.mockEquipment.find(item => item.code === data.code && item.id !== id);
-        if (existing) {
-          throw new ResponseError(ErrorCodes.EQUIPMENT.CODE_EXISTS, undefined, {
-            equipmentCode: data.code,
-          });
+      // 如果更新代码，检查是否与其他器材冲突
+      if (data.code) {
+        const exists = await this.isCodeExists(data.code, id);
+        if (exists) {
+          throw new ResponseError(ErrorCodes.EQUIPMENT.CODE_EXISTS, undefined, { equipmentCode: data.code });
         }
       }
 
-      const updatedEquipment = {
-        ...this.mockEquipment[index],
-        ...data,
-        updatedAt: new Date(),
-      };
-
-      this.mockEquipment[index] = updatedEquipment;
-      return updatedEquipment;
+      return await this.update({ id }, data);
     } catch (error) {
       if (error instanceof ResponseError) {
         throw error;
@@ -322,14 +262,7 @@ export class EquipmentDao {
    */
   async deleteEquipment(id: string): Promise<any> {
     try {
-      const index = this.mockEquipment.findIndex(item => item.id === id);
-      if (index === -1) {
-        throw new ResponseError(ErrorCodes.EQUIPMENT.NOT_FOUND, undefined, { equipmentId: id });
-      }
-
-      const deletedEquipment = this.mockEquipment[index];
-      this.mockEquipment.splice(index, 1);
-      return deletedEquipment;
+      return await this.delete({ id });
     } catch (error) {
       this.logger.error(`删除器材失败: id=${id}, error=${error.message}`);
       throw new ResponseError(ErrorCodes.EQUIPMENT.DELETE_FAILED, error, { equipmentId: id });
@@ -343,7 +276,7 @@ export class EquipmentDao {
    */
   async softDeleteEquipment(id: string): Promise<any> {
     try {
-      return await this.updateEquipment(id, { isActive: false });
+      return await this.update({ id }, { isActive: false });
     } catch (error) {
       this.logger.error(`软删除器材失败: id=${id}, error=${error.message}`);
       throw new ResponseError(ErrorCodes.EQUIPMENT.DELETE_FAILED, error, { equipmentId: id });
@@ -358,25 +291,40 @@ export class EquipmentDao {
    */
   async batchUpdateStatus(ids: string[], isActive: boolean): Promise<any> {
     try {
-      let count = 0;
-      for (const id of ids) {
-        const index = this.mockEquipment.findIndex(item => item.id === id);
-        if (index !== -1) {
-          this.mockEquipment[index] = {
-            ...this.mockEquipment[index],
-            isActive,
-            updatedAt: new Date(),
-          };
-          count++;
-        }
-      }
-
-      return { count };
+      return await this.updateMany(
+        { id: { in: ids } },
+        { isActive }
+      );
     } catch (error) {
       this.logger.error(
         `批量更新器材状态失败: ids=${JSON.stringify(ids)}, isActive=${isActive}, error=${error.message}`
       );
       throw new ResponseError(ErrorCodes.EQUIPMENT.UPDATE_FAILED, error, { equipmentIds: ids, isActive });
+    }
+  }
+
+  /**
+   * 获取器材相关的练习
+   * @param equipmentId 器材ID
+   * @returns 相关练习列表
+   */
+  async getRelatedExercises(equipmentId: string) {
+    try {
+      const equipment = await this.findUnique(
+        { id: equipmentId },
+        {
+          exerciseEquipment: {
+            include: {
+              exercise: true
+            }
+          }
+        }
+      );
+
+      return equipment?.exerciseEquipment?.map((ee: any) => ee.exercise) || [];
+    } catch (error) {
+      this.logger.error(`获取器材相关练习失败: equipmentId=${equipmentId}, error=${error.message}`);
+      throw new ResponseError(ErrorCodes.EQUIPMENT.FETCH_FAILED, error, { equipmentId });
     }
   }
 }

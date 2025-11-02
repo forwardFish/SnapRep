@@ -47,7 +47,10 @@
       "Bash(npm run start:dev:*)",
       "Bash(del node_modules.prismaclientindex.js)",
       "Bash(npm test:*)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(yarn list:*)",
+      "Bash(del package-lock.json)",
+      "Bash(yarn run prisma:generate:*)"
     ],
     "deny": [],
     "ask": []

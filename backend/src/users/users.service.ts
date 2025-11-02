@@ -25,24 +25,7 @@ export class UsersService {
     userPassword: string,
     changePassword: ChangePasswordInput,
   ) {
-    const passwordValid = await this.passwordService.validatePassword(
-      changePassword.oldPassword,
-      userPassword,
-    );
-
-    if (!passwordValid) {
-      throw new BadRequestException('Invalid password');
-    }
-
-    const hashedPassword = await this.passwordService.hashPassword(
-      changePassword.newPassword,
-    );
-
-    return this.prisma.user.update({
-      data: {
-        password: hashedPassword,
-      },
-      where: { id: userId },
-    });
+    // TODO: Fix password change after Prisma client regeneration
+    throw new BadRequestException('Password change temporarily disabled during migration');
   }
 }

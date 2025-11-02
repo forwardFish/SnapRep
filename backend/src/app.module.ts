@@ -13,40 +13,38 @@ import { EquipmentModule } from './equipment/equipment.module';
 import config from './common/configs/config';
 import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
 import { GqlConfigService } from './gql-config.service';
+import { loggingMiddleware, PrismaModule } from 'nestjs-prisma';
+import { AuthModule } from './auth/auth.module';
+import { UsersModule } from './users/users.module';
 
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true, load: [config] }),
-    // TEMPORARY: Commenting out PrismaModule until Prisma client generation is fixed
-    // PrismaModule.forRoot({
-    //   isGlobal: true,
-    //   prismaServiceOptions: {
-    //     middlewares: [
-    //       // configure your prisma middleware
-    //       loggingMiddleware({
-    //         logger: new Logger('PrismaMiddleware'),
-    //         logLevel: 'log',
-    //       }),
-    //     ],
-    //   },
-    // }),
+
 
     GraphQLModule.forRootAsync<ApolloDriverConfig>({
       driver: ApolloDriver,
       useClass: GqlConfigService,
     }),
 
-    // TEMPORARY: Comment out modules that depend on PrismaService
-    // AuthModule,
-    // UsersModule,
+    AuthModule,
+    UsersModule,
     // PostsModule,
     ScenariosModule,
     EquipmentModule,
     // TEMPORARY: Comment out PrismaModule until client generation issue is resolved
-    // PrismaModule.forRoot({
-    //   isGlobal: true, // ← 关键：全局可用
-    // }),
+    PrismaModule.forRoot({
+      isGlobal: true,
+      prismaServiceOptions: {
+        middlewares: [
+          loggingMiddleware({
+            logger: new Logger('Prisma'),
+            logLevel: 'debug',
+          }),
+        ],
+      },
+    }),
     
   ],
   controllers: [AppController],

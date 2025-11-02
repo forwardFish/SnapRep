@@ -1,4 +1,4 @@
-import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { EquipmentDao } from './equipment.dao';
 import { ResponseError } from '../exception/response-error';
 import { ErrorCodes } from '../exception/error-codes';
@@ -16,17 +16,13 @@ import {
 /**
  * Equipment Service 类
  * 提供器材相关的业务逻辑处理
- * TEMPORARY IMPLEMENTATION: Using mock data until Prisma is working
  */
 @Injectable()
 export class EquipmentService {
   private readonly logger = new Logger(EquipmentService.name);
 
-      @Inject(forwardRef(() => EquipmentDao))
-      public equipmentDao: EquipmentDao;
-  // constructor(private readonly equipmentDao: EquipmentDao) {}
-  constructor() {
-    this.logger.log('EquipmentService initialized (temporary mode without Prisma)');
+  constructor(private readonly equipmentDao: EquipmentDao) {
+    this.logger.log('EquipmentService initialized');
   }
 
   /**

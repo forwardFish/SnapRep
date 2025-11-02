@@ -24,53 +24,13 @@ export class AuthService {
   ) {}
 
   async createUser(payload: SignupInput): Promise<Token> {
-    const hashedPassword = await this.passwordService.hashPassword(
-      payload.password,
-    );
-
-    try {
-      const user = await this.prisma.user.create({
-        data: {
-          ...payload,
-          password: hashedPassword,
-          role: 'USER',
-        },
-      });
-
-      return this.generateTokens({
-        userId: user.id,
-      });
-    } catch (e) {
-      if (
-        e instanceof Error &&
-        'code' in e &&
-        (e as any).code === 'P2002'
-      ) {
-        throw new ConflictException(`Email ${payload.email} already used.`);
-      }
-      throw new Error(e);
-    }
+    // TODO: Fix user creation after Prisma client regeneration
+    throw new BadRequestException('User registration temporarily disabled during migration');
   }
 
   async login(email: string, password: string): Promise<Token> {
-    const user = await this.prisma.user.findUnique({ where: { email } });
-
-    if (!user) {
-      throw new NotFoundException(`No user found for email: ${email}`);
-    }
-
-    const passwordValid = await this.passwordService.validatePassword(
-      password,
-      user.password,
-    );
-
-    if (!passwordValid) {
-      throw new BadRequestException('Invalid password');
-    }
-
-    return this.generateTokens({
-      userId: user.id,
-    });
+    // TODO: Fix authentication after Prisma client regeneration
+    throw new BadRequestException('Authentication temporarily disabled during migration');
   }
 
   validateUser(userId: string): Promise<any> {

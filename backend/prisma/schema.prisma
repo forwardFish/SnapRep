@@ -17,7 +17,6 @@ generator client {
 datasource db {
   provider  = "postgresql"
   url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
 }
 
 // =============================================================================
@@ -273,6 +272,7 @@ model User {
 
   // 基本信息
   email     String? @unique
+  password  String? // 加密后的密码（用于JWT认证）
   name      String?
   avatarUrl String? @map("avatar_url")
 
@@ -313,9 +313,29 @@ model User {
   dailyTrainings          DailyTraining[]
   userPreferences         UserPreference[]
   themeWeekParticipations ThemeWeekParticipation[]
+  posts                   Post[] // 临时保留Post关系
 
   @@index([email])
   @@map("users")
+}
+
+// =============================================================================
+// TEMPORARY POST MODEL - 临时Post模型（保持兼容性）
+// =============================================================================
+
+model Post {
+  id        String   @id @default(cuid())
+  title     String
+  content   String?
+  published Boolean  @default(false)
+  authorId  String?  @map("author_id")
+  author    User?    @relation(fields: [authorId], references: [id])
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([authorId])
+  @@index([published])
+  @@map("posts")
 }
 
 // =============================================================================

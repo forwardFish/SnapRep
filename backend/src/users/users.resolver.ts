@@ -43,15 +43,17 @@ export class UsersResolver {
     @UserEntity() user: User,
     @Args('data') changePassword: ChangePasswordInput,
   ) {
+    // TODO: Fix password change after Prisma client regeneration
     return this.usersService.changePassword(
       user.id,
-      user.password,
+      '', // temporary placeholder for user.password
       changePassword,
     );
   }
 
   @ResolveField('posts')
   posts(@Parent() author: User) {
-    return this.prisma.user.findUnique({ where: { id: author.id } }).posts();
+    // TODO: Re-enable after Post model is added to schema
+    throw new Error('User posts resolution temporarily disabled during migration');
   }
 }

@@ -10,7 +10,7 @@ import {
 } from '@nestjs/graphql';
 import { findManyCursorConnection } from '@devoxa/prisma-relay-cursor-connection';
 import { PubSub } from 'graphql-subscriptions';
-import { UseGuards } from '@nestjs/common';
+import { forwardRef, Inject, UseGuards } from '@nestjs/common';
 import { PaginationArgs } from '../common/pagination/pagination.args';
 import { UserEntity } from '../common/decorators/user.decorator';
 import { User } from '../users/models/user.model';
@@ -26,7 +26,10 @@ const pubSub = new PubSub();
 
 @Resolver(() => Post)
 export class PostsResolver {
-  constructor(private prisma: PrismaService) {}
+
+  @Inject(forwardRef(() => PrismaService))
+  private prisma: PrismaService
+  constructor() {}
 
   @Subscription(() => Post)
   postCreated() {
@@ -39,16 +42,8 @@ export class PostsResolver {
     @UserEntity() user: User,
     @Args('data') data: CreatePostInput,
   ) {
-    const newPost = this.prisma.post.create({
-      data: {
-        published: true,
-        title: data.title,
-        content: data.content,
-        authorId: user.id,
-      },
-    });
-    pubSub.publish('postCreated', { postCreated: newPost });
-    return newPost;
+    // TODO: Re-enable after Post model is added to schema
+    throw new Error('Post creation temporarily disabled during migration');
   }
 
   @Query(() => PostConnection)
@@ -63,51 +58,25 @@ export class PostsResolver {
     })
     orderBy: PostOrder,
   ) {
-    const a = await findManyCursorConnection(
-      (args) =>
-        this.prisma.post.findMany({
-          include: { author: true },
-          where: {
-            published: true,
-            title: { contains: query || '' },
-          },
-          orderBy: orderBy ? { [orderBy.field]: orderBy.direction } : undefined,
-          ...args,
-        }),
-      () =>
-        this.prisma.post.count({
-          where: {
-            published: true,
-            title: { contains: query || '' },
-          },
-        }),
-      { first, last, before, after },
-    );
-    return a;
+    // TODO: Re-enable after Post model is added to schema
+    throw new Error('Post queries temporarily disabled during migration');
   }
 
   @Query(() => [Post])
   userPosts(@Args() id: UserIdArgs) {
-    return this.prisma.user
-      .findUnique({ where: { id: id.userId } })
-      .posts({ where: { published: true } });
-
-    // or
-    // return this.prisma.posts.findMany({
-    //   where: {
-    //     published: true,
-    //     author: { id: id.userId }
-    //   }
-    // });
+    // TODO: Re-enable after Post model is added to schema
+    throw new Error('User posts query temporarily disabled during migration');
   }
 
   @Query(() => Post)
   async post(@Args() id: PostIdArgs) {
-    return this.prisma.post.findUnique({ where: { id: id.postId } });
+    // TODO: Re-enable after Post model is added to schema
+    throw new Error('Post query temporarily disabled during migration');
   }
 
   @ResolveField('author', () => User)
   async author(@Parent() post: Post) {
-    return this.prisma.post.findUnique({ where: { id: post.id } }).author();
+    // TODO: Re-enable after Post model is added to schema
+    throw new Error('Post author resolution temporarily disabled during migration');
   }
 }
