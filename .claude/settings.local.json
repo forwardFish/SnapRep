@@ -50,7 +50,9 @@
       "Bash(find:*)",
       "Bash(yarn list:*)",
       "Bash(del package-lock.json)",
-      "Bash(yarn run prisma:generate:*)"
+      "Bash(yarn run prisma:generate:*)",
+      "Bash(node node_modules/prisma/build/index.js:*)",
+      "Bash(DATABASE_URL=\"postgresql://postgres:Snaprep%40123@db.tvjcmleckqovnieuexgu.supabase.co:5432/postgres?sslmode=require\" npx prisma db push:*)"
     ],
     "deny": [],
     "ask": []
