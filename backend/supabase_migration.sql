@@ -1,0 +1,872 @@
+-- SnapRep Database Migration Script v3.0
+-- Generated from: prisma/schema_v3.prisma
+-- Date: 2024-10-30
+-- Target: Supabase PostgreSQL
+-- Author: Claude Code
+--
+-- 改进内容:
+-- 1. 统一枚举命名（UPPER_SNAKE_CASE）
+-- 2. 新增深链统计表（deeplinks, deeplink_clicks）
+-- 3. 重命名 equipment_frequencies → rarity_table
+-- 4. 新增数据来源枚举（DataSource）
+-- 5. 新增稀有度枚举（RarityLevel）
+-- 6. 难度改为颜色编码（GREEN, BLUE, RED）
+-- 7. 完善 RLS 级联策略
+
+-- ============================================================================
+-- 1. CREATE ENUMS (枚举类型定义)
+-- ============================================================================
+
+-- 噪音等级枚举
+CREATE TYPE "NoiseLevel" AS ENUM (
+  'SILENT',   -- 必须静音 - 适合办公室、图书馆
+  'QUIET',    -- 安静 - 适合酒店房间、宿舍
+  'NORMAL'    -- 正常 - 适合家中、健身房
+);
+
+-- 空间大小枚举
+CREATE TYPE "SpaceSize" AS ENUM (
+  'SMALL',    -- 小空间 (1-2m²)
+  'MEDIUM',   -- 中等 (2-4m²)
+  'LARGE'     -- 大空间 (>4m²)
+);
+
+-- 器材分类枚举
+CREATE TYPE "EquipmentCategory" AS ENUM (
+  'NONE',       -- 徒手/无器材
+  'FURNITURE',  -- 家具系
+  'WALL',       -- 墙面系
+  'BOTTLE',     -- 水瓶系
+  'BAG',        -- 背包系
+  'STAIRS',     -- 台阶系
+  'FABRIC',     -- 布料系
+  'STICK',      -- 棍棒系
+  'OUTDOOR',    -- 户外系
+  'CREATIVE'    -- 创意系
+);
+
+-- 主要肌群枚举
+CREATE TYPE "PrimaryMuscle" AS ENUM (
+  'CHEST',         -- 胸部肌群
+  'BACK',          -- 背部肌群
+  'LEGS',          -- 腿部肌群
+  'GLUTES',        -- 臀部肌群
+  'SHOULDERS',     -- 肩部肌群
+  'ARMS',          -- 手臂肌群
+  'CORE',          -- 核心肌群
+  'FULL_BODY',     -- 全身综合
+  'NECK_SHOULDER'  -- 颈肩部位
+);
+
+-- 运动意图枚举（v3.0 统一）
+CREATE TYPE "IntentType" AS ENUM (
+  'RELAX',    -- 放松模式
+  'STRETCH',  -- 拉伸模式
+  'MODERATE', -- 适度运动
+  'STRENGTH'  -- 力量训练
+);
+
+-- 难度等级枚举（v3.0 改为颜色编码）
+CREATE TYPE "Difficulty" AS ENUM (
+  'GREEN',       -- 简单 - 适合健身新手
+  'BLUE',        -- 中等 - 需要一定技巧
+  'RED'          -- 困难 - 技术要求高
+);
+
+-- 时长计量方式枚举
+CREATE TYPE "DurationType" AS ENUM (
+  'TIME',  -- 按时间计量
+  'REPS'   -- 按次数计量
+);
+
+-- 训练会话状态枚举
+CREATE TYPE "SessionStatus" AS ENUM (
+  'PENDING',      -- 待开始
+  'IN_PROGRESS',  -- 进行中
+  'COMPLETED',    -- 已完成
+  'ABANDONED'     -- 已放弃
+);
+
+-- 稀有度等级枚举（v3.0 新增）
+CREATE TYPE "RarityLevel" AS ENUM (
+  'COMMON',      -- 常见 (>50%使用率)
+  'UNCOMMON',    -- 不常见 (20-50%)
+  'RARE',        -- 稀有 (5-20%)
+  'EPIC',        -- 史诗 (1-5%)
+  'LEGENDARY'    -- 传说 (<1%)
+);
+
+-- 数据来源枚举（v3.0 新增）
+CREATE TYPE "DataSource" AS ENUM (
+  'WEEKLY_TABLE',         -- 权威周表数据
+  'ON_THE_FLY_ESTIMATE'   -- 即时估算
+);
+
+-- 深链目标类型枚举（v3.0 新增）
+CREATE TYPE "DeeplinkTargetType" AS ENUM (
+  'WORKOUT_SESSION',  -- 训练会话
+  'THEME_WEEK',       -- 主题周
+  'SHARE_CARD',       -- 分享卡片
+  'EXERCISE'          -- 单个动作
+);
+
+-- ============================================================================
+-- 2. CREATE TABLES (创建表)
+-- ============================================================================
+
+-- ----------------------------------------------------------------------------
+-- 2.1 Scenarios Table (场景表)
+-- ----------------------------------------------------------------------------
+CREATE TABLE "scenarios" (
+    "id" TEXT NOT NULL,
+    "code" TEXT NOT NULL,
+    "name" TEXT NOT NULL,
+    "noise_tolerance" "NoiseLevel",
+    "space_requirement" "SpaceSize",
+    "icon_url" TEXT,
+    "is_active" BOOLEAN NOT NULL DEFAULT true,
+    "created_at" TIMESTAMPTZ(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMPTZ(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "scenarios_pkey" PRIMARY KEY ("id")
+);
+
+ALTER TABLE "scenarios" ADD CONSTRAINT "scenarios_code_key" UNIQUE ("code");
+
+CREATE INDEX "scenarios_code_idx" ON "scenarios"("code");
+CREATE INDEX "scenarios_is_active_idx" ON "scenarios"("is_active");
+
+-- ----------------------------------------------------------------------------
+-- 2.2 Equipment Table (器材表)
+-- ----------------------------------------------------------------------------
+CREATE TABLE "equipment" (
+    "id" TEXT NOT NULL,
+    "code" TEXT NOT NULL,
+    "name" TEXT NOT NULL,
+    "category" "EquipmentCategory" NOT NULL,
+    "recognizable" BOOLEAN NOT NULL DEFAULT false,
+    "recognition_labels" TEXT[] DEFAULT ARRAY[]::TEXT[],
+    "recognition_confidence" DOUBLE PRECISION NOT NULL DEFAULT 0.85,
+    "icon_url" TEXT NOT NULL,
+    "image_url" TEXT,
+    "display_order" INTEGER NOT NULL DEFAULT 0,
+    "is_active" BOOLEAN NOT NULL DEFAULT true,
+    "created_at" TIMESTAMPTZ(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMPTZ(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "equipment_pkey" PRIMARY KEY ("id")
+);
+
+ALTER TABLE "equipment" ADD CONSTRAINT "equipment_code_key" UNIQUE ("code");
+
+CREATE INDEX "equipment_code_idx" ON "equipment"("code");
+CREATE INDEX "equipment_category_idx" ON "equipment"("category");
+CREATE INDEX "equipment_recognizable_idx" ON "equipment"("recognizable");
+
+-- ----------------------------------------------------------------------------
+-- 2.3 Exercises Table (动作表)
+-- ----------------------------------------------------------------------------
+CREATE TABLE "exercises" (
+    "id" TEXT NOT NULL,
+    "code" TEXT NOT NULL,
+    "name" TEXT NOT NULL,
+    "primary_muscle" "PrimaryMuscle" NOT NULL,
+    "secondary_muscles" TEXT[] DEFAULT ARRAY[]::TEXT[],
+    "intent_type" "IntentType" NOT NULL,
+    "difficulty" "Difficulty" NOT NULL,
+    "description" JSONB NOT NULL,
+    "default_duration" INTEGER NOT NULL,
+    "default_sets" INTEGER NOT NULL DEFAULT 1,
+    "duration_type" "DurationType" NOT NULL,
+    "demo_image_url" TEXT,
+    "demo_video_url" TEXT,
+    "tags" TEXT[] DEFAULT ARRAY[]::TEXT[],
+    "is_active" BOOLEAN NOT NULL DEFAULT true,
+    "created_at" TIMESTAMPTZ(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMPTZ(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "exercises_pkey" PRIMARY KEY ("id")
+);
+
+ALTER TABLE "exercises" ADD CONSTRAINT "exercises_code_key" UNIQUE ("code");
+
+CREATE INDEX "exercises_code_idx" ON "exercises"("code");
+CREATE INDEX "exercises_primary_muscle_difficulty_intent_type_idx" ON "exercises"("primary_muscle", "difficulty", "intent_type");
+CREATE INDEX "exercises_is_active_idx" ON "exercises"("is_active");
+
+-- ----------------------------------------------------------------------------
+-- 2.4 Exercise-Scenario Junction Table (动作-场景关联表)
+-- ----------------------------------------------------------------------------
+CREATE TABLE "exercise_scenarios" (
+    "exercise_id" TEXT NOT NULL,
+    "scenario_id" TEXT NOT NULL,
+    "created_at" TIMESTAMPTZ(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "exercise_scenarios_pkey" PRIMARY KEY ("exercise_id", "scenario_id")
+);
+
+CREATE INDEX "exercise_scenarios_scenario_id_idx" ON "exercise_scenarios"("scenario_id");
+
+-- ----------------------------------------------------------------------------
+-- 2.5 Exercise-Equipment Junction Table (动作-器材关联表)
+-- ----------------------------------------------------------------------------
+CREATE TABLE "exercise_equipment" (
+    "exercise_id" TEXT NOT NULL,
+    "equipment_id" TEXT NOT NULL,
+    "is_required" BOOLEAN NOT NULL DEFAULT false,
+    "created_at" TIMESTAMPTZ(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "exercise_equipment_pkey" PRIMARY KEY ("exercise_id", "equipment_id")
+);
+
+CREATE INDEX "exercise_equipment_equipment_id_idx" ON "exercise_equipment"("equipment_id");
+
+-- ----------------------------------------------------------------------------
+-- 2.6 Users Table (用户表)
+-- ----------------------------------------------------------------------------
+CREATE TABLE "users" (
+    "id" UUID NOT NULL,
+    "email" TEXT,
+    "name" TEXT,
+    "avatar_url" TEXT,
+    "total_workouts" INTEGER NOT NULL DEFAULT 0,
+    "total_duration_sec" INTEGER NOT NULL DEFAULT 0,
+    "current_streak" INTEGER NOT NULL DEFAULT 0,
+    "longest_streak" INTEGER NOT NULL DEFAULT 0,
+    "preferred_intents" "IntentType"[] DEFAULT ARRAY[]::"IntentType"[],
+    "preferred_difficulty" "Difficulty",
+    "preferred_duration" INTEGER,
+    "avoid_equipment" TEXT[] DEFAULT ARRAY[]::TEXT[],
+    "streak_reminder" BOOLEAN NOT NULL DEFAULT true,
+    "theme_week_reminder" BOOLEAN NOT NULL DEFAULT true,
+    "quiet_hours_start" TEXT,
+    "quiet_hours_end" TEXT,
+    "hide_real_photos" BOOLEAN NOT NULL DEFAULT true,
+    "auto_blur_faces" BOOLEAN NOT NULL DEFAULT true,
+    "allow_data_sync" BOOLEAN NOT NULL DEFAULT false,
+    "language" TEXT NOT NULL DEFAULT 'zh',
+    "theme" TEXT NOT NULL DEFAULT 'auto',
+    "created_at" TIMESTAMPTZ(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMPTZ(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "users_pkey" PRIMARY KEY ("id")
+);
+
+ALTER TABLE "users" ADD CONSTRAINT "users_email_key" UNIQUE ("email");
+
+CREATE INDEX "users_email_idx" ON "users"("email");
+
+-- ----------------------------------------------------------------------------
+-- 2.7 Workout Sessions Table (训练会话表)
+-- ----------------------------------------------------------------------------
+CREATE TABLE "workout_sessions" (
+    "id" TEXT NOT NULL,
+    "user_id" UUID NOT NULL,
+    "intent_type" "IntentType" NOT NULL,
+    "scenario_id" TEXT,
+    "target_muscles" "PrimaryMuscle"[] DEFAULT ARRAY[]::"PrimaryMuscle"[],
+    "total_duration" INTEGER NOT NULL,
+    "difficulty" "Difficulty" NOT NULL,
+    "is_silent" BOOLEAN NOT NULL DEFAULT false,
+    "status" "SessionStatus" NOT NULL DEFAULT 'PENDING',
+    "started_at" TIMESTAMPTZ(6),
+    "completed_at" TIMESTAMPTZ(6),
+    "actual_duration" INTEGER,
+    "follow_mode" BOOLEAN NOT NULL DEFAULT false,
+    "current_step" INTEGER NOT NULL DEFAULT 0,
+    "pause_count" INTEGER NOT NULL DEFAULT 0,
+    "skip_count" INTEGER NOT NULL DEFAULT 0,
+    "is_offline" BOOLEAN NOT NULL DEFAULT false,
+    "ambient_noise" "NoiseLevel",
+    "used_space" "SpaceSize",
+    "rating" INTEGER,
+    "feedback" VARCHAR(500),
+    "created_at" TIMESTAMPTZ(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMPTZ(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "workout_sessions_pkey" PRIMARY KEY ("id")
+);
+
+CREATE INDEX "workout_sessions_user_id_completed_at_idx" ON "workout_sessions"("user_id", "completed_at" DESC);
+CREATE INDEX "workout_sessions_status_idx" ON "workout_sessions"("status");
+
+-- ----------------------------------------------------------------------------
+-- 2.8 Session Exercises Table (会话动作关联表)
+-- ----------------------------------------------------------------------------
+CREATE TABLE "session_exercises" (
+    "id" TEXT NOT NULL,
+    "session_id" TEXT NOT NULL,
+    "exercise_id" TEXT NOT NULL,
+    "sequence_order" INTEGER NOT NULL,
+    "duration" INTEGER NOT NULL,
+    "sets" INTEGER NOT NULL DEFAULT 1,
+    "is_completed" BOOLEAN NOT NULL DEFAULT false,
+    "actual_duration" INTEGER,
+    "started_at" TIMESTAMPTZ(6),
+    "ended_at" TIMESTAMPTZ(6),
+    "paused_times" INTEGER NOT NULL DEFAULT 0,
+    "skip_reason" TEXT,
+    "difficulty_felt" "Difficulty",
+    "comfort_level" INTEGER,
+    "effectiveness_rating" INTEGER,
+    "created_at" TIMESTAMPTZ(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "session_exercises_pkey" PRIMARY KEY ("id")
+);
+
+ALTER TABLE "session_exercises" ADD CONSTRAINT "session_exercises_session_id_sequence_order_key" UNIQUE ("session_id", "sequence_order");
+
+CREATE INDEX "session_exercises_session_id_idx" ON "session_exercises"("session_id");
+
+-- ----------------------------------------------------------------------------
+-- 2.9 Share Cards Table (分享成果卡表)
+-- ----------------------------------------------------------------------------
+CREATE TABLE "share_cards" (
+    "id" TEXT NOT NULL,
+    "user_id" UUID NOT NULL,
+    "session_id" TEXT NOT NULL,
+    "card_image_url" TEXT NOT NULL,
+    "card_template" TEXT NOT NULL,
+    "card_data" JSONB NOT NULL,
+    "rarity" "RarityLevel" NOT NULL,
+    "equipment_series" TEXT NOT NULL,
+    "rarity_score" DOUBLE PRECISION NOT NULL,
+    "data_source" "DataSource" NOT NULL DEFAULT 'WEEKLY_TABLE',
+    "special_tags" TEXT[] DEFAULT ARRAY[]::TEXT[],
+    "city_edition" TEXT,
+    "theme_week" TEXT,
+    "share_text" VARCHAR(500),
+    "is_public" BOOLEAN NOT NULL DEFAULT true,
+    "share_count" INTEGER NOT NULL DEFAULT 0,
+    "view_count" INTEGER NOT NULL DEFAULT 0,
+    "created_at" TIMESTAMPTZ(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMPTZ(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "share_cards_pkey" PRIMARY KEY ("id")
+);
+
+ALTER TABLE "share_cards" ADD CONSTRAINT "share_cards_session_id_key" UNIQUE ("session_id");
+
+CREATE INDEX "share_cards_user_id_created_at_idx" ON "share_cards"("user_id", "created_at" DESC);
+CREATE INDEX "share_cards_is_public_idx" ON "share_cards"("is_public");
+CREATE INDEX "share_cards_rarity_idx" ON "share_cards"("rarity");
+
+-- ----------------------------------------------------------------------------
+-- 2.10 Daily Trainings Table (每日训练记录表)
+-- ----------------------------------------------------------------------------
+CREATE TABLE "daily_trainings" (
+    "id" TEXT NOT NULL,
+    "user_id" UUID NOT NULL,
+    "training_date" DATE NOT NULL,
+    "total_sessions" INTEGER NOT NULL DEFAULT 0,
+    "total_duration" INTEGER NOT NULL DEFAULT 0,
+    "total_exercises" INTEGER NOT NULL DEFAULT 0,
+    "completed_sessions" INTEGER NOT NULL DEFAULT 0,
+    "intent_breakdown" JSONB,
+    "muscle_breakdown" JSONB,
+    "is_streak_day" BOOLEAN NOT NULL DEFAULT false,
+    "achievements" TEXT[] DEFAULT ARRAY[]::TEXT[],
+    "created_at" TIMESTAMPTZ(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMPTZ(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "daily_trainings_pkey" PRIMARY KEY ("id")
+);
+
+ALTER TABLE "daily_trainings" ADD CONSTRAINT "daily_trainings_user_id_training_date_key" UNIQUE ("user_id", "training_date");
+
+CREATE INDEX "daily_trainings_user_id_training_date_idx" ON "daily_trainings"("user_id", "training_date" DESC);
+CREATE INDEX "daily_trainings_training_date_idx" ON "daily_trainings"("training_date");
+
+-- ----------------------------------------------------------------------------
+-- 2.11 Rarity Table (稀有度周表 - v3.0重命名优化)
+-- ----------------------------------------------------------------------------
+CREATE TABLE "rarity_table" (
+    "id" TEXT NOT NULL,
+    "equipment_id" TEXT NOT NULL,
+    "equipment_code" TEXT NOT NULL,
+    "week_start" DATE NOT NULL,
+    "rarity_score" DOUBLE PRECISION NOT NULL,
+    "rarity_level" "RarityLevel" NOT NULL,
+    "data_source" "DataSource" NOT NULL DEFAULT 'WEEKLY_TABLE',
+    "region" TEXT,
+    "created_at" TIMESTAMPTZ(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMPTZ(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "rarity_table_pkey" PRIMARY KEY ("id")
+);
+
+ALTER TABLE "rarity_table" ADD CONSTRAINT "rarity_table_equipment_id_week_start_key" UNIQUE ("equipment_id", "week_start");
+ALTER TABLE "rarity_table" ADD CONSTRAINT "rarity_table_equipment_code_week_start_key" UNIQUE ("equipment_code", "week_start");
+
+CREATE INDEX "rarity_table_week_start_idx" ON "rarity_table"("week_start");
+CREATE INDEX "rarity_table_rarity_level_week_start_idx" ON "rarity_table"("rarity_level", "week_start");
+
+-- ----------------------------------------------------------------------------
+-- 2.12 User Preferences Table (用户偏好学习记录表)
+-- ----------------------------------------------------------------------------
+CREATE TABLE "user_preferences" (
+    "id" TEXT NOT NULL,
+    "user_id" UUID NOT NULL,
+    "preference_type" TEXT NOT NULL,
+    "preference_key" TEXT NOT NULL,
+    "preference_value" DOUBLE PRECISION NOT NULL,
+    "usage_count" INTEGER NOT NULL DEFAULT 0,
+    "success_rate" DOUBLE PRECISION NOT NULL DEFAULT 0.0,
+    "average_rating" DOUBLE PRECISION,
+    "last_used_at" TIMESTAMPTZ(6),
+    "first_used_at" TIMESTAMPTZ(6) NOT NULL,
+    "created_at" TIMESTAMPTZ(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMPTZ(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "user_preferences_pkey" PRIMARY KEY ("id")
+);
+
+ALTER TABLE "user_preferences" ADD CONSTRAINT "user_preferences_user_id_preference_type_preference_key_key" UNIQUE ("user_id", "preference_type", "preference_key");
+
+CREATE INDEX "user_preferences_user_id_preference_type_idx" ON "user_preferences"("user_id", "preference_type");
+CREATE INDEX "user_preferences_preference_value_idx" ON "user_preferences"("preference_value" DESC);
+
+-- ----------------------------------------------------------------------------
+-- 2.13 Theme Weeks Table (主题周活动表)
+-- ----------------------------------------------------------------------------
+CREATE TABLE "theme_weeks" (
+    "id" TEXT NOT NULL,
+    "title" TEXT NOT NULL,
+    "code" TEXT NOT NULL,
+    "description" VARCHAR(500),
+    "equipment_code" TEXT NOT NULL,
+    "target_exercise_count" INTEGER NOT NULL DEFAULT 3,
+    "start_date" DATE NOT NULL,
+    "end_date" DATE NOT NULL,
+    "reward_type" TEXT NOT NULL,
+    "reward_data" JSONB,
+    "status" TEXT NOT NULL DEFAULT 'UPCOMING',
+    "is_visible" BOOLEAN NOT NULL DEFAULT true,
+    "display_order" INTEGER NOT NULL DEFAULT 0,
+    "total_participants" INTEGER NOT NULL DEFAULT 0,
+    "total_completions" INTEGER NOT NULL DEFAULT 0,
+    "completion_rate" DOUBLE PRECISION NOT NULL DEFAULT 0.0,
+    "created_at" TIMESTAMPTZ(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMPTZ(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "theme_weeks_pkey" PRIMARY KEY ("id")
+);
+
+ALTER TABLE "theme_weeks" ADD CONSTRAINT "theme_weeks_code_key" UNIQUE ("code");
+
+CREATE INDEX "theme_weeks_status_start_date_idx" ON "theme_weeks"("status", "start_date");
+CREATE INDEX "theme_weeks_equipment_code_idx" ON "theme_weeks"("equipment_code");
+CREATE INDEX "theme_weeks_display_order_idx" ON "theme_weeks"("display_order");
+
+-- ----------------------------------------------------------------------------
+-- 2.14 Theme Week Participations Table (主题周参与记录表)
+-- ----------------------------------------------------------------------------
+CREATE TABLE "theme_week_participations" (
+    "id" TEXT NOT NULL,
+    "user_id" UUID NOT NULL,
+    "theme_week_id" TEXT NOT NULL,
+    "status" TEXT NOT NULL DEFAULT 'JOINED',
+    "joined_at" TIMESTAMPTZ(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "completed_at" TIMESTAMPTZ(6),
+    "exercises_completed" INTEGER NOT NULL DEFAULT 0,
+    "target_exercises" INTEGER NOT NULL,
+    "progress_percent" DOUBLE PRECISION NOT NULL DEFAULT 0.0,
+    "reward_earned" BOOLEAN NOT NULL DEFAULT false,
+    "reward_claimed_at" TIMESTAMPTZ(6),
+    "related_sessions" TEXT[] DEFAULT ARRAY[]::TEXT[],
+    "created_at" TIMESTAMPTZ(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMPTZ(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "theme_week_participations_pkey" PRIMARY KEY ("id")
+);
+
+ALTER TABLE "theme_week_participations" ADD CONSTRAINT "theme_week_participations_user_id_theme_week_id_key" UNIQUE ("user_id", "theme_week_id");
+
+CREATE INDEX "theme_week_participations_theme_week_id_status_idx" ON "theme_week_participations"("theme_week_id", "status");
+CREATE INDEX "theme_week_participations_user_id_status_idx" ON "theme_week_participations"("user_id", "status");
+
+-- ----------------------------------------------------------------------------
+-- 2.15 Deeplinks Table (深链表 - v3.0新增)
+-- ----------------------------------------------------------------------------
+CREATE TABLE "deeplinks" (
+    "id" TEXT NOT NULL,
+    "code" TEXT NOT NULL,
+    "target_type" "DeeplinkTargetType" NOT NULL,
+    "target_id" TEXT NOT NULL,
+    "created_by" UUID,
+    "expires_at" TIMESTAMPTZ(6),
+    "created_at" TIMESTAMPTZ(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "deeplinks_pkey" PRIMARY KEY ("id")
+);
+
+ALTER TABLE "deeplinks" ADD CONSTRAINT "deeplinks_code_key" UNIQUE ("code");
+
+CREATE INDEX "deeplinks_code_idx" ON "deeplinks"("code");
+CREATE INDEX "deeplinks_target_type_target_id_idx" ON "deeplinks"("target_type", "target_id");
+CREATE INDEX "deeplinks_expires_at_idx" ON "deeplinks"("expires_at");
+
+-- ----------------------------------------------------------------------------
+-- 2.16 Deeplink Clicks Table (深链点击统计表 - v3.0新增)
+-- ----------------------------------------------------------------------------
+CREATE TABLE "deeplink_clicks" (
+    "id" TEXT NOT NULL,
+    "deeplink_id" TEXT NOT NULL,
+    "clicked_at" TIMESTAMPTZ(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "ip_address" TEXT,
+    "user_agent" TEXT,
+    "referer" TEXT,
+
+    CONSTRAINT "deeplink_clicks_pkey" PRIMARY KEY ("id")
+);
+
+CREATE INDEX "deeplink_clicks_deeplink_id_clicked_at_idx" ON "deeplink_clicks"("deeplink_id", "clicked_at" DESC);
+
+-- ============================================================================
+-- 3. ADD FOREIGN KEY CONSTRAINTS (添加外键约束)
+-- ============================================================================
+
+-- Exercise-Scenario relationships
+ALTER TABLE "exercise_scenarios" ADD CONSTRAINT "exercise_scenarios_exercise_id_fkey" FOREIGN KEY ("exercise_id") REFERENCES "exercises"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "exercise_scenarios" ADD CONSTRAINT "exercise_scenarios_scenario_id_fkey" FOREIGN KEY ("scenario_id") REFERENCES "scenarios"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- Exercise-Equipment relationships
+ALTER TABLE "exercise_equipment" ADD CONSTRAINT "exercise_equipment_exercise_id_fkey" FOREIGN KEY ("exercise_id") REFERENCES "exercises"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "exercise_equipment" ADD CONSTRAINT "exercise_equipment_equipment_id_fkey" FOREIGN KEY ("equipment_id") REFERENCES "equipment"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- Workout Sessions relationships
+ALTER TABLE "workout_sessions" ADD CONSTRAINT "workout_sessions_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "workout_sessions" ADD CONSTRAINT "workout_sessions_scenario_id_fkey" FOREIGN KEY ("scenario_id") REFERENCES "scenarios"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- Session Exercises relationships
+ALTER TABLE "session_exercises" ADD CONSTRAINT "session_exercises_session_id_fkey" FOREIGN KEY ("session_id") REFERENCES "workout_sessions"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "session_exercises" ADD CONSTRAINT "session_exercises_exercise_id_fkey" FOREIGN KEY ("exercise_id") REFERENCES "exercises"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- Share Cards relationships
+ALTER TABLE "share_cards" ADD CONSTRAINT "share_cards_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "share_cards" ADD CONSTRAINT "share_cards_session_id_fkey" FOREIGN KEY ("session_id") REFERENCES "workout_sessions"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- Daily Trainings relationships
+ALTER TABLE "daily_trainings" ADD CONSTRAINT "daily_trainings_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- Rarity Table relationships
+ALTER TABLE "rarity_table" ADD CONSTRAINT "rarity_table_equipment_id_fkey" FOREIGN KEY ("equipment_id") REFERENCES "equipment"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- User Preferences relationships
+ALTER TABLE "user_preferences" ADD CONSTRAINT "user_preferences_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- Theme Week Participations relationships
+ALTER TABLE "theme_week_participations" ADD CONSTRAINT "theme_week_participations_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "theme_week_participations" ADD CONSTRAINT "theme_week_participations_theme_week_id_fkey" FOREIGN KEY ("theme_week_id") REFERENCES "theme_weeks"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- Deeplink Clicks relationships (v3.0新增)
+ALTER TABLE "deeplink_clicks" ADD CONSTRAINT "deeplink_clicks_deeplink_id_fkey" FOREIGN KEY ("deeplink_id") REFERENCES "deeplinks"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- ============================================================================
+-- 4. CREATE UPDATED_AT TRIGGER FUNCTION (创建自动更新时间戳触发器)
+-- ============================================================================
+
+CREATE OR REPLACE FUNCTION update_updated_at_column()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = CURRENT_TIMESTAMP;
+    RETURN NEW;
+END;
+$$ language 'plpgsql';
+
+-- ============================================================================
+-- 5. APPLY UPDATED_AT TRIGGERS TO ALL TABLES (为所有表添加触发器)
+-- ============================================================================
+
+CREATE TRIGGER update_scenarios_updated_at BEFORE UPDATE ON "scenarios" FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_equipment_updated_at BEFORE UPDATE ON "equipment" FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_exercises_updated_at BEFORE UPDATE ON "exercises" FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_users_updated_at BEFORE UPDATE ON "users" FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_workout_sessions_updated_at BEFORE UPDATE ON "workout_sessions" FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_share_cards_updated_at BEFORE UPDATE ON "share_cards" FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_daily_trainings_updated_at BEFORE UPDATE ON "daily_trainings" FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_rarity_table_updated_at BEFORE UPDATE ON "rarity_table" FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_user_preferences_updated_at BEFORE UPDATE ON "user_preferences" FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_theme_weeks_updated_at BEFORE UPDATE ON "theme_weeks" FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_theme_week_participations_updated_at BEFORE UPDATE ON "theme_week_participations" FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- ============================================================================
+-- 6. ENABLE ROW LEVEL SECURITY (RLS) (启用行级安全策略)
+-- ============================================================================
+
+ALTER TABLE "scenarios" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "equipment" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "exercises" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "exercise_scenarios" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "exercise_equipment" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "users" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "workout_sessions" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "session_exercises" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "share_cards" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "daily_trainings" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "rarity_table" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "user_preferences" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "theme_weeks" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "theme_week_participations" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "deeplinks" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "deeplink_clicks" ENABLE ROW LEVEL SECURITY;
+
+-- ============================================================================
+-- 7. CREATE RLS POLICIES (创建行级安全策略)
+-- ============================================================================
+
+-- ----------------------------------------------------------------------------
+-- 7.1 Public Read Access (公开数据可被所有人访问)
+-- ----------------------------------------------------------------------------
+
+CREATE POLICY "Public scenarios readable"
+ON "scenarios" FOR SELECT TO anon, authenticated
+USING (is_active = true);
+
+CREATE POLICY "Public equipment readable"
+ON "equipment" FOR SELECT TO anon, authenticated
+USING (is_active = true);
+
+CREATE POLICY "Public exercises readable"
+ON "exercises" FOR SELECT TO anon, authenticated
+USING (is_active = true);
+
+CREATE POLICY "Public exercise_scenarios readable"
+ON "exercise_scenarios" FOR SELECT TO anon, authenticated
+USING (true);
+
+CREATE POLICY "Public exercise_equipment readable"
+ON "exercise_equipment" FOR SELECT TO anon, authenticated
+USING (true);
+
+CREATE POLICY "Public theme_weeks readable"
+ON "theme_weeks" FOR SELECT TO anon, authenticated
+USING (is_visible = true);
+
+-- Rarity Table: 稀有度数据公开可读
+CREATE POLICY "Public rarity_table readable"
+ON "rarity_table" FOR SELECT TO anon, authenticated
+USING (true);
+
+-- ----------------------------------------------------------------------------
+-- 7.2 Users Own Data Access (用户只能访问自己的数据)
+-- ----------------------------------------------------------------------------
+
+CREATE POLICY "Users can view own profile"
+ON "users" FOR SELECT TO authenticated
+USING (auth.uid() = id);
+
+CREATE POLICY "Users can update own profile"
+ON "users" FOR UPDATE TO authenticated
+USING (auth.uid() = id);
+
+-- ----------------------------------------------------------------------------
+-- 7.3 Workout Sessions Access (训练会话权限)
+-- ----------------------------------------------------------------------------
+
+CREATE POLICY "Users can view own sessions"
+ON "workout_sessions" FOR SELECT TO authenticated
+USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can insert own sessions"
+ON "workout_sessions" FOR INSERT TO authenticated
+WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can update own sessions"
+ON "workout_sessions" FOR UPDATE TO authenticated
+USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can delete own sessions"
+ON "workout_sessions" FOR DELETE TO authenticated
+USING (auth.uid() = user_id);
+
+-- ----------------------------------------------------------------------------
+-- 7.4 Session Exercises Access (会话动作权限 - v3.0增强级联策略)
+-- ----------------------------------------------------------------------------
+
+-- 查询权限：通过 EXISTS 关联 workout_sessions.user_id
+CREATE POLICY "Users can view own session_exercises"
+ON "session_exercises" FOR SELECT TO authenticated
+USING (
+    EXISTS (
+        SELECT 1 FROM workout_sessions
+        WHERE workout_sessions.id = session_exercises.session_id
+          AND workout_sessions.user_id = auth.uid()
+    )
+);
+
+-- 插入权限：只能为自己的会话插入动作
+CREATE POLICY "Users can insert own session_exercises"
+ON "session_exercises" FOR INSERT TO authenticated
+WITH CHECK (
+    EXISTS (
+        SELECT 1 FROM workout_sessions
+        WHERE workout_sessions.id = session_exercises.session_id
+          AND workout_sessions.user_id = auth.uid()
+    )
+);
+
+-- 更新权限：只能更新自己会话的动作
+CREATE POLICY "Users can update own session_exercises"
+ON "session_exercises" FOR UPDATE TO authenticated
+USING (
+    EXISTS (
+        SELECT 1 FROM workout_sessions
+        WHERE workout_sessions.id = session_exercises.session_id
+          AND workout_sessions.user_id = auth.uid()
+    )
+);
+
+-- ----------------------------------------------------------------------------
+-- 7.5 Share Cards Access (分享卡片权限 - v3.0完善可见性控制)
+-- ----------------------------------------------------------------------------
+
+-- 查询权限：公开卡片或自己的卡片
+CREATE POLICY "Users can view own or public cards"
+ON "share_cards" FOR SELECT TO authenticated
+USING (auth.uid() = user_id OR is_public = true);
+
+CREATE POLICY "Users can insert own cards"
+ON "share_cards" FOR INSERT TO authenticated
+WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can update own cards"
+ON "share_cards" FOR UPDATE TO authenticated
+USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can delete own cards"
+ON "share_cards" FOR DELETE TO authenticated
+USING (auth.uid() = user_id);
+
+-- ----------------------------------------------------------------------------
+-- 7.6 Daily Trainings Access (每日训练记录权限)
+-- ----------------------------------------------------------------------------
+
+CREATE POLICY "Users can view own daily_trainings"
+ON "daily_trainings" FOR SELECT TO authenticated
+USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can insert own daily_trainings"
+ON "daily_trainings" FOR INSERT TO authenticated
+WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can update own daily_trainings"
+ON "daily_trainings" FOR UPDATE TO authenticated
+USING (auth.uid() = user_id);
+
+-- ----------------------------------------------------------------------------
+-- 7.7 User Preferences Access (用户偏好权限)
+-- ----------------------------------------------------------------------------
+
+CREATE POLICY "Users can view own preferences"
+ON "user_preferences" FOR SELECT TO authenticated
+USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can insert own preferences"
+ON "user_preferences" FOR INSERT TO authenticated
+WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can update own preferences"
+ON "user_preferences" FOR UPDATE TO authenticated
+USING (auth.uid() = user_id);
+
+-- ----------------------------------------------------------------------------
+-- 7.8 Theme Week Participations Access (主题周参与权限)
+-- ----------------------------------------------------------------------------
+
+CREATE POLICY "Users can view own participations"
+ON "theme_week_participations" FOR SELECT TO authenticated
+USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can insert own participations"
+ON "theme_week_participations" FOR INSERT TO authenticated
+WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can update own participations"
+ON "theme_week_participations" FOR UPDATE TO authenticated
+USING (auth.uid() = user_id);
+
+-- ----------------------------------------------------------------------------
+-- 7.9 Deeplinks Access (深链权限 - v3.0新增)
+-- ----------------------------------------------------------------------------
+
+-- 查询权限：公开读取有效的深链
+CREATE POLICY "Public can read active deeplinks"
+ON "deeplinks" FOR SELECT TO anon, authenticated
+USING (expires_at IS NULL OR expires_at > NOW());
+
+-- 插入权限：仅 service_role 可创建（Edge Function 使用）
+-- 注意：此策略由应用层控制，通常使用 Service Key
+
+-- ----------------------------------------------------------------------------
+-- 7.10 Deeplink Clicks Access (深链点击统计权限 - v3.0新增)
+-- ----------------------------------------------------------------------------
+
+-- 插入权限：service_role 可写入（无需用户认证）
+CREATE POLICY "Service can insert clicks"
+ON "deeplink_clicks" FOR INSERT TO service_role
+WITH CHECK (true);
+
+-- 查询权限：仅管理员或数据分析角色可读（可选实现）
+-- CREATE POLICY "Admin can read clicks"
+-- ON "deeplink_clicks" FOR SELECT TO authenticated
+-- USING (auth.jwt()->>'role' = 'admin');
+
+-- ============================================================================
+-- 8. ADD TABLE COMMENTS (添加表和列的注释)
+-- ============================================================================
+
+COMMENT ON TABLE "scenarios" IS '场景表 - 存储训练场景信息（如办公室、家、健身房等）';
+COMMENT ON TABLE "equipment" IS '器材表 - 存储训练器材信息（如椅子、墙面、水瓶等）';
+COMMENT ON TABLE "exercises" IS '动作表 - 存储所有训练动作的详细信息';
+COMMENT ON TABLE "exercise_scenarios" IS '动作-场景关联表 - 多对多关系';
+COMMENT ON TABLE "exercise_equipment" IS '动作-器材关联表 - 多对多关系';
+COMMENT ON TABLE "users" IS '用户表 - 存储用户基本信息、统计数据和偏好设置';
+COMMENT ON TABLE "workout_sessions" IS '训练会话表 - 记录每次训练的完整信息';
+COMMENT ON TABLE "session_exercises" IS '会话动作关联表 - 记录训练会话中的具体动作（v3.0增强RLS级联策略）';
+COMMENT ON TABLE "share_cards" IS '分享成果卡表 - 用户完成训练后生成的分享卡片（v3.0改用枚举类型）';
+COMMENT ON TABLE "daily_trainings" IS '每日训练记录表 - 按日期聚合的训练数据，用于日历视图';
+COMMENT ON TABLE "rarity_table" IS '稀有度周表 - 用于动态计算稀有度（v3.0重命名自equipment_frequencies）';
+COMMENT ON TABLE "user_preferences" IS '用户偏好学习记录表 - 用于个性化推荐和智能学习';
+COMMENT ON TABLE "theme_weeks" IS '主题周活动表 - 管理主题周活动（如椅子周、水瓶周）';
+COMMENT ON TABLE "theme_week_participations" IS '主题周参与记录表 - 记录用户参与主题周的详细数据';
+COMMENT ON TABLE "deeplinks" IS '深链表 - 用于分享和跳转链接（v3.0新增）';
+COMMENT ON TABLE "deeplink_clicks" IS '深链点击统计表 - 无需用户认证的统计数据（v3.0新增）';
+
+-- ============================================================================
+-- MIGRATION COMPLETED - 迁移完成
+-- ============================================================================
+--
+-- ✅ 数据库架构版本: v3.0 Production Ready
+-- ✅ 基于改进建议全面重构
+--
+-- 统计数据:
+-- - Total Tables Created: 16 (新增2个：deeplinks, deeplink_clicks)
+-- - Total Enums Created: 11 (新增3个：RarityLevel, DataSource, DeeplinkTargetType)
+-- - Total Indexes Created: 40+
+-- - Total Foreign Keys: 14
+-- - Total Triggers: 11
+-- - RLS Policies: Enabled for all tables with ~30 policies
+--
+-- v3.0 主要改进:
+-- 1. ✅ 统一命名规范（资源型 vs 计算型接口）
+-- 2. ✅ 新增深链统计表（deeplinks, deeplink_clicks）
+-- 3. ✅ 重命名 equipment_frequencies → rarity_table
+-- 4. ✅ 新增数据来源枚举（DataSource）
+-- 5. ✅ 新增稀有度枚举（RarityLevel）
+-- 6. ✅ 难度改为颜色编码（GREEN, BLUE, RED）
+-- 7. ✅ 完善 RLS 级联策略（session_exercises 通过 EXISTS 关联）
+-- 8. ✅ 所有枚举统一为 UPPER_SNAKE_CASE
+--
+-- 下一步操作:
+-- 1. 在 Supabase SQL Editor 中运行此脚本
+--    URL: https://app.supabase.com/project/tvjcmleckqovnieuexgu/sql
+-- 2. 验证所有 16 张表创建成功
+-- 3. 更新 Prisma 配置：将 schema.prisma 替换为 schema_v3.prisma
+-- 4. 运行 npx prisma generate 生成 Prisma Client
+-- 5. 创建种子数据 (scenarios, equipment, exercises)
+-- 6. 测试 Supabase Auth 集成和 RLS 策略
+-- 7. 配置 Supabase Storage bucket (share-cards)
+-- 8. 部署 Edge Functions（深链创建和点击统计）
+--
+-- ============================================================================

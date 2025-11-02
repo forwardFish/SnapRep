@@ -1,0 +1,1011 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SnapRep Crystal White UI Design Preview</title>
+    <style>
+        /* Fonts Import */
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+
+        /* Base Reset */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', 'Roboto', sans-serif;
+            background: #FFFFFF;
+            color: #4A4A4A;
+            line-height: 1.6;
+            padding: 20px;
+            overflow-x: auto;
+        }
+
+        /* Container Layout */
+        .preview-container {
+            max-width: 2400px;
+            margin: 0 auto;
+        }
+
+        .preview-title {
+            text-align: center;
+            font-size: 36px;
+            font-weight: 700;
+            color: #4A4A4A;
+            margin-bottom: 40px;
+            background: linear-gradient(135deg, #4A4A4A, #888888);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* 6-Column Grid Layout */
+        .pages-grid {
+            display: grid;
+            grid-template-columns: repeat(6, 375px);
+            gap: 30px;
+            justify-content: center;
+            align-items: start;
+        }
+
+        @media (max-width: 2400px) {
+            .pages-grid {
+                grid-template-columns: repeat(4, 375px);
+            }
+        }
+
+        @media (max-width: 1600px) {
+            .pages-grid {
+                grid-template-columns: repeat(3, 375px);
+            }
+        }
+
+        @media (max-width: 1200px) {
+            .pages-grid {
+                grid-template-columns: repeat(2, 375px);
+            }
+        }
+
+        @media (max-width: 800px) {
+            .pages-grid {
+                grid-template-columns: 1fr;
+                justify-items: center;
+            }
+        }
+
+        /* Phone Mockup Frame */
+        .phone-mockup {
+            width: 375px;
+            height: 812px;
+            border: 1px solid #E0E0E0;
+            border-radius: 30px;
+            background: #FFFFFF;
+            overflow: hidden;
+            position: relative;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .phone-mockup:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 16px 48px rgba(0, 0, 0, 0.15);
+        }
+
+        /* Phone Notch */
+        .phone-notch {
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 150px;
+            height: 30px;
+            background: #000000;
+            border-radius: 0 0 16px 16px;
+            z-index: 10;
+        }
+
+        /* Status Bar */
+        .status-bar {
+            height: 44px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 20px;
+            font-size: 14px;
+            font-weight: 600;
+            color: #000000;
+            background: #FFFFFF;
+            position: relative;
+            z-index: 5;
+        }
+
+        /* Page Content Area */
+        .page-content {
+            height: 688px;
+            padding: 0;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Bottom Navigation */
+        .bottom-nav {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 80px;
+            background: linear-gradient(to bottom, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.1));
+            border-top: 1px solid rgba(0, 0, 0, 0.05);
+            backdrop-filter: blur(20px);
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            padding: 0 20px;
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            color: #888888;
+            transition: all 0.3s ease;
+        }
+
+        .nav-item.active {
+            color: #FF7F50;
+        }
+
+        .nav-item:hover {
+            transform: translateY(-2px);
+            filter: drop-shadow(0 4px 8px rgba(255, 127, 80, 0.3));
+        }
+
+        /* Crystal White Cards */
+        .crystal-card {
+            background: linear-gradient(to bottom, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.1));
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+        }
+
+        .crystal-card:hover {
+            transform: translateY(-4px);
+            filter: drop-shadow(0 12px 20px rgba(0, 0, 0, 0.08));
+        }
+
+        /* Typography Hierarchy */
+        .page-title {
+            font-size: 30px;
+            font-weight: 700;
+            color: #4A4A4A;
+            margin-bottom: 20px;
+        }
+
+        .card-title {
+            font-size: 20px;
+            font-weight: 500;
+            color: #4A4A4A;
+            margin-bottom: 12px;
+        }
+
+        .body-text {
+            font-size: 16px;
+            color: #4A4A4A;
+            line-height: 1.5;
+        }
+
+        .small-text {
+            font-size: 14px;
+            color: #888888;
+        }
+
+        /* Primary Button */
+        .primary-button {
+            background: linear-gradient(135deg, #FF7F50, #FF6B35);
+            color: #FFFFFF;
+            border: none;
+            border-radius: 12px;
+            padding: 16px 32px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 16px rgba(255, 127, 80, 0.3);
+        }
+
+        .primary-button:hover {
+            transform: scale(0.98);
+            box-shadow: 0 6px 20px rgba(255, 127, 80, 0.4);
+        }
+
+        .primary-button:focus {
+            outline: none;
+            box-shadow: 0 0 8px 2px rgba(255, 127, 80, 0.3);
+        }
+
+        /* Chips */
+        .chip {
+            display: inline-flex;
+            align-items: center;
+            padding: 8px 16px;
+            background: linear-gradient(to bottom, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.3));
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            border-radius: 20px;
+            font-size: 14px;
+            color: #4A4A4A;
+            margin: 4px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .chip:hover {
+            background: linear-gradient(135deg, #FF7F50, #FF6B35);
+            color: #FFFFFF;
+            transform: translateY(-1px);
+        }
+
+        .chip.selected {
+            background: linear-gradient(135deg, #FF7F50, #FF6B35);
+            color: #FFFFFF;
+        }
+
+        /* Object Grid */
+        .object-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            padding: 20px;
+        }
+
+        .object-tile {
+            aspect-ratio: 1;
+            background: linear-gradient(to bottom, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.1));
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            border-radius: 16px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .object-tile:hover {
+            transform: translateY(-4px);
+            filter: drop-shadow(0 12px 20px rgba(0, 0, 0, 0.08));
+            background: linear-gradient(135deg, #FF7F50, #FF6B35);
+            color: #FFFFFF;
+        }
+
+        /* Workout Cards */
+        .workout-card {
+            background: linear-gradient(to bottom, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.1));
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            border-radius: 16px;
+            padding: 20px;
+            margin: 12px 20px;
+            transition: all 0.3s ease;
+        }
+
+        .workout-card:hover {
+            transform: translateY(-4px);
+            filter: drop-shadow(0 12px 20px rgba(0, 0, 0, 0.08));
+        }
+
+        /* Form Inputs */
+        .form-input {
+            width: 100%;
+            border: none;
+            border-radius: 12px;
+            padding: 16px;
+            background: rgba(255, 255, 255, 0.8);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            font-size: 16px;
+            color: #4A4A4A;
+            transition: all 0.3s ease;
+        }
+
+        .form-input:focus {
+            outline: none;
+            box-shadow: 0 0 8px 2px rgba(255, 127, 80, 0.3);
+        }
+
+        /* SVG Icons */
+        .icon {
+            width: 24px;
+            height: 24px;
+            fill: currentColor;
+        }
+
+        .icon-large {
+            width: 48px;
+            height: 48px;
+            fill: currentColor;
+        }
+
+        /* Page Specific Styles */
+        .hero-section {
+            height: 300px;
+            background: linear-gradient(135deg, #FF7F50, #FF6B35);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            color: #FFFFFF;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="2" fill="rgba(255,255,255,0.1)"/><circle cx="20" cy="20" r="1" fill="rgba(255,255,255,0.1)"/><circle cx="80" cy="30" r="1.5" fill="rgba(255,255,255,0.1)"/></svg>');
+            opacity: 0.6;
+        }
+
+        .hero-title {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            z-index: 2;
+        }
+
+        .hero-subtitle {
+            font-size: 16px;
+            margin-bottom: 24px;
+            opacity: 0.9;
+            z-index: 2;
+        }
+
+        .hero-button {
+            background: linear-gradient(to bottom, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.8));
+            color: #FF7F50;
+            border: none;
+            border-radius: 24px;
+            padding: 16px 40px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            z-index: 2;
+        }
+
+        .hero-button:hover {
+            transform: scale(0.98);
+            box-shadow: 0 8px 24px rgba(255, 255, 255, 0.4);
+        }
+
+        /* Page Label */
+        .page-label {
+            position: absolute;
+            bottom: 90px;
+            left: 20px;
+            background: linear-gradient(135deg, #FF7F50, #FF6B35);
+            color: #FFFFFF;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            z-index: 10;
+        }
+
+        /* Animated Progress Line */
+        .progress-line {
+            stroke: #FF7F50;
+            stroke-width: 3;
+            fill: none;
+            stroke-dasharray: 100;
+            stroke-dashoffset: 100;
+            animation: drawLine 2s ease-in-out forwards;
+        }
+
+        @keyframes drawLine {
+            to {
+                stroke-dashoffset: 0;
+            }
+        }
+
+        /* Collection Grid */
+        .collection-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            padding: 20px;
+        }
+
+        .collection-card {
+            aspect-ratio: 9/13;
+            background: linear-gradient(to bottom, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.1));
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            padding: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .collection-card:hover {
+            transform: translateY(-4px);
+            filter: drop-shadow(0 12px 20px rgba(0, 0, 0, 0.08));
+        }
+
+        .collection-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(45deg, #FF7F50, #FF6B35);
+            opacity: 0.1;
+        }
+
+        /* Tab Navigation */
+        .tab-nav {
+            display: flex;
+            background: linear-gradient(to bottom, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.1));
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            border-radius: 12px;
+            margin: 20px;
+            overflow: hidden;
+        }
+
+        .tab-item {
+            flex: 1;
+            padding: 12px 16px;
+            text-align: center;
+            font-size: 14px;
+            font-weight: 500;
+            color: #888888;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .tab-item.active {
+            background: linear-gradient(135deg, #FF7F50, #FF6B35);
+            color: #FFFFFF;
+        }
+
+        .tab-item:hover {
+            background: linear-gradient(135deg, rgba(255, 127, 80, 0.1), rgba(255, 107, 53, 0.1));
+            color: #FF7F50;
+        }
+    </style>
+</head>
+<body>
+    <!-- SVG Icon Definitions -->
+    <svg style="display: none;">
+        <defs>
+            <symbol id="icon-home" viewBox="0 0 24 24">
+                <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
+            </symbol>
+            <symbol id="icon-camera" viewBox="0 0 24 24">
+                <path d="M12 15.2c-2.2 0-3.9-1.8-3.9-3.9s1.8-3.9 3.9-3.9 3.9 1.8 3.9 3.9-1.7 3.9-3.9 3.9zM9 2L7.17 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2h-3.17L15 2H9z"/>
+            </symbol>
+            <symbol id="icon-user" viewBox="0 0 24 24">
+                <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+            </symbol>
+            <symbol id="icon-chair" viewBox="0 0 24 24">
+                <path d="M7 11v2h10v-2H7zm0 6h10v-2H7v2zm0-10h10V5H7v2z"/>
+            </symbol>
+            <symbol id="icon-bottle" viewBox="0 0 24 24">
+                <path d="M9 2v1.5c0 .28-.22.5-.5.5s-.5-.22-.5-.5V2H7v1.5c0 1.38 1.12 2.5 2.5 2.5h5C15.88 6 17 4.88 17 3.5V2h-1v1.5c0 .28-.22.5-.5.5s-.5-.22-.5-.5V2H9zm6 7.25c0-.41-.34-.75-.75-.75h-4.5c-.41 0-.75.34-.75.75V22h6V9.25z"/>
+            </symbol>
+            <symbol id="icon-book" viewBox="0 0 24 24">
+                <path d="M18 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 4h5v8l-2.5-1.5L6 12V4z"/>
+            </symbol>
+            <symbol id="icon-dumbbell" viewBox="0 0 24 24">
+                <path d="M20.57 14.86L22 13.43 20.57 12 17 15.57 8.43 7 12 3.43 10.57 2 9.14 3.43 7.71 2 5.57 4.14 4.14 2.71 2.71 4.14l1.43 1.43L2 7.71l1.43 1.43L2 10.57 3.43 12 7 8.43 15.57 17 12 20.57 13.43 22l1.43-1.43L16.29 22l2.14-2.14 1.43 1.43 1.43-1.43-1.43-1.43L22 16.29l-1.43-1.43z"/>
+            </symbol>
+            <symbol id="icon-settings" viewBox="0 0 24 24">
+                <path d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.07-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.74,8.87 C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.8,11.69,4.8,12s0.02,0.64,0.07,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.44-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.47-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6 s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z"/>
+            </symbol>
+            <symbol id="icon-heart" viewBox="0 0 24 24">
+                <path d="M16.5,3c-1.74,0-3.41,0.81-4.5,2.09C10.91,3.81,9.24,3,7.5,3C4.42,3,2,5.42,2,8.5c0,3.78,3.4,6.86,8.55,11.54L12,21.35 l1.45-1.32C18.6,15.36,22,12.28,22,8.5C22,5.42,19.58,3,16.5,3L16.5,3z"/>
+            </symbol>
+            <symbol id="icon-play" viewBox="0 0 24 24">
+                <path d="M8 5v14l11-7z"/>
+            </symbol>
+            <symbol id="icon-star" viewBox="0 0 24 24">
+                <path d="M12,17.27L18.18,21l-1.64-7.03L22,9.24l-7.19-0.61L12,2L9.19,8.63L2,9.24l5.46,4.73L5.82,21L12,17.27z"/>
+            </symbol>
+        </defs>
+    </svg>
+
+    <div class="preview-container">
+        <h1 class="preview-title">SnapRep Crystal White Design System</h1>
+
+        <div class="pages-grid">
+            <!-- Page 1: HomePage -->
+            <div class="phone-mockup">
+                <div class="phone-notch"></div>
+                <div class="status-bar">
+                    <span>9:41</span>
+                    <span>••••• 100%</span>
+                </div>
+                <div class="page-content">
+                    <!-- Hero Section -->
+                    <div class="hero-section">
+                        <h1 class="hero-title">Give me 60 seconds</h1>
+                        <p class="hero-subtitle">Train anywhere • No equipment needed</p>
+                        <button class="hero-button">Start Now</button>
+                    </div>
+
+                    <!-- Scene Chips -->
+                    <div style="padding: 20px;">
+                        <h3 class="body-text" style="margin-bottom: 16px;">Choose Your Scene</h3>
+                        <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                            <span class="chip selected">Office</span>
+                            <span class="chip">Living Room</span>
+                            <span class="chip">Morning</span>
+                            <span class="chip">Evening</span>
+                            <span class="chip">Travel</span>
+                            <span class="chip">Before Meeting</span>
+                        </div>
+                    </div>
+
+                    <!-- Object Grid -->
+                    <div style="padding: 0 20px;">
+                        <h3 class="body-text" style="margin-bottom: 16px;">Available Objects</h3>
+                        <div class="object-grid">
+                            <div class="object-tile">
+                                <svg class="icon-large"><use href="#icon-user"/></svg>
+                                <span class="small-text">Empty Hands</span>
+                            </div>
+                            <div class="object-tile">
+                                <svg class="icon-large"><use href="#icon-chair"/></svg>
+                                <span class="small-text">Chair</span>
+                            </div>
+                            <div class="object-tile">
+                                <svg class="icon-large"><use href="#icon-bottle"/></svg>
+                                <span class="small-text">Water Bottle</span>
+                            </div>
+                            <div class="object-tile">
+                                <svg class="icon-large"><use href="#icon-book"/></svg>
+                                <span class="small-text">Book</span>
+                            </div>
+                            <div class="object-tile">
+                                <svg class="icon-large"><use href="#icon-dumbbell"/></svg>
+                                <span class="small-text">Backpack</span>
+                            </div>
+                            <div class="object-tile">
+                                <svg class="icon-large"><use href="#icon-heart"/></svg>
+                                <span class="small-text">Towel</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="bottom-nav">
+                    <div class="nav-item active">
+                        <svg class="icon"><use href="#icon-home"/></svg>
+                        <span class="small-text">Home</span>
+                    </div>
+                    <div class="nav-item">
+                        <svg class="icon"><use href="#icon-camera"/></svg>
+                        <span class="small-text">Camera</span>
+                    </div>
+                    <div class="nav-item">
+                        <svg class="icon"><use href="#icon-user"/></svg>
+                        <span class="small-text">My</span>
+                    </div>
+                </div>
+                <div class="page-label">HomePage</div>
+            </div>
+
+            <!-- Page 2: WorkoutGuide Step 1 -->
+            <div class="phone-mockup">
+                <div class="phone-notch"></div>
+                <div class="status-bar">
+                    <span>9:41</span>
+                    <span>••••• 100%</span>
+                </div>
+                <div class="page-content" style="padding: 44px 20px 100px;">
+                    <div style="text-align: center; margin-bottom: 40px;">
+                        <h1 class="page-title">What's Your Goal?</h1>
+                        <p class="body-text" style="color: #888888;">Choose your workout intention</p>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                        <div class="crystal-card" style="padding: 40px 20px; text-align: center;">
+                            <svg class="icon-large" style="color: #FF7F50; margin-bottom: 16px;"><use href="#icon-heart"/></svg>
+                            <h3 class="card-title">Relax</h3>
+                            <p class="small-text">Gentle stretches</p>
+                        </div>
+                        <div class="crystal-card" style="padding: 40px 20px; text-align: center;">
+                            <svg class="icon-large" style="color: #FF7F50; margin-bottom: 16px;"><use href="#icon-star"/></svg>
+                            <h3 class="card-title">Stretch</h3>
+                            <p class="small-text">Flexibility focus</p>
+                        </div>
+                        <div class="crystal-card" style="padding: 40px 20px; text-align: center;">
+                            <svg class="icon-large" style="color: #FF7F50; margin-bottom: 16px;"><use href="#icon-play"/></svg>
+                            <h3 class="card-title">Light Exercise</h3>
+                            <p class="small-text">Easy movement</p>
+                        </div>
+                        <div class="crystal-card" style="padding: 40px 20px; text-align: center; background: linear-gradient(135deg, #FF7F50, #FF6B35); color: #FFFFFF;">
+                            <svg class="icon-large" style="margin-bottom: 16px;"><use href="#icon-dumbbell"/></svg>
+                            <h3 class="card-title">Strength</h3>
+                            <p class="small-text" style="color: rgba(255,255,255,0.8);">Build muscle</p>
+                        </div>
+                    </div>
+
+                    <button class="primary-button" style="width: 100%; margin-top: 40px;">Continue</button>
+                </div>
+                <div class="bottom-nav">
+                    <div class="nav-item">
+                        <svg class="icon"><use href="#icon-home"/></svg>
+                        <span class="small-text">Home</span>
+                    </div>
+                    <div class="nav-item active">
+                        <svg class="icon"><use href="#icon-camera"/></svg>
+                        <span class="small-text">Camera</span>
+                    </div>
+                    <div class="nav-item">
+                        <svg class="icon"><use href="#icon-user"/></svg>
+                        <span class="small-text">My</span>
+                    </div>
+                </div>
+                <div class="page-label">Guide Step 1</div>
+            </div>
+
+            <!-- Page 3: WorkoutGuide Step 2 -->
+            <div class="phone-mockup">
+                <div class="phone-notch"></div>
+                <div class="status-bar">
+                    <span>9:41</span>
+                    <span>••••• 100%</span>
+                </div>
+                <div class="page-content" style="padding: 44px 20px 100px;">
+                    <div style="text-align: center; margin-bottom: 40px;">
+                        <h1 class="page-title">Choose Location & Objects</h1>
+                        <p class="body-text" style="color: #888888;">Where are you working out?</p>
+                    </div>
+
+                    <!-- Location Cards -->
+                    <div style="margin-bottom: 32px;">
+                        <h3 class="body-text" style="margin-bottom: 16px;">Location</h3>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px;">
+                            <div class="crystal-card" style="padding: 24px 12px; text-align: center; background: linear-gradient(135deg, #FF7F50, #FF6B35); color: #FFFFFF;">
+                                <svg class="icon" style="margin-bottom: 8px;"><use href="#icon-home"/></svg>
+                                <p class="small-text" style="color: rgba(255,255,255,0.9);">Home</p>
+                            </div>
+                            <div class="crystal-card" style="padding: 24px 12px; text-align: center;">
+                                <svg class="icon" style="margin-bottom: 8px; color: #FF7F50;"><use href="#icon-settings"/></svg>
+                                <p class="small-text">Office</p>
+                            </div>
+                            <div class="crystal-card" style="padding: 24px 12px; text-align: center;">
+                                <svg class="icon" style="margin-bottom: 8px; color: #FF7F50;"><use href="#icon-star"/></svg>
+                                <p class="small-text">Travel</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Object Selection -->
+                    <div>
+                        <h3 class="body-text" style="margin-bottom: 16px;">Available Objects (Multi-select)</h3>
+                        <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                            <span class="chip selected">Chair</span>
+                            <span class="chip">Water Bottle</span>
+                            <span class="chip selected">Book</span>
+                            <span class="chip">Backpack</span>
+                            <span class="chip">Towel</span>
+                        </div>
+                    </div>
+
+                    <button class="primary-button" style="width: 100%; margin-top: 40px;">Next Step</button>
+                </div>
+                <div class="bottom-nav">
+                    <div class="nav-item">
+                        <svg class="icon"><use href="#icon-home"/></svg>
+                        <span class="small-text">Home</span>
+                    </div>
+                    <div class="nav-item active">
+                        <svg class="icon"><use href="#icon-camera"/></svg>
+                        <span class="small-text">Camera</span>
+                    </div>
+                    <div class="nav-item">
+                        <svg class="icon"><use href="#icon-user"/></svg>
+                        <span class="small-text">My</span>
+                    </div>
+                </div>
+                <div class="page-label">Guide Step 2</div>
+            </div>
+
+            <!-- Page 4: WorkoutGuide Step 3 -->
+            <div class="phone-mockup">
+                <div class="phone-notch"></div>
+                <div class="status-bar">
+                    <span>9:41</span>
+                    <span>••••• 100%</span>
+                </div>
+                <div class="page-content" style="padding: 44px 20px 100px;">
+                    <div style="text-align: center; margin-bottom: 40px;">
+                        <h1 class="page-title">Target Body Parts</h1>
+                        <p class="body-text" style="color: #888888;">Select up to 2 areas to focus on</p>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                        <span class="chip" style="padding: 16px; justify-content: center; background: linear-gradient(135deg, #FF7F50, #FF6B35); color: #FFFFFF;">Arms</span>
+                        <span class="chip" style="padding: 16px; justify-content: center;">Chest</span>
+                        <span class="chip" style="padding: 16px; justify-content: center;">Shoulders</span>
+                        <span class="chip" style="padding: 16px; justify-content: center;">Back</span>
+                        <span class="chip" style="padding: 16px; justify-content: center; background: linear-gradient(135deg, #FF7F50, #FF6B35); color: #FFFFFF;">Core</span>
+                        <span class="chip" style="padding: 16px; justify-content: center;">Legs</span>
+                        <span class="chip" style="padding: 16px; justify-content: center;">Glutes</span>
+                        <span class="chip" style="padding: 16px; justify-content: center;">Full Body</span>
+                    </div>
+
+                    <div class="crystal-card" style="margin-top: 32px; padding: 20px; text-align: center;">
+                        <h3 class="card-title" style="color: #FF7F50;">Selected: Arms + Core</h3>
+                        <p class="small-text">Perfect combination for strength building</p>
+                    </div>
+
+                    <button class="primary-button" style="width: 100%; margin-top: 32px;">Generate Workout</button>
+                </div>
+                <div class="bottom-nav">
+                    <div class="nav-item">
+                        <svg class="icon"><use href="#icon-home"/></svg>
+                        <span class="small-text">Home</span>
+                    </div>
+                    <div class="nav-item active">
+                        <svg class="icon"><use href="#icon-camera"/></svg>
+                        <span class="small-text">Camera</span>
+                    </div>
+                    <div class="nav-item">
+                        <svg class="icon"><use href="#icon-user"/></svg>
+                        <span class="small-text">My</span>
+                    </div>
+                </div>
+                <div class="page-label">Guide Step 3</div>
+            </div>
+
+            <!-- Page 5: WorkoutResultPage -->
+            <div class="phone-mockup">
+                <div class="phone-notch"></div>
+                <div class="status-bar">
+                    <span>9:41</span>
+                    <span>••••• 100%</span>
+                </div>
+                <div class="page-content" style="padding: 44px 0 100px;">
+                    <!-- Info Bar -->
+                    <div style="padding: 0 20px; margin-bottom: 20px;">
+                        <div class="crystal-card" style="padding: 16px; display: flex; justify-content: space-between; align-items: center;">
+                            <span class="small-text">Chair • Home</span>
+                            <span class="body-text" style="color: #FF7F50; font-weight: 600;">Strength Workout</span>
+                            <span class="small-text">★★★☆☆</span>
+                        </div>
+                    </div>
+
+                    <!-- Workout Cards -->
+                    <div class="workout-card">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
+                            <h3 class="card-title">Chair Push-ups</h3>
+                            <svg class="icon" style="color: #FF7F50;"><use href="#icon-heart"/></svg>
+                        </div>
+                        <div style="height: 80px; background: linear-gradient(45deg, #FF7F50, #FF6B35); border-radius: 12px; margin-bottom: 12px; position: relative; overflow: hidden;">
+                            <div style="position: absolute; bottom: 8px; left: 12px; color: white; font-size: 12px;">Preview</div>
+                        </div>
+                        <div style="margin-bottom: 8px;">
+                            <span class="chip" style="margin: 2px;">Arms</span>
+                            <span class="chip" style="margin: 2px;">Chest</span>
+                        </div>
+                        <p class="small-text" style="margin-bottom: 8px;">Build upper body strength using chair support</p>
+                        <p class="small-text" style="color: #FF7F50; font-weight: 500;">⚠️ Keep chair stable • Avoid if wrist pain</p>
+                        <p class="body-text" style="font-weight: 600;">12 reps × 3 sets</p>
+                    </div>
+
+                    <div class="workout-card">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
+                            <h3 class="card-title">Chair Dips</h3>
+                            <svg class="icon" style="color: #888888;"><use href="#icon-heart"/></svg>
+                        </div>
+                        <div style="height: 80px; background: linear-gradient(45deg, #888888, #AAAAAA); border-radius: 12px; margin-bottom: 12px; position: relative; overflow: hidden;">
+                            <div style="position: absolute; bottom: 8px; left: 12px; color: white; font-size: 12px;">Preview</div>
+                        </div>
+                        <div style="margin-bottom: 8px;">
+                            <span class="chip" style="margin: 2px;">Triceps</span>
+                        </div>
+                        <p class="small-text" style="margin-bottom: 8px;">Target triceps with controlled movements</p>
+                        <p class="small-text" style="color: #FF7F50; font-weight: 500;">⚠️ Control descent • Avoid if shoulder issues</p>
+                        <p class="body-text" style="font-weight: 600;">10 reps × 3 sets</p>
+                    </div>
+
+                    <div class="workout-card">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
+                            <h3 class="card-title">Chair Squats</h3>
+                            <svg class="icon" style="color: #888888;"><use href="#icon-heart"/></svg>
+                        </div>
+                        <div style="height: 80px; background: linear-gradient(45deg, #888888, #AAAAAA); border-radius: 12px; margin-bottom: 12px; position: relative; overflow: hidden;">
+                            <div style="position: absolute; bottom: 8px; left: 12px; color: white; font-size: 12px;">Preview</div>
+                        </div>
+                        <div style="margin-bottom: 8px;">
+                            <span class="chip" style="margin: 2px;">Legs</span>
+                            <span class="chip" style="margin: 2px;">Glutes</span>
+                        </div>
+                        <p class="small-text" style="margin-bottom: 8px;">Build lower body strength with support</p>
+                        <p class="small-text" style="color: #FF7F50; font-weight: 500;">⚠️ Keep knees aligned • Avoid if knee pain</p>
+                        <p class="body-text" style="font-weight: 600;">15 reps × 3 sets</p>
+                    </div>
+                </div>
+                <div class="bottom-nav">
+                    <div class="nav-item">
+                        <svg class="icon"><use href="#icon-home"/></svg>
+                        <span class="small-text">Home</span>
+                    </div>
+                    <div class="nav-item active">
+                        <svg class="icon"><use href="#icon-camera"/></svg>
+                        <span class="small-text">Camera</span>
+                    </div>
+                    <div class="nav-item">
+                        <svg class="icon"><use href="#icon-user"/></svg>
+                        <span class="small-text">My</span>
+                    </div>
+                </div>
+                <div class="page-label">Workout Result</div>
+            </div>
+
+            <!-- Page 6: MyPage -->
+            <div class="phone-mockup">
+                <div class="phone-notch"></div>
+                <div class="status-bar">
+                    <span>9:41</span>
+                    <span>••••• 100%</span>
+                </div>
+                <div class="page-content" style="padding: 44px 0 100px;">
+                    <!-- Profile Header -->
+                    <div style="padding: 20px; text-align: center;">
+                        <div style="width: 80px; height: 80px; border-radius: 40px; background: linear-gradient(135deg, #FF7F50, #FF6B35); margin: 0 auto 16px; display: flex; align-items: center; justify-content: center;">
+                            <svg class="icon-large" style="color: white;"><use href="#icon-user"/></svg>
+                        </div>
+                        <h2 class="card-title">Fitness Explorer</h2>
+                        <div style="display: flex; justify-content: center; gap: 24px; margin-top: 16px;">
+                            <div style="text-align: center;">
+                                <div class="body-text" style="font-weight: 600; color: #FF7F50;">7</div>
+                                <div class="small-text">Streak</div>
+                            </div>
+                            <div style="text-align: center;">
+                                <div class="body-text" style="font-weight: 600; color: #FF7F50;">23</div>
+                                <div class="small-text">Cards</div>
+                            </div>
+                            <div style="text-align: center;">
+                                <div class="body-text" style="font-weight: 600; color: #FF7F50;">4.2h</div>
+                                <div class="small-text">Time</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tab Navigation -->
+                    <div class="tab-nav">
+                        <div class="tab-item active">Cards</div>
+                        <div class="tab-item">History</div>
+                        <div class="tab-item">Settings</div>
+                    </div>
+
+                    <!-- Collection Grid -->
+                    <div class="collection-grid">
+                        <div class="collection-card" style="background: linear-gradient(135deg, #FF7F50, #FF6B35);">
+                            <div style="color: white;">
+                                <p class="small-text" style="opacity: 0.9;">Chair Master</p>
+                                <p style="font-size: 12px; font-weight: 600;">EPIC</p>
+                            </div>
+                        </div>
+                        <div class="collection-card">
+                            <div>
+                                <p class="small-text">Water Warrior</p>
+                                <p style="font-size: 12px; font-weight: 600; color: #FF7F50;">RARE</p>
+                            </div>
+                        </div>
+                        <div class="collection-card">
+                            <div>
+                                <p class="small-text">Book Balance</p>
+                                <p style="font-size: 12px; font-weight: 600; color: #888888;">COMMON</p>
+                            </div>
+                        </div>
+                        <div class="collection-card">
+                            <div>
+                                <p class="small-text">Morning Stretch</p>
+                                <p style="font-size: 12px; font-weight: 600; color: #888888;">COMMON</p>
+                            </div>
+                        </div>
+                        <div class="collection-card">
+                            <div>
+                                <p class="small-text">Office Hero</p>
+                                <p style="font-size: 12px; font-weight: 600; color: #4A90E2;">UNCOMMON</p>
+                            </div>
+                        </div>
+                        <div class="collection-card">
+                            <div>
+                                <p class="small-text">Travel Fit</p>
+                                <p style="font-size: 12px; font-weight: 600; color: #4A90E2;">UNCOMMON</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="bottom-nav">
+                    <div class="nav-item">
+                        <svg class="icon"><use href="#icon-home"/></svg>
+                        <span class="small-text">Home</span>
+                    </div>
+                    <div class="nav-item">
+                        <svg class="icon"><use href="#icon-camera"/></svg>
+                        <span class="small-text">Camera</span>
+                    </div>
+                    <div class="nav-item active">
+                        <svg class="icon"><use href="#icon-user"/></svg>
+                        <span class="small-text">My</span>
+                    </div>
+                </div>
+                <div class="page-label">My Page</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Add subtle interactions
+        document.querySelectorAll('.crystal-card').forEach(card => {
+            card.addEventListener('mouseenter', function() {
+                this.style.transform = 'translateY(-4px)';
+                this.style.filter = 'drop-shadow(0 12px 20px rgba(0, 0, 0, 0.08))';
+            });
+
+            card.addEventListener('mouseleave', function() {
+                this.style.transform = 'translateY(0)';
+                this.style.filter = 'none';
+            });
+        });
+
+        // Button interactions
+        document.querySelectorAll('.primary-button, .hero-button').forEach(button => {
+            button.addEventListener('mousedown', function() {
+                this.style.transform = 'scale(0.98)';
+            });
+
+            button.addEventListener('mouseup', function() {
+                this.style.transform = 'scale(1)';
+            });
+        });
+
+        // Chip interactions
+        document.querySelectorAll('.chip').forEach(chip => {
+            chip.addEventListener('click', function() {
+                this.classList.toggle('selected');
+            });
+        });
+
+        // Tab interactions
+        document.querySelectorAll('.tab-item').forEach(tab => {
+            tab.addEventListener('click', function() {
+                // Remove active from siblings
+                this.parentElement.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active'));
+                // Add active to clicked tab
+                this.classList.add('active');
+            });
+        });
+
+        // Progress line animation
+        const progressLines = document.querySelectorAll('.progress-line');
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.animation = 'drawLine 2s ease-in-out forwards';
+                }
+            });
+        });
+
+        progressLines.forEach(line => observer.observe(line));
+    </script>
+</body>
+</html>

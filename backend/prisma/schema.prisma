@@ -1,0 +1,699 @@
+// SnapRep Database Schema v3.0 - Production Ready
+// 设计原则: 快速上线 + 平滑扩展到 P1（NestJS 单体）
+// 改进维度: 协议一致性、权限边界、幂等性、缓存性能、可观测性
+//
+// 主要改进:
+// 1. 统一命名规范（资源型 vs 计算型接口）
+// 2. 增强权限边界（RLS 级联策略）
+// 3. 新增深链统计表（无需用户认证）
+// 4. 稀有度表语义优化（equipment_frequencies → rarity_table）
+// 5. 枚举统一（UPPER_SNAKE_CASE）
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../node_modules/.prisma/client"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// =============================================================================
+// ENUMS - 枚举类型定义（统一 UPPER_SNAKE_CASE）
+// =============================================================================
+
+// 噪音等级
+enum NoiseLevel {
+  SILENT // 必须静音 - 适合办公室、图书馆
+  QUIET // 安静 - 适合酒店房间、宿舍
+  NORMAL // 正常 - 适合家中、健身房
+}
+
+// 空间大小
+enum SpaceSize {
+  SMALL // 小空间 (1-2m²) - 如办公桌旁边
+  MEDIUM // 中等 (2-4m²) - 如客厅一角
+  LARGE // 大空间 (>4m²) - 如公园、健身房
+}
+
+// 器材分类
+enum EquipmentCategory {
+  NONE // 徒手/无器材
+  FURNITURE // 家具系 - 椅子、沙发、桌子
+  WALL // 墙面系 - 墙壁、门框
+  BOTTLE // 水瓶系 - 水瓶、饮料瓶
+  BAG // 背包系 - 背包、手提包
+  STAIRS // 台阶系 - 楼梯、台阶
+  FABRIC // 布料系 - 毛巾、床单
+  STICK // 棍棒系 - 扫把、拖把、雨伞
+  OUTDOOR // 户外系 - 树木、长椅、石头
+  CREATIVE // 创意系 - 其他创意物品
+}
+
+// 主要肌群
+enum PrimaryMuscle {
+  CHEST // 胸部肌群
+  BACK // 背部肌群
+  LEGS // 腿部肌群
+  GLUTES // 臀部肌群
+  SHOULDERS // 肩部肌群
+  ARMS // 手臂肌群
+  CORE // 核心肌群
+  FULL_BODY // 全身综合
+  NECK_SHOULDER // 颈肩部位
+}
+
+// 运动意图（v3.0 统一）
+enum IntentType {
+  RELAX // 放松模式 - 缓解肌肉紧张
+  STRETCH // 拉伸模式 - 增加柔韧性
+  MODERATE // 适度运动 - 轻微提升心率
+  STRENGTH // 力量训练 - 增强肌肉力量
+}
+
+// 难度等级（v3.0 改为颜色编码）
+enum Difficulty {
+  GREEN // 简单 - 适合健身新手
+  BLUE // 中等 - 需要一定技巧
+  RED // 困难 - 技术要求高
+}
+
+// 时长计量方式
+enum DurationType {
+  TIME // 按时间计量 - 以秒为单位
+  REPS // 按次数计量 - 以重复次数为单位
+}
+
+// 训练会话状态
+enum SessionStatus {
+  PENDING // 待开始
+  IN_PROGRESS // 进行中
+  COMPLETED // 已完成
+  ABANDONED // 已放弃
+}
+
+// 稀有度等级（v3.0 新增枚举）
+enum RarityLevel {
+  COMMON // 常见 (>50%使用率)
+  UNCOMMON // 不常见 (20-50%)
+  RARE // 稀有 (5-20%)
+  EPIC // 史诗 (1-5%)
+  LEGENDARY // 传说 (<1%)
+}
+
+// 数据来源（v3.0 新增）
+enum DataSource {
+  WEEKLY_TABLE // 权威周表数据（每周一更新）
+  ON_THE_FLY_ESTIMATE // 即时估算（仅供预览）
+}
+
+// 深链目标类型（v3.0 新增）
+enum DeeplinkTargetType {
+  WORKOUT_SESSION // 训练会话
+  THEME_WEEK // 主题周
+  SHARE_CARD // 分享卡片
+  EXERCISE // 单个动作
+}
+
+// =============================================================================
+// 1. SCENARIOS - 场景表
+// =============================================================================
+
+model Scenario {
+  id   String @id @default(cuid())
+  code String @unique // 业务标识: "office", "home", "gym", "park"
+  name String // 场景名称: "Office", "Home", "Gym", "Park"
+
+  // 场景特性（可选）
+  noiseTolerance   NoiseLevel? @map("noise_tolerance") // 噪音容忍度
+  spaceRequirement SpaceSize?  @map("space_requirement") // 空间需求
+
+  // 媒体资源
+  iconUrl String? @map("icon_url") // 图标URL（可选）
+
+  // 元数据
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  // 关系
+  exerciseScenarios ExerciseScenario[]
+  workoutSessions   WorkoutSession[]
+
+  @@index([code])
+  @@index([isActive])
+  @@map("scenarios")
+}
+
+// =============================================================================
+// 2. EQUIPMENT - 器材表
+// =============================================================================
+
+model Equipment {
+  id       String            @id @default(cuid())
+  code     String            @unique // 业务标识: "chair", "wall", "bottle", "none"
+  name     String // 名称: "Chair", "Wall", "Water Bottle", "No Equipment"
+  category EquipmentCategory // 分类
+
+  // AI 识别配置（核心功能）
+  recognizable          Boolean  @default(false) // 是否可通过相机识别
+  recognitionLabels     String[] @default([]) // TensorFlow Lite 识别标签
+  recognitionConfidence Float    @default(0.85) // 识别置信度阈值
+
+  // 媒体资源
+  iconUrl  String  @map("icon_url") // 图标URL（必需）
+  imageUrl String? @map("image_url") // 大图URL（可选）
+
+  // 元数据
+  displayOrder Int      @default(0) @map("display_order")
+  isActive     Boolean  @default(true) @map("is_active")
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  // 关系
+  exerciseEquipment ExerciseEquipment[]
+  rarityTable       RarityTable[] // v3.0: 重命名自 equipmentFrequencies
+
+  @@index([code])
+  @@index([category])
+  @@index([recognizable])
+  @@map("equipment")
+}
+
+// =============================================================================
+// 3. EXERCISES - 动作表
+// =============================================================================
+
+model Exercise {
+  id   String @id @default(cuid())
+  code String @unique // 业务标识: "wall_chest_opener", "chair_squat"
+  name String // 名称: "Wall Chest Opener", "Chair Squat"
+
+  // 肌群分类
+  primaryMuscle    PrimaryMuscle // 主要目标肌群
+  secondaryMuscles String[]      @default([]) // 次要肌群列表
+  intentType       IntentType // 运动意图（v3.0 统一）
+  difficulty       Difficulty // 难度等级（v3.0 颜色编码）
+
+  // 动作详情（JSON 格式，支持前端 i18n）
+  description Json // 格式: {"keyPoints": [...], "steps": [...], "warnings": [...]}
+
+  // 时长配置
+  defaultDuration Int          @map("default_duration") // 默认时长（秒数或次数）
+  defaultSets     Int          @default(1) @map("default_sets")
+  durationType    DurationType @map("duration_type")
+
+  // 媒体资源
+  demoImageUrl String? @map("demo_image_url")
+  demoVideoUrl String? @map("demo_video_url")
+
+  // 标签系统
+  tags String[] @default([]) // 如 ["静音", "小空间", "办公室适用"]
+
+  // 元数据
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  // 关系
+  exerciseScenarios ExerciseScenario[]
+  exerciseEquipment ExerciseEquipment[]
+  sessionExercises  SessionExercise[]
+
+  @@index([code])
+  @@index([primaryMuscle, difficulty, intentType])
+  @@index([isActive])
+  @@map("exercises")
+}
+
+// =============================================================================
+// 4. JUNCTION TABLES - 连接表（多对多关系）
+// =============================================================================
+
+// 动作-场景关联表
+model ExerciseScenario {
+  exerciseId String   @map("exercise_id")
+  exercise   Exercise @relation(fields: [exerciseId], references: [id], onDelete: Cascade)
+
+  scenarioId String   @map("scenario_id")
+  scenario   Scenario @relation(fields: [scenarioId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@id([exerciseId, scenarioId])
+  @@index([scenarioId])
+  @@map("exercise_scenarios")
+}
+
+// 动作-器材关联表
+model ExerciseEquipment {
+  exerciseId String   @map("exercise_id")
+  exercise   Exercise @relation(fields: [exerciseId], references: [id], onDelete: Cascade)
+
+  equipmentId String    @map("equipment_id")
+  equipment   Equipment @relation(fields: [equipmentId], references: [id], onDelete: Cascade)
+
+  isRequired Boolean @default(false) @map("is_required") // true=必需, false=可选
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@id([exerciseId, equipmentId])
+  @@index([equipmentId])
+  @@map("exercise_equipment")
+}
+
+// =============================================================================
+// 5. USERS - 用户表
+// =============================================================================
+
+model User {
+  id String @id @db.Uuid // Supabase Auth UUID（不使用 @default(cuid())）
+
+  // 基本信息
+  email     String? @unique
+  name      String?
+  avatarUrl String? @map("avatar_url")
+
+  // 统计数据（冗余字段，提升查询性能）
+  totalWorkouts    Int @default(0) @map("total_workouts")
+  totalDurationSec Int @default(0) @map("total_duration_sec")
+  currentStreak    Int @default(0) @map("current_streak")
+  longestStreak    Int @default(0) @map("longest_streak")
+
+  // 用户偏好设置（机器学习和个性化推荐）
+  preferredIntents    IntentType[] @default([])
+  preferredDifficulty Difficulty?  @map("preferred_difficulty")
+  preferredDuration   Int?         @map("preferred_duration")
+  avoidEquipment      String[]     @default([]) @map("avoid_equipment")
+
+  // 通知设置
+  streakReminder    Boolean @default(true) @map("streak_reminder")
+  themeWeekReminder Boolean @default(true) @map("theme_week_reminder")
+  quietHoursStart   String? @map("quiet_hours_start") // 格式: "22:00"
+  quietHoursEnd     String? @map("quiet_hours_end") // 格式: "08:00"
+
+  // 隐私设置
+  hideRealPhotos Boolean @default(true) @map("hide_real_photos")
+  autoBlurFaces  Boolean @default(true) @map("auto_blur_faces")
+  allowDataSync  Boolean @default(false) @map("allow_data_sync")
+
+  // 应用设置
+  language String @default("zh") @map("language") // zh/en
+  theme    String @default("auto") @map("theme") // auto/light/dark
+
+  // 元数据
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  // 关系
+  workoutSessions         WorkoutSession[]
+  shareCards              ShareCard[]
+  dailyTrainings          DailyTraining[]
+  userPreferences         UserPreference[]
+  themeWeekParticipations ThemeWeekParticipation[]
+
+  @@index([email])
+  @@map("users")
+}
+
+// =============================================================================
+// 6. WORKOUT SESSIONS - 训练会话表
+// =============================================================================
+
+model WorkoutSession {
+  id     String @id @default(cuid())
+  userId String @map("user_id")
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // 用户选择的训练参数
+  intentType    IntentType // 运动意图（v3.0 统一）
+  scenarioId    String?         @map("scenario_id")
+  scenario      Scenario?       @relation(fields: [scenarioId], references: [id])
+  targetMuscles PrimaryMuscle[] @default([]) // 目标肌群列表
+
+  // 训练配置
+  totalDuration Int        @map("total_duration") // 总时长（秒）
+  difficulty    Difficulty // 难度等级（v3.0 颜色编码）
+  isSilent      Boolean    @default(false) @map("is_silent")
+
+  // 训练状态跟踪
+  status         SessionStatus @default(PENDING)
+  startedAt      DateTime?     @map("started_at") @db.Timestamptz(6)
+  completedAt    DateTime?     @map("completed_at") @db.Timestamptz(6)
+  actualDuration Int?          @map("actual_duration")
+
+  // 跟练模式和进度
+  followMode  Boolean @default(false) @map("follow_mode")
+  currentStep Int     @default(0) @map("current_step")
+  pauseCount  Int     @default(0) @map("pause_count")
+  skipCount   Int     @default(0) @map("skip_count")
+
+  // 训练环境和条件
+  isOffline    Boolean     @default(false) @map("is_offline")
+  ambientNoise NoiseLevel? @map("ambient_noise")
+  usedSpace    SpaceSize?  @map("used_space")
+
+  // 用户反馈
+  rating   Int? // 1-5 星
+  feedback String? @db.VarChar(500)
+
+  // 元数据
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  // 关系
+  sessionExercises SessionExercise[]
+  shareCard        ShareCard?
+
+  @@index([userId, completedAt(sort: Desc)])
+  @@index([status])
+  @@map("workout_sessions")
+}
+
+// =============================================================================
+// 7. SESSION EXERCISES - 会话动作关联表
+// =============================================================================
+
+model SessionExercise {
+  id String @id @default(cuid())
+
+  sessionId String         @map("session_id")
+  session   WorkoutSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  exerciseId String   @map("exercise_id")
+  exercise   Exercise @relation(fields: [exerciseId], references: [id])
+
+  // 动作配置
+  sequenceOrder Int @map("sequence_order") // 执行顺序: 1, 2, 3
+  duration      Int // 时长（秒数或次数）
+  sets          Int @default(1)
+
+  // 完成状态跟踪
+  isCompleted    Boolean @default(false) @map("is_completed")
+  actualDuration Int?    @map("actual_duration")
+
+  // 详细跟练数据
+  startedAt   DateTime? @map("started_at") @db.Timestamptz(6)
+  endedAt     DateTime? @map("ended_at") @db.Timestamptz(6)
+  pausedTimes Int       @default(0) @map("paused_times")
+  skipReason  String?   @map("skip_reason")
+
+  // 用户体验反馈
+  difficultyFelt      Difficulty? @map("difficulty_felt")
+  comfortLevel        Int?        @map("comfort_level") // 1-5分
+  effectivenessRating Int?        @map("effectiveness_rating") // 1-5分
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@unique([sessionId, sequenceOrder])
+  @@index([sessionId])
+  @@map("session_exercises")
+}
+
+// =============================================================================
+// 8. SHARE CARDS - 分享成果卡表
+// =============================================================================
+
+model ShareCard {
+  id String @id @default(cuid())
+
+  // 关联信息
+  userId String @map("user_id")
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  sessionId String         @unique @map("session_id")
+  session   WorkoutSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  // 卡片内容
+  cardImageUrl String @map("card_image_url") // 生成的卡片图片URL
+  cardTemplate String @map("card_template") // 模板: "classic", "minimal", "vibrant"
+  cardData     Json   @map("card_data") // JSON格式: {"duration": 300, "exercises": 5, ...}
+
+  // 稀有度系统（卡片收集核心功能）
+  rarity          RarityLevel @map("rarity") // v3.0: 改为枚举类型
+  equipmentSeries String      @map("equipment_series")
+  rarityScore     Float       @map("rarity_score") // 0.0-1.0
+  dataSource      DataSource  @default(WEEKLY_TABLE) @map("data_source") // v3.0: 新增数据来源
+
+  // 特殊标记和成就
+  specialTags String[] @default([]) @map("special_tags")
+  cityEdition String?  @map("city_edition")
+  themeWeek   String?  @map("theme_week")
+
+  // 分享配置
+  shareText String? @map("share_text") @db.VarChar(500)
+  isPublic  Boolean @default(true) @map("is_public") // v3.0: RLS 策略依赖此字段
+
+  // 分享统计
+  shareCount Int @default(0) @map("share_count")
+  viewCount  Int @default(0) @map("view_count")
+
+  // 元数据
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@index([userId, createdAt(sort: Desc)])
+  @@index([isPublic])
+  @@index([rarity]) // v3.0: 新增稀有度索引
+  @@map("share_cards")
+}
+
+// =============================================================================
+// 9. DAILY TRAININGS - 每日训练记录表
+// =============================================================================
+
+model DailyTraining {
+  id String @id @default(cuid())
+
+  userId String @map("user_id")
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  trainingDate DateTime @map("training_date") @db.Date
+
+  // 当日统计数据
+  totalSessions     Int @default(0) @map("total_sessions")
+  totalDuration     Int @default(0) @map("total_duration")
+  totalExercises    Int @default(0) @map("total_exercises")
+  completedSessions Int @default(0) @map("completed_sessions")
+
+  // 训练类型分布（JSON格式）
+  intentBreakdown Json? @map("intent_breakdown") // {"RELAX": 300, "STRETCH": 600, ...}
+  muscleBreakdown Json? @map("muscle_breakdown") // {"CHEST": 5, "BACK": 3, ...}
+
+  // 成就标记
+  isStreakDay  Boolean  @default(false) @map("is_streak_day")
+  achievements String[] @default([])
+
+  // 元数据
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@unique([userId, trainingDate])
+  @@index([userId, trainingDate(sort: Desc)])
+  @@index([trainingDate])
+  @@map("daily_trainings")
+}
+
+// =============================================================================
+// 10. RARITY TABLE - 稀有度周表（v3.0 重命名优化）
+// =============================================================================
+
+model RarityTable {
+  id String @id @default(cuid())
+
+  // 器材信息
+  equipmentId   String    @map("equipment_id")
+  equipment     Equipment @relation(fields: [equipmentId], references: [id], onDelete: Cascade)
+  equipmentCode String    @map("equipment_code")
+
+  // 统计时间范围（周表）
+  weekStart DateTime @map("week_start") @db.Date // 每周一
+
+  // 稀有度计算结果
+  rarityScore Float       @map("rarity_score") // 0.0-1.0
+  rarityLevel RarityLevel @map("rarity_level") // v3.0: 枚举类型
+  dataSource  DataSource  @default(WEEKLY_TABLE) // v3.0: 数据来源标识
+
+  // 地区数据（可选）
+  region String? @map("region")
+
+  // 元数据
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@unique([equipmentId, weekStart])
+  @@unique([equipmentCode, weekStart])
+  @@index([weekStart])
+  @@index([rarityLevel, weekStart])
+  @@map("rarity_table")
+}
+
+// =============================================================================
+// 11. USER PREFERENCES - 用户偏好学习记录表
+// =============================================================================
+
+model UserPreference {
+  id String @id @default(cuid())
+
+  userId String @map("user_id")
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // 偏好类型和数据
+  preferenceType  String @map("preference_type") // "equipment", "intent", "difficulty", "duration", "scenario"
+  preferenceKey   String @map("preference_key") // 如 "chair", "STRETCH", "GREEN"
+  preferenceValue Float  @map("preference_value") // 0.0-1.0
+
+  // 统计数据
+  usageCount    Int    @default(0) @map("usage_count")
+  successRate   Float  @default(0.0) @map("success_rate")
+  averageRating Float? @map("average_rating")
+
+  // 时间窗口
+  lastUsedAt  DateTime? @map("last_used_at") @db.Timestamptz(6)
+  firstUsedAt DateTime  @map("first_used_at") @db.Timestamptz(6)
+
+  // 元数据
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@unique([userId, preferenceType, preferenceKey])
+  @@index([userId, preferenceType])
+  @@index([preferenceValue(sort: Desc)])
+  @@map("user_preferences")
+}
+
+// =============================================================================
+// 12. THEME WEEKS - 主题周活动表
+// =============================================================================
+
+model ThemeWeek {
+  id String @id @default(cuid())
+
+  // 主题周基本信息
+  title       String
+  code        String  @unique
+  description String? @db.VarChar(500)
+
+  // 关联器材和动作
+  equipmentCode       String @map("equipment_code")
+  targetExerciseCount Int    @default(3) @map("target_exercise_count")
+
+  // 时间范围
+  startDate DateTime @map("start_date") @db.Date
+  endDate   DateTime @map("end_date") @db.Date
+
+  // 奖励设置
+  rewardType String @map("reward_type") // "skin", "badge", "rarity_boost"
+  rewardData Json?  @map("reward_data")
+
+  // 状态管理
+  status       String  @default("UPCOMING") // "UPCOMING", "ACTIVE", "COMPLETED", "CANCELLED"
+  isVisible    Boolean @default(true) @map("is_visible")
+  displayOrder Int     @default(0) @map("display_order")
+
+  // 参与统计（冗余字段，提升查询性能）
+  totalParticipants Int   @default(0) @map("total_participants")
+  totalCompletions  Int   @default(0) @map("total_completions")
+  completionRate    Float @default(0.0) @map("completion_rate")
+
+  // 元数据
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  // 关系
+  participations ThemeWeekParticipation[]
+
+  @@index([status, startDate])
+  @@index([equipmentCode])
+  @@index([displayOrder])
+  @@map("theme_weeks")
+}
+
+// =============================================================================
+// 13. THEME WEEK PARTICIPATIONS - 主题周参与记录表
+// =============================================================================
+
+model ThemeWeekParticipation {
+  id String @id @default(cuid())
+
+  userId String @map("user_id")
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  themeWeekId String    @map("theme_week_id")
+  themeWeek   ThemeWeek @relation(fields: [themeWeekId], references: [id], onDelete: Cascade)
+
+  // 参与状态
+  status      String    @default("JOINED") // "JOINED", "IN_PROGRESS", "COMPLETED", "FAILED"
+  joinedAt    DateTime  @default(now()) @map("joined_at") @db.Timestamptz(6)
+  completedAt DateTime? @map("completed_at") @db.Timestamptz(6)
+
+  // 进度追踪
+  exercisesCompleted Int   @default(0) @map("exercises_completed")
+  targetExercises    Int   @map("target_exercises")
+  progressPercent    Float @default(0.0) @map("progress_percent")
+
+  // 奖励记录
+  rewardEarned    Boolean   @default(false) @map("reward_earned")
+  rewardClaimedAt DateTime? @map("reward_claimed_at") @db.Timestamptz(6)
+
+  // 相关训练会话记录
+  relatedSessions String[] @default([]) @map("related_sessions")
+
+  // 元数据
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@unique([userId, themeWeekId])
+  @@index([themeWeekId, status])
+  @@index([userId, status])
+  @@map("theme_week_participations")
+}
+
+// =============================================================================
+// 14. DEEPLINKS - 深链表（v3.0 新增）
+// =============================================================================
+
+model Deeplink {
+  id         String             @id @default(cuid())
+  code       String             @unique // 短码，如 "abc123"
+  targetType DeeplinkTargetType @map("target_type")
+  targetId   String             @map("target_id")
+
+  // 创建者（可选，用于统计）
+  createdBy String? @map("created_by")
+
+  // 过期时间（可选）
+  expiresAt DateTime? @map("expires_at") @db.Timestamptz(6)
+
+  // 元数据
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  // 关系
+  clicks DeeplinkClick[]
+
+  @@index([code])
+  @@index([targetType, targetId])
+  @@index([expiresAt])
+  @@map("deeplinks")
+}
+
+// =============================================================================
+// 15. DEEPLINK CLICKS - 深链点击统计表（v3.0 新增）
+// =============================================================================
+
+model DeeplinkClick {
+  id         String   @id @default(cuid())
+  deeplinkId String   @map("deeplink_id")
+  deeplink   Deeplink @relation(fields: [deeplinkId], references: [id], onDelete: Cascade)
+
+  // 点击信息（无需用户认证）
+  clickedAt DateTime @default(now()) @map("clicked_at") @db.Timestamptz(6)
+  ipAddress String?  @map("ip_address") // 可选，隐私考虑
+  userAgent String?  @map("user_agent") // 可选
+  referer   String?  @map("referer") // 来源
+
+  @@index([deeplinkId, clickedAt(sort: Desc)])
+  @@map("deeplink_clicks")
+}

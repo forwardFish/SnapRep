@@ -1,0 +1,1628 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SnapRep - Anywhere Fitness Training App</title>
+    <style>
+        /* =================== FONT IMPORTS =================== */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&family=Caveat:wght@400;500;600;700&display=swap');
+
+        /* =================== CSS VARIABLES =================== */
+        :root {
+            /* Brand Colors - Fitness Energy Palette */
+            --primary-orange: #FF6B35;
+            --primary-blue: #004E98;
+            --accent-green: #3A9B7A;
+            --accent-yellow: #FFD23F;
+            --accent-coral: #FF8E53;
+            --accent-teal: #0FA4AF;
+
+            /* Neutral Colors */
+            --white: #FFFFFF;
+            --light-gray: #F8F9FA;
+            --medium-gray: #6C757D;
+            --dark-gray: #343A40;
+            --black: #000000;
+
+            /* Hand-drawn Effects */
+            --paper-bg: #FEFEFE;
+            --ink-black: #2D3436;
+            --sketch-shadow: 3px 3px 0px rgba(45, 52, 54, 0.15);
+            --hand-drawn-border: 3px solid var(--ink-black);
+
+            /* Typography */
+            --font-primary: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            --font-accent: 'Space Grotesk', sans-serif;
+            --font-handwritten: 'Caveat', cursive;
+
+            /* Spacing */
+            --space-xs: 4px;
+            --space-sm: 8px;
+            --space-md: 16px;
+            --space-lg: 24px;
+            --space-xl: 32px;
+            --space-2xl: 48px;
+
+            /* Border Radius */
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+            --radius-xl: 24px;
+
+            /* Paper Texture */
+            --paper-texture: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23f0f0f0' fill-opacity='0.06'%3E%3Ccircle cx='30' cy='30' r='2'/%3E%3Ccircle cx='10' cy='10' r='1'/%3E%3Ccircle cx='50' cy='50' r='1'/%3E%3Ccircle cx='20' cy='50' r='1'/%3E%3Ccircle cx='50' cy='20' r='1'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+        }
+
+        /* =================== RESET & BASE STYLES =================== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--font-primary);
+            background: var(--paper-bg);
+            background-image: var(--paper-texture);
+            color: var(--ink-black);
+            line-height: 1.6;
+            overflow-x: auto;
+            padding: var(--space-lg);
+        }
+
+        /* =================== LAYOUT CONTAINER =================== */
+        .app-showcase {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(375px, 1fr));
+            gap: var(--space-2xl);
+            max-width: 2400px;
+            margin: 0 auto;
+            padding: var(--space-lg);
+        }
+
+        /* =================== PHONE MOCKUP =================== */
+        .phone-mockup {
+            width: 375px;
+            height: 812px;
+            background: var(--white);
+            border: 4px solid var(--ink-black);
+            border-radius: var(--radius-xl);
+            position: relative;
+            overflow: hidden;
+            box-shadow:
+                var(--sketch-shadow),
+                0 8px 32px rgba(0, 0, 0, 0.12);
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            margin: 0 auto;
+        }
+
+        .phone-mockup:hover {
+            transform: rotate(-1deg) scale(1.02);
+        }
+
+        /* =================== PAGE TITLE =================== */
+        .page-title {
+            position: absolute;
+            top: -60px;
+            left: 50%;
+            transform: translateX(-50%) rotate(-2deg);
+            font-family: var(--font-handwritten);
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--ink-black);
+            background: var(--accent-yellow);
+            padding: var(--space-sm) var(--space-md);
+            border: 3px solid var(--ink-black);
+            border-radius: var(--radius-md);
+            box-shadow: var(--sketch-shadow);
+            white-space: nowrap;
+        }
+
+        /* =================== PAGE CONTENT =================== */
+        .page-content {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, var(--white) 0%, #F8F9FA 100%);
+        }
+
+        /* =================== HEADER =================== */
+        .header {
+            padding: var(--space-lg) var(--space-md);
+            background: var(--white);
+            border-bottom: 2px solid var(--light-gray);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .header h1 {
+            font-family: var(--font-accent);
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--primary-orange);
+        }
+
+        .back-btn {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            padding: var(--space-sm);
+        }
+
+        .settings-btn {
+            background: none;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            padding: var(--space-sm);
+        }
+
+        /* =================== HERO SECTION =================== */
+        .hero-section {
+            padding: var(--space-xl) var(--space-md);
+            text-align: center;
+            background: linear-gradient(135deg, var(--primary-blue) 0%, var(--accent-teal) 100%);
+            color: var(--white);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.08'%3E%3Cpath d='M30 30l15-15v30l-15-15zm-15 0l15 15v-30l-15 15z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+        }
+
+        .hero-title {
+            font-family: var(--font-accent);
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: var(--space-sm);
+            position: relative;
+            z-index: 2;
+        }
+
+        .hero-subtitle {
+            font-size: 16px;
+            opacity: 0.9;
+            margin-bottom: var(--space-xl);
+            position: relative;
+            z-index: 2;
+        }
+
+        /* =================== BUTTONS =================== */
+        .btn {
+            font-family: var(--font-accent);
+            font-weight: 600;
+            border: none;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-primary {
+            background: var(--primary-orange);
+            color: var(--white);
+            padding: var(--space-md) var(--space-xl);
+            font-size: 18px;
+            box-shadow: var(--sketch-shadow);
+            border: 3px solid var(--ink-black);
+            transform: rotate(-1deg);
+        }
+
+        .btn-primary:hover {
+            transform: rotate(1deg) scale(1.05);
+            box-shadow: 6px 6px 0px var(--ink-black);
+        }
+
+        .btn-secondary {
+            background: var(--accent-green);
+            color: var(--white);
+            padding: var(--space-sm) var(--space-lg);
+            font-size: 16px;
+            border: 2px solid var(--ink-black);
+        }
+
+        .btn-chip {
+            background: var(--light-gray);
+            color: var(--dark-gray);
+            padding: var(--space-sm) var(--space-md);
+            font-size: 14px;
+            border: 2px solid var(--medium-gray);
+            border-radius: 20px;
+            margin: var(--space-xs);
+        }
+
+        .btn-chip.active {
+            background: var(--accent-yellow);
+            border-color: var(--ink-black);
+            transform: scale(1.05);
+        }
+
+        /* =================== SECTIONS =================== */
+        .section {
+            padding: var(--space-lg) var(--space-md);
+        }
+
+        .section-title {
+            font-family: var(--font-handwritten);
+            font-size: 22px;
+            font-weight: 600;
+            color: var(--ink-black);
+            margin-bottom: var(--space-md);
+            transform: rotate(-1deg);
+        }
+
+        /* =================== SCENARIOS GRID =================== */
+        .scenarios-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: var(--space-sm);
+            margin-bottom: var(--space-lg);
+        }
+
+        .scenario-chip {
+            background: var(--white);
+            border: 2px solid var(--medium-gray);
+            border-radius: var(--radius-md);
+            padding: var(--space-md);
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-weight: 500;
+            transform: rotate(0.5deg);
+        }
+
+        .scenario-chip:nth-child(even) {
+            transform: rotate(-0.5deg);
+        }
+
+        .scenario-chip:hover {
+            transform: rotate(0deg) scale(1.02);
+            border-color: var(--primary-orange);
+            background: #FFF4F0;
+        }
+
+        /* =================== OBJECTS GRID =================== */
+        .objects-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: var(--space-md);
+            margin-bottom: var(--space-lg);
+        }
+
+        .object-tile {
+            background: var(--white);
+            border: 3px solid var(--ink-black);
+            border-radius: var(--radius-md);
+            padding: var(--space-md);
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            aspect-ratio: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            transform: rotate(-1deg);
+        }
+
+        .object-tile:nth-child(3n+2) {
+            transform: rotate(1deg);
+        }
+
+        .object-tile:nth-child(3n+3) {
+            transform: rotate(-0.5deg);
+        }
+
+        .object-tile:hover {
+            transform: rotate(0deg) scale(1.05);
+            box-shadow: var(--sketch-shadow);
+        }
+
+        .object-icon {
+            font-size: 32px;
+            margin-bottom: var(--space-sm);
+        }
+
+        .object-name {
+            font-weight: 600;
+            font-size: 14px;
+            color: var(--ink-black);
+        }
+
+        /* =================== WORKOUT CARDS =================== */
+        .workout-cards {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-lg);
+        }
+
+        .workout-card {
+            background: var(--white);
+            border: 3px solid var(--ink-black);
+            border-radius: var(--radius-lg);
+            padding: var(--space-lg);
+            transform: rotate(-0.5deg);
+            box-shadow: var(--sketch-shadow);
+            position: relative;
+        }
+
+        .workout-card:nth-child(even) {
+            transform: rotate(0.5deg);
+        }
+
+        .workout-card:hover {
+            transform: rotate(0deg) scale(1.02);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--space-md);
+        }
+
+        .card-title {
+            font-family: var(--font-accent);
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--primary-blue);
+        }
+
+        .difficulty-badge {
+            background: var(--accent-green);
+            color: var(--white);
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            border: 2px solid var(--ink-black);
+        }
+
+        .card-preview {
+            background: var(--light-gray);
+            border: 2px dashed var(--medium-gray);
+            border-radius: var(--radius-md);
+            height: 120px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: var(--space-md);
+            font-size: 48px;
+        }
+
+        .card-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: var(--space-xs);
+            margin-bottom: var(--space-md);
+        }
+
+        .tag {
+            background: var(--accent-yellow);
+            color: var(--ink-black);
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+            border: 1px solid var(--ink-black);
+        }
+
+        .card-description {
+            font-size: 14px;
+            color: var(--medium-gray);
+            margin-bottom: var(--space-md);
+        }
+
+        .safety-warnings {
+            background: #FFF5F5;
+            border: 2px solid #E53E3E;
+            border-radius: var(--radius-sm);
+            padding: var(--space-md);
+            margin-bottom: var(--space-md);
+        }
+
+        .safety-warnings h4 {
+            color: #E53E3E;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: var(--space-sm);
+        }
+
+        .safety-warnings ul {
+            list-style: none;
+            font-size: 14px;
+        }
+
+        .safety-warnings li {
+            margin-bottom: 4px;
+        }
+
+        .safety-warnings li::before {
+            content: '⚠️ ';
+            margin-right: var(--space-xs);
+        }
+
+        .dosage {
+            font-family: var(--font-accent);
+            font-weight: 600;
+            font-size: 16px;
+            color: var(--primary-blue);
+            margin-bottom: var(--space-md);
+        }
+
+        .card-actions {
+            display: flex;
+            gap: var(--space-sm);
+        }
+
+        /* =================== GUIDE STEPS =================== */
+        .guide-step {
+            padding: var(--space-xl) var(--space-md);
+        }
+
+        .step-header {
+            text-align: center;
+            margin-bottom: var(--space-xl);
+        }
+
+        .step-number {
+            font-family: var(--font-handwritten);
+            font-size: 48px;
+            color: var(--primary-orange);
+            font-weight: 700;
+        }
+
+        .step-title {
+            font-family: var(--font-accent);
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--ink-black);
+            margin-bottom: var(--space-sm);
+        }
+
+        .step-subtitle {
+            font-size: 16px;
+            color: var(--medium-gray);
+        }
+
+        .options-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: var(--space-md);
+            margin-bottom: var(--space-xl);
+        }
+
+        .option-card {
+            background: var(--white);
+            border: 3px solid var(--ink-black);
+            border-radius: var(--radius-lg);
+            padding: var(--space-lg);
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            transform: rotate(-1deg);
+        }
+
+        .option-card:nth-child(even) {
+            transform: rotate(1deg);
+        }
+
+        .option-card:hover {
+            transform: rotate(0deg) scale(1.02);
+            background: #FFF4F0;
+        }
+
+        .option-card.selected {
+            background: var(--accent-yellow);
+            border-color: var(--primary-orange);
+        }
+
+        .option-icon {
+            font-size: 40px;
+            margin-bottom: var(--space-md);
+        }
+
+        .option-title {
+            font-weight: 700;
+            font-size: 18px;
+            margin-bottom: var(--space-sm);
+        }
+
+        .option-description {
+            font-size: 14px;
+            color: var(--medium-gray);
+        }
+
+        /* =================== BOTTOM NAVIGATION =================== */
+        .bottom-nav {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 80px;
+            background: var(--white);
+            border-top: 3px solid var(--ink-black);
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: var(--space-sm);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border-radius: var(--radius-md);
+            min-width: 60px;
+        }
+
+        .nav-item:hover {
+            background: var(--light-gray);
+            transform: scale(1.1);
+        }
+
+        .nav-item.active {
+            background: var(--primary-orange);
+            color: var(--white);
+            transform: scale(1.15);
+        }
+
+        .nav-icon {
+            font-size: 24px;
+            margin-bottom: 4px;
+        }
+
+        .nav-label {
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* =================== RESULT CARD =================== */
+        .result-card {
+            background: linear-gradient(135deg, var(--accent-yellow) 0%, var(--accent-coral) 100%);
+            border: 4px solid var(--ink-black);
+            border-radius: var(--radius-xl);
+            padding: var(--space-xl);
+            margin: var(--space-lg);
+            text-align: center;
+            transform: rotate(-1deg);
+            box-shadow: var(--sketch-shadow);
+            position: relative;
+        }
+
+        .result-card::before {
+            content: '';
+            position: absolute;
+            top: -10px;
+            right: -10px;
+            width: 30px;
+            height: 30px;
+            background: var(--accent-green);
+            border: 2px solid var(--ink-black);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+        }
+
+        .rarity-badge {
+            background: var(--primary-blue);
+            color: var(--white);
+            padding: var(--space-sm) var(--space-md);
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: var(--space-md);
+            display: inline-block;
+            border: 2px solid var(--ink-black);
+        }
+
+        .result-title {
+            font-family: var(--font-accent);
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: var(--space-md);
+        }
+
+        .achievements {
+            list-style: none;
+            margin-bottom: var(--space-lg);
+        }
+
+        .achievements li {
+            margin-bottom: var(--space-sm);
+            font-weight: 500;
+        }
+
+        /* =================== RESPONSIVE DESIGN =================== */
+        @media (max-width: 768px) {
+            .app-showcase {
+                grid-template-columns: 1fr;
+                gap: var(--space-lg);
+                padding: var(--space-md);
+            }
+
+            .phone-mockup {
+                width: 100%;
+                max-width: 375px;
+            }
+
+            body {
+                padding: var(--space-md);
+            }
+        }
+
+        /* =================== ANIMATIONS =================== */
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-8px) rotate(2deg); }
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .floating {
+            animation: float 3s ease-in-out infinite;
+        }
+
+        .pulsing {
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        /* =================== UTILITY CLASSES =================== */
+        .text-center { text-align: center; }
+        .text-left { text-align: left; }
+        .text-right { text-align: right; }
+
+        .mt-sm { margin-top: var(--space-sm); }
+        .mt-md { margin-top: var(--space-md); }
+        .mt-lg { margin-top: var(--space-lg); }
+        .mt-xl { margin-top: var(--space-xl); }
+
+        .mb-sm { margin-bottom: var(--space-sm); }
+        .mb-md { margin-bottom: var(--space-md); }
+        .mb-lg { margin-bottom: var(--space-lg); }
+        .mb-xl { margin-bottom: var(--space-xl); }
+
+        .flex { display: flex; }
+        .flex-col { flex-direction: column; }
+        .items-center { align-items: center; }
+        .justify-center { justify-content: center; }
+        .justify-between { justify-content: space-between; }
+
+        .w-full { width: 100%; }
+        .h-full { height: 100%; }
+    </style>
+</head>
+<body>
+    <div class="app-showcase">
+        <!-- 1. Home Page -->
+        <div class="phone-mockup">
+            <div class="page-title">Home Page</div>
+            <div class="page-content">
+                <!-- Header -->
+                <div class="header">
+                    <h1>SnapRep</h1>
+                    <button class="settings-btn">⚙️</button>
+                </div>
+
+                <!-- Hero Section -->
+                <div class="hero-section">
+                    <h2 class="hero-title">Train Anywhere in 60 Seconds</h2>
+                    <p class="hero-subtitle">3 exercises · No equipment needed</p>
+                    <button class="btn btn-primary floating">
+                        🎯 Give me 60 seconds
+                    </button>
+                </div>
+
+                <!-- Scenarios Section -->
+                <div class="section">
+                    <h3 class="section-title">Quick Scenarios</h3>
+                    <div class="scenarios-grid">
+                        <div class="scenario-chip">🏢 Office</div>
+                        <div class="scenario-chip">🏠 Living Room</div>
+                        <div class="scenario-chip">🌅 After Waking Up</div>
+                        <div class="scenario-chip">🌙 Before Sleep</div>
+                        <div class="scenario-chip">✈️ Traveling</div>
+                        <div class="scenario-chip">🪜 Stairs/Steps</div>
+                        <div class="scenario-chip">🪑 Park Bench</div>
+                        <div class="scenario-chip">⏰ Before Meeting</div>
+                    </div>
+                </div>
+
+                <!-- Objects Section -->
+                <div class="section">
+                    <h3 class="section-title">Available Objects</h3>
+                    <div class="objects-grid">
+                        <div class="object-tile">
+                            <div class="object-icon">✋</div>
+                            <div class="object-name">No Equipment</div>
+                        </div>
+                        <div class="object-tile">
+                            <div class="object-icon">🪑</div>
+                            <div class="object-name">Chair</div>
+                        </div>
+                        <div class="object-tile">
+                            <div class="object-icon">🧱</div>
+                            <div class="object-name">Wall</div>
+                        </div>
+                        <div class="object-tile">
+                            <div class="object-icon">🧃</div>
+                            <div class="object-name">Water Bottle</div>
+                        </div>
+                        <div class="object-tile">
+                            <div class="object-icon">🎒</div>
+                            <div class="object-name">Backpack</div>
+                        </div>
+                        <div class="object-tile">
+                            <div class="object-icon">📊</div>
+                            <div class="object-name">Steps</div>
+                        </div>
+                        <div class="object-tile">
+                            <div class="object-icon">🛋️</div>
+                            <div class="object-name">Sofa</div>
+                        </div>
+                        <div class="object-tile">
+                            <div class="object-icon">📚</div>
+                            <div class="object-name">Book</div>
+                        </div>
+                        <div class="object-tile">
+                            <div class="object-icon">🧺</div>
+                            <div class="object-name">Towel</div>
+                        </div>
+                        <div class="object-tile">
+                            <div class="object-icon">🧹</div>
+                            <div class="object-name">Broom</div>
+                        </div>
+                        <div class="object-tile">
+                            <div class="object-icon">🧳</div>
+                            <div class="object-name">Luggage</div>
+                        </div>
+                        <div class="object-tile">
+                            <div class="object-icon">📸</div>
+                            <div class="object-name">Camera Scan</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Theme Week Section -->
+                <div class="section">
+                    <h3 class="section-title">This Week: #ChairDay</h3>
+                    <div style="background: var(--accent-yellow); border: 3px solid var(--ink-black); border-radius: var(--radius-lg); padding: var(--space-lg); text-align: center; transform: rotate(-0.5deg);">
+                        <h4 style="font-weight: 700; margin-bottom: var(--space-sm);">Chair Workouts Challenge</h4>
+                        <p style="margin-bottom: var(--space-md); font-size: 14px;">Complete 3 exercises with a chair · Unlock rare sticker skin</p>
+                        <button class="btn btn-secondary">🚀 Join Now</button>
+                    </div>
+                </div>
+
+                <!-- Bottom Navigation -->
+                <div class="bottom-nav">
+                    <div class="nav-item active">
+                        <div class="nav-icon">🏠</div>
+                        <div class="nav-label">Home</div>
+                    </div>
+                    <div class="nav-item">
+                        <div class="nav-icon">📷</div>
+                        <div class="nav-label">Camera</div>
+                    </div>
+                    <div class="nav-item">
+                        <div class="nav-icon">👤</div>
+                        <div class="nav-label">My</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. Workout Guide Page - Step 1 -->
+        <div class="phone-mockup">
+            <div class="page-title">Workout Guide - Step 1</div>
+            <div class="page-content">
+                <!-- Header -->
+                <div class="header">
+                    <button class="back-btn">←</button>
+                    <h1>How do you want to move today?</h1>
+                    <button class="settings-btn">Skip</button>
+                </div>
+
+                <!-- Step Content -->
+                <div class="guide-step">
+                    <div class="step-header">
+                        <div class="step-number">1</div>
+                        <h2 class="step-title">Choose Your Intent</h2>
+                        <p class="step-subtitle">Don't overthink it, just pick what feels right.</p>
+                    </div>
+
+                    <div class="options-grid">
+                        <div class="option-card selected">
+                            <div class="option-icon">🧘</div>
+                            <h3 class="option-title">Relax</h3>
+                            <p class="option-description">Reduce tension<br>Calm nerves</p>
+                        </div>
+                        <div class="option-card">
+                            <div class="option-icon">🤸</div>
+                            <h3 class="option-title">Stretch & Move</h3>
+                            <p class="option-description">Stretching<br>Mobility work</p>
+                        </div>
+                        <div class="option-card">
+                            <div class="option-icon">🏃</div>
+                            <h3 class="option-title">Light Exercise</h3>
+                            <p class="option-description">Light sweat<br>Mild heart rate</p>
+                        </div>
+                        <div class="option-card">
+                            <div class="option-icon">💪</div>
+                            <h3 class="option-title">Main Workout</h3>
+                            <p class="option-description">Light strength<br>Stability work</p>
+                        </div>
+                    </div>
+
+                    <div style="text-align: center; margin-bottom: var(--space-xl);">
+                        <p style="margin-bottom: var(--space-md);">Or</p>
+                        <button class="btn btn-secondary">✨ Start Directly (60s)</button>
+                        <p style="font-size: 12px; color: var(--medium-gray); margin-top: var(--space-sm);">Default template: Stretch → Move → Strength</p>
+                    </div>
+
+                    <button class="btn btn-primary w-full">Next: Choose Scene & Objects</button>
+                </div>
+
+                <!-- Bottom Navigation -->
+                <div class="bottom-nav">
+                    <div class="nav-item">
+                        <div class="nav-icon">🏠</div>
+                        <div class="nav-label">Home</div>
+                    </div>
+                    <div class="nav-item active">
+                        <div class="nav-icon">📷</div>
+                        <div class="nav-label">Camera</div>
+                    </div>
+                    <div class="nav-item">
+                        <div class="nav-icon">👤</div>
+                        <div class="nav-label">My</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. Workout Guide Page - Step 2 -->
+        <div class="phone-mockup">
+            <div class="page-title">Workout Guide - Step 2</div>
+            <div class="page-content">
+                <!-- Header -->
+                <div class="header">
+                    <button class="back-btn">←</button>
+                    <h1>Choose Scene & Objects</h1>
+                    <button class="settings-btn">Skip</button>
+                </div>
+
+                <!-- Step Content -->
+                <div class="guide-step">
+                    <div class="step-header">
+                        <div class="step-number">2</div>
+                        <h2 class="step-title">Where are you training?</h2>
+                        <p class="step-subtitle">You can still train without any equipment.</p>
+                    </div>
+
+                    <div style="margin-bottom: var(--space-xl);">
+                        <h4 style="margin-bottom: var(--space-md); font-weight: 600;">Where are you training? (Select one)</h4>
+                        <div class="scenarios-grid">
+                            <div class="scenario-chip" style="background: var(--accent-yellow); border-color: var(--primary-orange);">
+                                🏠 Home ✓
+                            </div>
+                            <div class="scenario-chip">🏢 Office</div>
+                            <div class="scenario-chip">✈️ Travel</div>
+                        </div>
+                    </div>
+
+                    <div style="margin-bottom: var(--space-xl);">
+                        <h4 style="margin-bottom: var(--space-md); font-weight: 600;">What objects do you have? (Multiple selection)</h4>
+                        <div style="display: flex; flex-wrap: wrap; gap: var(--space-sm);">
+                            <button class="btn-chip">Chair</button>
+                            <button class="btn-chip">Wall</button>
+                            <button class="btn-chip">Backpack/Water</button>
+                            <button class="btn-chip">Towel</button>
+                            <button class="btn-chip active">None ✓</button>
+                        </div>
+                        <p style="margin-top: var(--space-md); font-size: 14px; color: var(--medium-gray);">
+                            Not sure? <a href="#" style="color: var(--primary-orange);">Take a photo to identify later</a>
+                        </p>
+                    </div>
+
+                    <button class="btn btn-primary w-full">Next: Choose Target Areas</button>
+                </div>
+
+                <!-- Bottom Navigation -->
+                <div class="bottom-nav">
+                    <div class="nav-item">
+                        <div class="nav-icon">🏠</div>
+                        <div class="nav-label">Home</div>
+                    </div>
+                    <div class="nav-item active">
+                        <div class="nav-icon">📷</div>
+                        <div class="nav-label">Camera</div>
+                    </div>
+                    <div class="nav-item">
+                        <div class="nav-icon">👤</div>
+                        <div class="nav-label">My</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 4. Workout Guide Page - Step 3 -->
+        <div class="phone-mockup">
+            <div class="page-title">Workout Guide - Step 3</div>
+            <div class="page-content">
+                <!-- Header -->
+                <div class="header">
+                    <button class="back-btn">←</button>
+                    <h1>Choose Target Areas</h1>
+                    <button class="settings-btn">Complete</button>
+                </div>
+
+                <!-- Step Content -->
+                <div class="guide-step">
+                    <div class="step-header">
+                        <div class="step-number">3</div>
+                        <h2 class="step-title">Target Areas</h2>
+                        <p class="step-subtitle">Which areas would you like to focus on?</p>
+                    </div>
+
+                    <div style="margin-bottom: var(--space-xl);">
+                        <div style="display: flex; flex-wrap: wrap; gap: var(--space-sm); margin-bottom: var(--space-md);">
+                            <button class="btn-chip active">Full Body</button>
+                            <button class="btn-chip">Neck & Shoulders</button>
+                            <button class="btn-chip">Chest & Back</button>
+                            <button class="btn-chip">Core</button>
+                            <button class="btn-chip">Thighs</button>
+                            <button class="btn-chip">Glutes</button>
+                            <button class="btn-chip">Calves</button>
+                            <button class="btn-chip">Arms</button>
+                        </div>
+                        <p style="font-size: 14px; color: var(--medium-gray);">Selected 1/2</p>
+                    </div>
+
+                    <button class="btn btn-primary w-full">Complete Guide → View Exercises</button>
+                </div>
+
+                <!-- Bottom Navigation -->
+                <div class="bottom-nav">
+                    <div class="nav-item">
+                        <div class="nav-icon">🏠</div>
+                        <div class="nav-label">Home</div>
+                    </div>
+                    <div class="nav-item active">
+                        <div class="nav-icon">📷</div>
+                        <div class="nav-label">Camera</div>
+                    </div>
+                    <div class="nav-item">
+                        <div class="nav-icon">👤</div>
+                        <div class="nav-label">My</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 5. Workout Result Page -->
+        <div class="phone-mockup">
+            <div class="page-title">Workout Results</div>
+            <div class="page-content">
+                <!-- Header -->
+                <div class="header">
+                    <button class="back-btn">←</button>
+                    <h1>Your Workout</h1>
+                    <button class="settings-btn">ℹ️</button>
+                </div>
+
+                <!-- Info Bar -->
+                <div style="background: var(--light-gray); padding: var(--space-md); border-bottom: 2px solid var(--medium-gray);">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span>🪑 Chair · Office</span>
+                        <span>60s · Stretch & Move</span>
+                        <span>🟢 Easy</span>
+                    </div>
+                </div>
+
+                <!-- Workout Cards -->
+                <div style="padding: var(--space-md);">
+                    <div class="workout-cards">
+                        <!-- Card 1 -->
+                        <div class="workout-card">
+                            <div class="card-header">
+                                <h3 class="card-title">Wall Chest Opener</h3>
+                                <span class="difficulty-badge">🟢 Easy</span>
+                            </div>
+
+                            <div class="card-preview">🤸‍♀️</div>
+
+                            <div class="card-tags">
+                                <span class="tag">Standing</span>
+                                <span class="tag">Wall</span>
+                                <span class="tag">Stretch</span>
+                            </div>
+
+                            <p class="card-description">
+                                <strong>Effect:</strong> Relieve neck stiffness<br>
+                                Relax shoulders
+                            </p>
+
+                            <div class="safety-warnings">
+                                <h4>Safety Guidelines:</h4>
+                                <ul>
+                                    <li>Keep neck in neutral position, don't arch back</li>
+                                    <li>Lower shoulders, don't shrug</li>
+                                </ul>
+                            </div>
+
+                            <div class="dosage">📊 20s × 1 set</div>
+
+                            <div class="card-actions">
+                                <button class="btn btn-secondary">Replace</button>
+                                <button class="btn btn-secondary">Gentler</button>
+                            </div>
+                        </div>
+
+                        <!-- Card 2 -->
+                        <div class="workout-card">
+                            <div class="card-header">
+                                <h3 class="card-title">Chair Sit-to-Stand</h3>
+                                <span class="difficulty-badge">🟢 Easy</span>
+                            </div>
+
+                            <div class="card-preview">🪑</div>
+
+                            <div class="card-tags">
+                                <span class="tag">Chair</span>
+                                <span class="tag">Legs</span>
+                                <span class="tag">Strength</span>
+                            </div>
+
+                            <p class="card-description">
+                                <strong>Effect:</strong> Strengthen legs<br>
+                                Improve stability
+                            </p>
+
+                            <div class="safety-warnings">
+                                <h4>Safety Guidelines:</h4>
+                                <ul>
+                                    <li>Don't let knees cave inward</li>
+                                    <li>Avoid knees going past toes</li>
+                                </ul>
+                            </div>
+
+                            <div class="dosage">📊 20s × 1 set</div>
+
+                            <div class="card-actions">
+                                <button class="btn btn-secondary">Replace</button>
+                                <button class="btn btn-secondary">Gentler</button>
+                            </div>
+                        </div>
+
+                        <!-- Card 3 -->
+                        <div class="workout-card">
+                            <div class="card-header">
+                                <h3 class="card-title">Core Three-Point Support</h3>
+                                <span class="difficulty-badge">🟢 Easy</span>
+                            </div>
+
+                            <div class="card-preview">🧘‍♀️</div>
+
+                            <div class="card-tags">
+                                <span class="tag">Floor</span>
+                                <span class="tag">Core</span>
+                                <span class="tag">Balance</span>
+                            </div>
+
+                            <p class="card-description">
+                                <strong>Effect:</strong> Strengthen core<br>
+                                Improve balance
+                            </p>
+
+                            <div class="safety-warnings">
+                                <h4>Safety Guidelines:</h4>
+                                <ul>
+                                    <li>Keep spine neutral</li>
+                                    <li>Don't hold breath</li>
+                                </ul>
+                            </div>
+
+                            <div class="dosage">📊 20s × 1 set</div>
+
+                            <div class="card-actions">
+                                <button class="btn btn-secondary">Replace</button>
+                                <button class="btn btn-secondary">Gentler</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Alternative Options -->
+                    <div style="margin-top: var(--space-lg);">
+                        <h4 style="margin-bottom: var(--space-md);">More Options (Same Conditions)</h4>
+                        <div style="display: flex; gap: var(--space-sm); overflow-x: auto; padding-bottom: var(--space-sm);">
+                            <div style="min-width: 80px; text-align: center; border: 2px solid var(--medium-gray); border-radius: var(--radius-sm); padding: var(--space-sm);">
+                                <div style="font-size: 24px;">🤸</div>
+                                <p style="font-size: 10px;">Neck Relief</p>
+                            </div>
+                            <div style="min-width: 80px; text-align: center; border: 2px solid var(--medium-gray); border-radius: var(--radius-sm); padding: var(--space-sm);">
+                                <div style="font-size: 24px;">💪</div>
+                                <p style="font-size: 10px;">Core Activate</p>
+                            </div>
+                            <div style="min-width: 80px; text-align: center; border: 2px solid var(--medium-gray); border-radius: var(--radius-sm); padding: var(--space-sm);">
+                                <div style="font-size: 24px;">🦵</div>
+                                <p style="font-size: 10px;">Leg Power</p>
+                            </div>
+                            <div style="min-width: 80px; text-align: center; border: 2px solid var(--medium-gray); border-radius: var(--radius-sm); padding: var(--space-sm);">
+                                <div style="font-size: 24px;">🧘</div>
+                                <p style="font-size: 10px;">Balance</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Bottom Actions -->
+                    <div style="display: flex; gap: var(--space-md); margin-top: var(--space-xl); margin-bottom: 100px;">
+                        <button class="btn btn-primary" style="flex: 1;">Start Following</button>
+                        <button class="btn btn-secondary">Try Different Set</button>
+                    </div>
+                </div>
+
+                <!-- Bottom Navigation -->
+                <div class="bottom-nav">
+                    <div class="nav-item">
+                        <div class="nav-icon">🏠</div>
+                        <div class="nav-label">Home</div>
+                    </div>
+                    <div class="nav-item active">
+                        <div class="nav-icon">📷</div>
+                        <div class="nav-label">Camera</div>
+                    </div>
+                    <div class="nav-item">
+                        <div class="nav-icon">👤</div>
+                        <div class="nav-label">My</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 6. Result Card Page -->
+        <div class="phone-mockup">
+            <div class="page-title">Achievement Card</div>
+            <div class="page-content">
+                <!-- Header -->
+                <div class="header">
+                    <button class="back-btn">←</button>
+                    <h1>Generate Achievement Card</h1>
+                    <button class="settings-btn">Save</button>
+                </div>
+
+                <!-- Card Preview -->
+                <div style="padding: var(--space-lg);">
+                    <div class="result-card">
+                        <div class="rarity-badge">🟢 Common</div>
+
+                        <div style="font-size: 48px; margin-bottom: var(--space-md);">🪑</div>
+
+                        <h2 class="result-title">Chair Day</h2>
+
+                        <ul class="achievements">
+                            <li>✅ Relieve neck & shoulder pressure</li>
+                            <li>✅ Open upper back mobility</li>
+                            <li>✅ Stabilize core muscles</li>
+                        </ul>
+
+                        <div style="margin-bottom: var(--space-lg);">
+                            <div style="display: flex; justify-content: space-between; font-size: 14px; margin-bottom: var(--space-sm);">
+                                <span>✅ 60s Complete</span>
+                                <span>🔇 Silent Mode</span>
+                            </div>
+                            <div style="font-size: 14px;">🏆 Regional Top 1%</div>
+                        </div>
+
+                        <div style="margin-bottom: var(--space-lg);">
+                            <span style="color: var(--primary-blue); font-weight: 600;">#AnywhereTraining #SnapRep</span>
+                        </div>
+
+                        <button class="btn btn-secondary">🚀 One-Click Same Workout</button>
+
+                        <div style="margin-top: var(--space-lg); font-size: 12px; color: var(--medium-gray);">
+                            SnapRep Logo<br>
+                            #12345
+                        </div>
+                    </div>
+
+                    <!-- Style Options -->
+                    <div style="margin-top: var(--space-lg);">
+                        <h4 style="margin-bottom: var(--space-md);">🎨 Card Style</h4>
+                        <div style="display: flex; gap: var(--space-sm);">
+                            <button class="btn-chip">Fun Style</button>
+                            <button class="btn-chip active">Minimal Style</button>
+                            <button class="btn-chip">Theme Style</button>
+                        </div>
+                    </div>
+
+                    <!-- Bottom Actions -->
+                    <div style="display: flex; gap: var(--space-md); margin-top: var(--space-xl); margin-bottom: 100px;">
+                        <button class="btn btn-secondary" style="flex: 1;">💾 Save to Album</button>
+                        <button class="btn btn-primary" style="flex: 1;">📤 Share Now</button>
+                    </div>
+                </div>
+
+                <!-- Bottom Navigation -->
+                <div class="bottom-nav">
+                    <div class="nav-item">
+                        <div class="nav-icon">🏠</div>
+                        <div class="nav-label">Home</div>
+                    </div>
+                    <div class="nav-item">
+                        <div class="nav-icon">📷</div>
+                        <div class="nav-label">Camera</div>
+                    </div>
+                    <div class="nav-item active">
+                        <div class="nav-icon">👤</div>
+                        <div class="nav-label">My</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 7. My Page - Card Collection -->
+        <div class="phone-mockup">
+            <div class="page-title">My Collection</div>
+            <div class="page-content">
+                <!-- Header -->
+                <div class="header">
+                    <button class="back-btn">←</button>
+                    <h1>SnapRep</h1>
+                    <button class="settings-btn">⚙️</button>
+                </div>
+
+                <!-- User Info -->
+                <div style="padding: var(--space-lg); background: var(--light-gray); border-bottom: 2px solid var(--medium-gray);">
+                    <div style="display: flex; align-items: center; margin-bottom: var(--space-md);">
+                        <div style="width: 64px; height: 64px; background: var(--primary-orange); border-radius: 50%; border: 3px solid var(--ink-black); display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 24px; margin-right: var(--space-md);">A</div>
+                        <div>
+                            <h3 style="font-weight: 700;">Alex</h3>
+                            <p style="color: var(--medium-gray); font-size: 14px;">Fitness Enthusiast</p>
+                        </div>
+                        <button style="margin-left: auto; background: none; border: 1px solid var(--medium-gray); border-radius: var(--radius-sm); padding: var(--space-sm);">Edit</button>
+                    </div>
+
+                    <div style="display: flex; gap: var(--space-md);">
+                        <div style="background: var(--white); border: 2px solid var(--ink-black); border-radius: var(--radius-md); padding: var(--space-sm); text-align: center; flex: 1;">
+                            <div style="font-weight: 700; color: var(--primary-orange);">DAY 7</div>
+                            <div style="font-size: 12px;">Streak</div>
+                        </div>
+                        <div style="background: var(--white); border: 2px solid var(--ink-black); border-radius: var(--radius-md); padding: var(--space-sm); text-align: center; flex: 1;">
+                            <div style="font-weight: 700; color: var(--accent-green);">34 Cards</div>
+                            <div style="font-size: 12px;">Collected</div>
+                        </div>
+                        <div style="background: var(--white); border: 2px solid var(--ink-black); border-radius: var(--radius-md); padding: var(--space-sm); text-align: center; flex: 1;">
+                            <div style="font-weight: 700; color: var(--accent-teal);">18 min</div>
+                            <div style="font-size: 12px;">This Week</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tabs -->
+                <div style="display: flex; background: var(--white); border-bottom: 2px solid var(--medium-gray);">
+                    <button style="flex: 1; padding: var(--space-md); background: var(--accent-yellow); border: none; font-weight: 600; border-bottom: 3px solid var(--primary-orange);">Cards</button>
+                    <button style="flex: 1; padding: var(--space-md); background: none; border: none; font-weight: 600; color: var(--medium-gray);">History</button>
+                    <button style="flex: 1; padding: var(--space-md); background: none; border: none; font-weight: 600; color: var(--medium-gray);">Settings</button>
+                </div>
+
+                <!-- Filter -->
+                <div style="padding: var(--space-md); background: var(--light-gray);">
+                    <div style="display: flex; flex-wrap: wrap; gap: var(--space-xs);">
+                        <button class="btn-chip active">All</button>
+                        <button class="btn-chip">Common</button>
+                        <button class="btn-chip">Uncommon</button>
+                        <button class="btn-chip">Rare</button>
+                        <button class="btn-chip">Epic</button>
+                        <button class="btn-chip">Legendary</button>
+                    </div>
+                </div>
+
+                <!-- Card Grid -->
+                <div style="padding: var(--space-md); display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-md); margin-bottom: 100px;">
+                    <!-- Collected Cards -->
+                    <div style="aspect-ratio: 2/3; background: linear-gradient(135deg, var(--accent-yellow), var(--accent-coral)); border: 3px solid var(--ink-black); border-radius: var(--radius-md); position: relative; transform: rotate(-1deg);">
+                        <div style="position: absolute; top: 4px; right: 4px; background: var(--accent-green); color: white; border-radius: 50%; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-size: 12px; border: 1px solid var(--ink-black);">🟢</div>
+                        <div style="position: absolute; bottom: 4px; left: 4px; background: var(--white); padding: 2px 6px; border-radius: 8px; font-size: 10px; border: 1px solid var(--ink-black);">Office</div>
+                        <div style="display: flex; align-items: center; justify-content: center; height: 100%; font-size: 32px;">🪑</div>
+                    </div>
+
+                    <div style="aspect-ratio: 2/3; background: linear-gradient(135deg, var(--primary-blue), var(--accent-teal)); border: 3px solid var(--ink-black); border-radius: var(--radius-md); position: relative; transform: rotate(1deg);">
+                        <div style="position: absolute; top: 4px; right: 4px; background: var(--accent-yellow); color: black; border-radius: 50%; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-size: 12px; border: 1px solid var(--ink-black);">🟡</div>
+                        <div style="position: absolute; bottom: 4px; left: 4px; background: var(--white); padding: 2px 6px; border-radius: 8px; font-size: 10px; border: 1px solid var(--ink-black);">Home</div>
+                        <div style="display: flex; align-items: center; justify-content: center; height: 100%; font-size: 32px;">🧱</div>
+                    </div>
+
+                    <div style="aspect-ratio: 2/3; background: linear-gradient(135deg, var(--accent-green), var(--primary-blue)); border: 3px solid var(--ink-black); border-radius: var(--radius-md); position: relative; transform: rotate(-0.5deg);">
+                        <div style="position: absolute; top: 4px; right: 4px; background: var(--primary-orange); color: white; border-radius: 50%; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-size: 12px; border: 1px solid var(--ink-black);">🔴</div>
+                        <div style="position: absolute; bottom: 4px; left: 4px; background: var(--white); padding: 2px 6px; border-radius: 8px; font-size: 10px; border: 1px solid var(--ink-black);">Travel</div>
+                        <div style="display: flex; align-items: center; justify-content: center; height: 100%; font-size: 32px;">🧃</div>
+                    </div>
+
+                    <!-- Missing Cards -->
+                    <div style="aspect-ratio: 2/3; background: var(--light-gray); border: 2px dashed var(--medium-gray); border-radius: var(--radius-md); display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--medium-gray);">
+                        <div style="font-size: 24px; opacity: 0.5;">🎒</div>
+                        <div style="font-size: 10px; margin-top: var(--space-xs);">Missing</div>
+                    </div>
+
+                    <div style="aspect-ratio: 2/3; background: var(--light-gray); border: 2px dashed var(--medium-gray); border-radius: var(--radius-md); display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--medium-gray);">
+                        <div style="font-size: 24px; opacity: 0.5;">📊</div>
+                        <div style="font-size: 10px; margin-top: var(--space-xs);">Missing</div>
+                    </div>
+
+                    <div style="aspect-ratio: 2/3; background: var(--light-gray); border: 2px dashed var(--medium-gray); border-radius: var(--radius-md); display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--medium-gray);">
+                        <div style="font-size: 24px; opacity: 0.5;">🛋️</div>
+                        <div style="font-size: 10px; margin-top: var(--space-xs);">Missing</div>
+                    </div>
+                </div>
+
+                <!-- Bottom Navigation -->
+                <div class="bottom-nav">
+                    <div class="nav-item">
+                        <div class="nav-icon">🏠</div>
+                        <div class="nav-label">Home</div>
+                    </div>
+                    <div class="nav-item">
+                        <div class="nav-icon">📷</div>
+                        <div class="nav-label">Camera</div>
+                    </div>
+                    <div class="nav-item active">
+                        <div class="nav-icon">👤</div>
+                        <div class="nav-label">My</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 8. Camera Recognition Page -->
+        <div class="phone-mockup">
+            <div class="page-title">Camera Recognition</div>
+            <div class="page-content">
+                <!-- Camera Interface -->
+                <div style="background: black; height: 100%; position: relative; display: flex; align-items: center; justify-content: center;">
+                    <!-- Viewfinder -->
+                    <div style="border: 3px solid white; border-radius: var(--radius-xl); width: 250px; height: 250px; position: relative; overflow: hidden;">
+                        <div style="background: linear-gradient(45deg, #333, #666); width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: white; font-size: 48px;">
+                            🪑
+                        </div>
+
+                        <!-- Detection Overlay -->
+                        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 80%; height: 60%; border: 3px solid var(--accent-green); border-radius: var(--radius-md); background: rgba(76, 175, 80, 0.1); animation: pulse 2s infinite;">
+                            <div style="position: absolute; top: -30px; left: 50%; transform: translateX(-50%); background: var(--accent-green); color: white; padding: 4px 8px; border-radius: 8px; font-size: 12px; font-weight: 600;">
+                                Chair Detected (92%)
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Top Controls -->
+                    <div style="position: absolute; top: 20px; left: 20px; right: 20px; display: flex; justify-content: space-between; align-items: center;">
+                        <button style="background: rgba(0,0,0,0.5); border: none; color: white; padding: var(--space-sm); border-radius: 50%; font-size: 20px;">×</button>
+                        <button style="background: rgba(0,0,0,0.5); border: none; color: white; padding: var(--space-sm); border-radius: 50%; font-size: 16px;">🔄</button>
+                    </div>
+
+                    <!-- Instructions -->
+                    <div style="position: absolute; top: 100px; left: 20px; right: 20px; text-align: center; color: white;">
+                        <h3 style="margin-bottom: var(--space-sm);">Point camera at available objects</h3>
+                        <p style="font-size: 14px; opacity: 0.8;">Hold steady for automatic detection</p>
+                    </div>
+
+                    <!-- Bottom Controls -->
+                    <div style="position: absolute; bottom: 100px; left: 20px; right: 20px; text-align: center;">
+                        <div style="margin-bottom: var(--space-lg);">
+                            <button style="background: var(--accent-green); border: 3px solid white; border-radius: 50%; width: 80px; height: 80px; color: white; font-size: 24px; margin: 0 auto; display: block;">📷</button>
+                        </div>
+
+                        <div style="background: rgba(0,0,0,0.7); border-radius: var(--radius-lg); padding: var(--space-md); color: white;">
+                            <h4 style="margin-bottom: var(--space-sm);">Object Recognition Result:</h4>
+                            <div style="display: flex; justify-content: center; gap: var(--space-md); margin-bottom: var(--space-md);">
+                                <div style="text-align: center;">
+                                    <div style="font-size: 32px;">🪑</div>
+                                    <div style="font-size: 12px;">Chair (92%)</div>
+                                </div>
+                                <div style="text-align: center; opacity: 0.6;">
+                                    <div style="font-size: 32px;">📚</div>
+                                    <div style="font-size: 12px;">Book (67%)</div>
+                                </div>
+                                <div style="text-align: center; opacity: 0.4;">
+                                    <div style="font-size: 32px;">🧺</div>
+                                    <div style="font-size: 12px;">Towel (45%)</div>
+                                </div>
+                            </div>
+
+                            <button class="btn btn-primary w-full" style="margin-bottom: var(--space-sm);">✅ Use Chair for Workout</button>
+                            <button style="background: none; border: 1px solid white; color: white; padding: var(--space-sm); border-radius: var(--radius-sm); width: 100%;">Manual Select Instead</button>
+                        </div>
+                    </div>
+
+                    <!-- Bottom Navigation -->
+                    <div class="bottom-nav">
+                        <div class="nav-item">
+                            <div class="nav-icon">🏠</div>
+                            <div class="nav-label">Home</div>
+                        </div>
+                        <div class="nav-item active">
+                            <div class="nav-icon">📷</div>
+                            <div class="nav-label">Camera</div>
+                        </div>
+                        <div class="nav-item">
+                            <div class="nav-icon">👤</div>
+                            <div class="nav-label">My</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Enhanced Interactive Effects
+        document.addEventListener('DOMContentLoaded', function() {
+            // Button Click Animations
+            const buttons = document.querySelectorAll('.btn, .btn-chip, .nav-item, .scenario-chip, .object-tile, .option-card');
+            buttons.forEach(button => {
+                button.addEventListener('click', function(e) {
+                    // Prevent default for demo
+                    e.preventDefault();
+
+                    // Add active state
+                    if (this.classList.contains('btn-chip') || this.classList.contains('option-card')) {
+                        // Toggle selection for chips and options
+                        this.classList.toggle('selected');
+                        this.classList.toggle('active');
+                    }
+
+                    // Scale animation
+                    this.style.transform = 'scale(0.95)';
+                    this.style.transition = 'transform 0.1s ease';
+
+                    setTimeout(() => {
+                        this.style.transform = '';
+                        this.style.transition = 'transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+                    }, 100);
+
+                    // Ripple effect for primary buttons
+                    if (this.classList.contains('btn-primary')) {
+                        const ripple = document.createElement('div');
+                        const rect = this.getBoundingClientRect();
+                        const size = Math.max(rect.width, rect.height);
+                        const x = e.clientX - rect.left - size / 2;
+                        const y = e.clientY - rect.top - size / 2;
+
+                        ripple.style.cssText = `
+                            position: absolute;
+                            width: ${size}px;
+                            height: ${size}px;
+                            background: rgba(255, 255, 255, 0.3);
+                            border-radius: 50%;
+                            left: ${x}px;
+                            top: ${y}px;
+                            transform: scale(0);
+                            animation: ripple 0.6s linear;
+                            pointer-events: none;
+                        `;
+
+                        this.style.position = 'relative';
+                        this.style.overflow = 'hidden';
+                        this.appendChild(ripple);
+
+                        setTimeout(() => ripple.remove(), 600);
+                    }
+                });
+            });
+
+            // Phone Mockup Hover Effects
+            const mockups = document.querySelectorAll('.phone-mockup');
+            mockups.forEach((mockup) => {
+                mockup.addEventListener('mouseenter', function() {
+                    const randomRotation = (Math.random() - 0.5) * 3;
+                    this.style.transform = `rotate(${randomRotation}deg) scale(1.02)`;
+                    this.style.zIndex = 10;
+                });
+
+                mockup.addEventListener('mouseleave', function() {
+                    this.style.transform = '';
+                    this.style.zIndex = '';
+                });
+            });
+
+            // Navigation Active State
+            const navItems = document.querySelectorAll('.nav-item');
+            navItems.forEach(nav => {
+                nav.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    // Remove active from siblings
+                    this.parentElement.querySelectorAll('.nav-item').forEach(item => {
+                        item.classList.remove('active');
+                    });
+                    // Add active to clicked
+                    this.classList.add('active');
+                });
+            });
+
+            // Object Tile Interactions
+            const objectTiles = document.querySelectorAll('.object-tile');
+            objectTiles.forEach(tile => {
+                tile.addEventListener('click', function() {
+                    // Add selection effect
+                    this.style.background = '#FFF4F0';
+                    this.style.borderColor = 'var(--primary-orange)';
+
+                    setTimeout(() => {
+                        this.style.background = '';
+                        this.style.borderColor = '';
+                    }, 1000);
+                });
+            });
+
+            // Workout Card Interactions
+            const workoutCards = document.querySelectorAll('.workout-card');
+            workoutCards.forEach(card => {
+                card.addEventListener('mouseenter', function() {
+                    this.style.transform = 'rotate(0deg) scale(1.02)';
+                    this.style.boxShadow = '6px 6px 0px var(--ink-black)';
+                });
+
+                card.addEventListener('mouseleave', function() {
+                    this.style.transform = '';
+                    this.style.boxShadow = '';
+                });
+            });
+
+            // Camera Detection Animation
+            const detectionOverlay = document.querySelector('.phone-mockup:last-child .page-content div[style*="border: 3px solid var(--accent-green)"]');
+            if (detectionOverlay) {
+                setInterval(() => {
+                    detectionOverlay.style.opacity = detectionOverlay.style.opacity === '0.5' ? '1' : '0.5';
+                }, 1000);
+            }
+        });
+
+        // Add CSS animation for ripple effect
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes ripple {
+                to {
+                    transform: scale(4);
+                    opacity: 0;
+                }
+            }
+
+            @keyframes pulse {
+                0%, 100% {
+                    opacity: 1;
+                    transform: translate(-50%, -50%) scale(1);
+                }
+                50% {
+                    opacity: 0.7;
+                    transform: translate(-50%, -50%) scale(1.05);
+                }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+</html>

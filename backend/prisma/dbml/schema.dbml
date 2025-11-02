@@ -1,0 +1,433 @@
+//// ------------------------------------------------------
+//// THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+//// ------------------------------------------------------
+
+Table scenarios {
+  id String [pk]
+  code String [unique, not null]
+  name String [not null]
+  noiseTolerance NoiseLevel
+  spaceRequirement SpaceSize
+  iconUrl String
+  isActive Boolean [not null, default: true]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  exerciseScenarios exercise_scenarios [not null]
+  workoutSessions workout_sessions [not null]
+}
+
+Table equipment {
+  id String [pk]
+  code String [unique, not null]
+  name String [not null]
+  category EquipmentCategory [not null]
+  recognizable Boolean [not null, default: false]
+  recognitionLabels String[] [not null]
+  recognitionConfidence Float [not null, default: 0.85]
+  iconUrl String [not null]
+  imageUrl String
+  displayOrder Int [not null, default: 0]
+  isActive Boolean [not null, default: true]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  exerciseEquipment exercise_equipment [not null]
+  rarityTable rarity_table [not null]
+}
+
+Table exercises {
+  id String [pk]
+  code String [unique, not null]
+  name String [not null]
+  primaryMuscle PrimaryMuscle [not null]
+  secondaryMuscles String[] [not null]
+  intentType IntentType [not null]
+  difficulty Difficulty [not null]
+  description Json [not null]
+  defaultDuration Int [not null]
+  defaultSets Int [not null, default: 1]
+  durationType DurationType [not null]
+  demoImageUrl String
+  demoVideoUrl String
+  tags String[] [not null]
+  isActive Boolean [not null, default: true]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  exerciseScenarios exercise_scenarios [not null]
+  exerciseEquipment exercise_equipment [not null]
+  sessionExercises session_exercises [not null]
+}
+
+Table exercise_scenarios {
+  exerciseId String [not null]
+  exercise exercises [not null]
+  scenarioId String [not null]
+  scenario scenarios [not null]
+  createdAt DateTime [default: `now()`, not null]
+
+  indexes {
+    (exerciseId, scenarioId) [pk]
+  }
+}
+
+Table exercise_equipment {
+  exerciseId String [not null]
+  exercise exercises [not null]
+  equipmentId String [not null]
+  equipment equipment [not null]
+  isRequired Boolean [not null, default: false]
+  createdAt DateTime [default: `now()`, not null]
+
+  indexes {
+    (exerciseId, equipmentId) [pk]
+  }
+}
+
+Table users {
+  id String [pk]
+  email String [unique]
+  name String
+  avatarUrl String
+  totalWorkouts Int [not null, default: 0]
+  totalDurationSec Int [not null, default: 0]
+  currentStreak Int [not null, default: 0]
+  longestStreak Int [not null, default: 0]
+  preferredIntents IntentType[] [not null]
+  preferredDifficulty Difficulty
+  preferredDuration Int
+  avoidEquipment String[] [not null]
+  streakReminder Boolean [not null, default: true]
+  themeWeekReminder Boolean [not null, default: true]
+  quietHoursStart String
+  quietHoursEnd String
+  hideRealPhotos Boolean [not null, default: true]
+  autoBlurFaces Boolean [not null, default: true]
+  allowDataSync Boolean [not null, default: false]
+  language String [not null, default: 'zh']
+  theme String [not null, default: 'auto']
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  workoutSessions workout_sessions [not null]
+  shareCards share_cards [not null]
+  dailyTrainings daily_trainings [not null]
+  userPreferences user_preferences [not null]
+  themeWeekParticipations theme_week_participations [not null]
+}
+
+Table workout_sessions {
+  id String [pk]
+  userId String [not null]
+  user users [not null]
+  intentType IntentType [not null]
+  scenarioId String
+  scenario scenarios
+  targetMuscles PrimaryMuscle[] [not null]
+  totalDuration Int [not null]
+  difficulty Difficulty [not null]
+  isSilent Boolean [not null, default: false]
+  status SessionStatus [not null, default: 'PENDING']
+  startedAt DateTime
+  completedAt DateTime
+  actualDuration Int
+  followMode Boolean [not null, default: false]
+  currentStep Int [not null, default: 0]
+  pauseCount Int [not null, default: 0]
+  skipCount Int [not null, default: 0]
+  isOffline Boolean [not null, default: false]
+  ambientNoise NoiseLevel
+  usedSpace SpaceSize
+  rating Int
+  feedback String
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  sessionExercises session_exercises [not null]
+  shareCard share_cards
+}
+
+Table session_exercises {
+  id String [pk]
+  sessionId String [not null]
+  session workout_sessions [not null]
+  exerciseId String [not null]
+  exercise exercises [not null]
+  sequenceOrder Int [not null]
+  duration Int [not null]
+  sets Int [not null, default: 1]
+  isCompleted Boolean [not null, default: false]
+  actualDuration Int
+  startedAt DateTime
+  endedAt DateTime
+  pausedTimes Int [not null, default: 0]
+  skipReason String
+  difficultyFelt Difficulty
+  comfortLevel Int
+  effectivenessRating Int
+  createdAt DateTime [default: `now()`, not null]
+
+  indexes {
+    (sessionId, sequenceOrder) [unique]
+  }
+}
+
+Table share_cards {
+  id String [pk]
+  userId String [not null]
+  user users [not null]
+  sessionId String [unique, not null]
+  session workout_sessions [not null]
+  cardImageUrl String [not null]
+  cardTemplate String [not null]
+  cardData Json [not null]
+  rarity RarityLevel [not null]
+  equipmentSeries String [not null]
+  rarityScore Float [not null]
+  dataSource DataSource [not null, default: 'WEEKLY_TABLE']
+  specialTags String[] [not null]
+  cityEdition String
+  themeWeek String
+  shareText String
+  isPublic Boolean [not null, default: true]
+  shareCount Int [not null, default: 0]
+  viewCount Int [not null, default: 0]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+}
+
+Table daily_trainings {
+  id String [pk]
+  userId String [not null]
+  user users [not null]
+  trainingDate DateTime [not null]
+  totalSessions Int [not null, default: 0]
+  totalDuration Int [not null, default: 0]
+  totalExercises Int [not null, default: 0]
+  completedSessions Int [not null, default: 0]
+  intentBreakdown Json
+  muscleBreakdown Json
+  isStreakDay Boolean [not null, default: false]
+  achievements String[] [not null]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+
+  indexes {
+    (userId, trainingDate) [unique]
+  }
+}
+
+Table rarity_table {
+  id String [pk]
+  equipmentId String [not null]
+  equipment equipment [not null]
+  equipmentCode String [not null]
+  weekStart DateTime [not null]
+  rarityScore Float [not null]
+  rarityLevel RarityLevel [not null]
+  dataSource DataSource [not null, default: 'WEEKLY_TABLE']
+  region String
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+
+  indexes {
+    (equipmentId, weekStart) [unique]
+    (equipmentCode, weekStart) [unique]
+  }
+}
+
+Table user_preferences {
+  id String [pk]
+  userId String [not null]
+  user users [not null]
+  preferenceType String [not null]
+  preferenceKey String [not null]
+  preferenceValue Float [not null]
+  usageCount Int [not null, default: 0]
+  successRate Float [not null, default: 0]
+  averageRating Float
+  lastUsedAt DateTime
+  firstUsedAt DateTime [not null]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+
+  indexes {
+    (userId, preferenceType, preferenceKey) [unique]
+  }
+}
+
+Table theme_weeks {
+  id String [pk]
+  title String [not null]
+  code String [unique, not null]
+  description String
+  equipmentCode String [not null]
+  targetExerciseCount Int [not null, default: 3]
+  startDate DateTime [not null]
+  endDate DateTime [not null]
+  rewardType String [not null]
+  rewardData Json
+  status String [not null, default: 'UPCOMING']
+  isVisible Boolean [not null, default: true]
+  displayOrder Int [not null, default: 0]
+  totalParticipants Int [not null, default: 0]
+  totalCompletions Int [not null, default: 0]
+  completionRate Float [not null, default: 0]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  participations theme_week_participations [not null]
+}
+
+Table theme_week_participations {
+  id String [pk]
+  userId String [not null]
+  user users [not null]
+  themeWeekId String [not null]
+  themeWeek theme_weeks [not null]
+  status String [not null, default: 'JOINED']
+  joinedAt DateTime [default: `now()`, not null]
+  completedAt DateTime
+  exercisesCompleted Int [not null, default: 0]
+  targetExercises Int [not null]
+  progressPercent Float [not null, default: 0]
+  rewardEarned Boolean [not null, default: false]
+  rewardClaimedAt DateTime
+  relatedSessions String[] [not null]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+
+  indexes {
+    (userId, themeWeekId) [unique]
+  }
+}
+
+Table deeplinks {
+  id String [pk]
+  code String [unique, not null]
+  targetType DeeplinkTargetType [not null]
+  targetId String [not null]
+  createdBy String
+  expiresAt DateTime
+  createdAt DateTime [default: `now()`, not null]
+  clicks deeplink_clicks [not null]
+}
+
+Table deeplink_clicks {
+  id String [pk]
+  deeplinkId String [not null]
+  deeplink deeplinks [not null]
+  clickedAt DateTime [default: `now()`, not null]
+  ipAddress String
+  userAgent String
+  referer String
+}
+
+Enum NoiseLevel {
+  SILENT
+  QUIET
+  NORMAL
+}
+
+Enum SpaceSize {
+  SMALL
+  MEDIUM
+  LARGE
+}
+
+Enum EquipmentCategory {
+  NONE
+  FURNITURE
+  WALL
+  BOTTLE
+  BAG
+  STAIRS
+  FABRIC
+  STICK
+  OUTDOOR
+  CREATIVE
+}
+
+Enum PrimaryMuscle {
+  CHEST
+  BACK
+  LEGS
+  GLUTES
+  SHOULDERS
+  ARMS
+  CORE
+  FULL_BODY
+  NECK_SHOULDER
+}
+
+Enum IntentType {
+  RELAX
+  STRETCH
+  MODERATE
+  STRENGTH
+}
+
+Enum Difficulty {
+  GREEN
+  BLUE
+  RED
+}
+
+Enum DurationType {
+  TIME
+  REPS
+}
+
+Enum SessionStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  ABANDONED
+}
+
+Enum RarityLevel {
+  COMMON
+  UNCOMMON
+  RARE
+  EPIC
+  LEGENDARY
+}
+
+Enum DataSource {
+  WEEKLY_TABLE
+  ON_THE_FLY_ESTIMATE
+}
+
+Enum DeeplinkTargetType {
+  WORKOUT_SESSION
+  THEME_WEEK
+  SHARE_CARD
+  EXERCISE
+}
+
+Ref: exercise_scenarios.exerciseId > exercises.id [delete: Cascade]
+
+Ref: exercise_scenarios.scenarioId > scenarios.id [delete: Cascade]
+
+Ref: exercise_equipment.exerciseId > exercises.id [delete: Cascade]
+
+Ref: exercise_equipment.equipmentId > equipment.id [delete: Cascade]
+
+Ref: workout_sessions.userId > users.id [delete: Cascade]
+
+Ref: workout_sessions.scenarioId > scenarios.id
+
+Ref: session_exercises.sessionId > workout_sessions.id [delete: Cascade]
+
+Ref: session_exercises.exerciseId > exercises.id
+
+Ref: share_cards.userId > users.id [delete: Cascade]
+
+Ref: share_cards.sessionId - workout_sessions.id [delete: Cascade]
+
+Ref: daily_trainings.userId > users.id [delete: Cascade]
+
+Ref: rarity_table.equipmentId > equipment.id [delete: Cascade]
+
+Ref: user_preferences.userId > users.id [delete: Cascade]
+
+Ref: theme_week_participations.userId > users.id [delete: Cascade]
+
+Ref: theme_week_participations.themeWeekId > theme_weeks.id [delete: Cascade]
+
+Ref: deeplink_clicks.deeplinkId > deeplinks.id [delete: Cascade]

@@ -1,0 +1,2420 @@
+# SnapRep API Design Documentation (v2.0)
+
+> **Version**: v2.0 (Page-Based Architecture)
+> **Date**: 2024-10-30
+> **Architecture**: NestJS + Supabase Hybrid
+
+---
+
+## 📋 API Overview & Quick Reference
+
+### Design Philosophy
+- **Page-Centric Design**: APIs organized by frontend pages for clarity
+- **Supabase First**: Leverage built-in features (Auth, RLS, Storage, Realtime)
+- **Performance Priority**: TTV ≤30s, Card generation ≤800ms
+- **Offline First**: Core features work offline, sync when online
+
+---
+
+## 🗺️ Complete API Map (一目了然)
+
+### API Summary by Page
+
+| Page | Feature | API Endpoint | Method | Supabase/NestJS |
+|------|---------|-------------|--------|-----------------|
+| **🏠 HomePage** | 获取场景列表 | `/rest/v1/scenarios` | GET | Supabase Auto |
+| | 获取器材列表 | `/rest/v1/equipment` | GET | Supabase Auto |
+| | 获取当前主题周 | `/api/v1/theme-weeks/current` | GET | NestJS |
+| | 加入主题周 | `/api/v1/theme-weeks/{id}/join` | POST | NestJS |
+| | AI 物体识别 | `/api/v1/ai/recognize-equipment` | POST | NestJS |
+| **🎯 WorkoutGuidePage** | 获取意图选项 | N/A (前端hardcoded) | - | Frontend |
+| | 获取场景选项 | `/rest/v1/scenarios` | GET | Supabase Auto |
+| | 获取器材选项 | `/rest/v1/equipment` | GET | Supabase Auto |
+| **🎪 WorkoutResultPage** | 快速推荐(60秒) | `/api/v1/recommendations/quick` | POST | NestJS |
+| | 替换单个动作 | `/api/v1/recommendations/replace` | POST | NestJS |
+| | 获取替换候选 | `/api/v1/recommendations/alternatives` | GET | NestJS |
+| | 创建训练会话 | `/rest/v1/workout_sessions` | POST | Supabase Auto |
+| | 更新会话状态 | `/rest/v1/workout_sessions/{id}` | PATCH | Supabase Auto |
+| **🎨 ResultCardPage** | 生成分享卡片 | `/api/v1/cards/generate` | POST | NestJS |
+| | 计算稀有度 | `/api/v1/rarity/calculate/{code}` | GET | NestJS |
+| | 上传卡片图片 | `supabase.storage.upload()` | POST | Supabase Storage |
+| | 保存卡片记录 | `/rest/v1/share_cards` | POST | Supabase Auto |
+| **👤 MyPage - Cards** | 获取我的卡片 | `/rest/v1/share_cards` | GET | Supabase Auto |
+| | 卡片详情 | `/rest/v1/share_cards/{id}` | GET | Supabase Auto |
+| | 更新卡片 | `/rest/v1/share_cards/{id}` | PATCH | Supabase Auto |
+| **👤 MyPage - History** | 获取训练历史 | `/rest/v1/workout_sessions` | GET | Supabase Auto |
+| | 获取每日统计 | `/rest/v1/daily_trainings` | GET | Supabase Auto |
+| | 月历视图 | `/api/v1/users/{id}/calendar` | GET | NestJS |
+| **👤 MyPage - Settings** | 获取用户信息 | `/rest/v1/users/{id}` | GET | Supabase Auto |
+| | 更新用户设置 | `/rest/v1/users/{id}` | PATCH | Supabase Auto |
+| | 匿名登录 | `supabase.auth.signInAnonymously()` | - | Supabase Auth |
+| | 邮箱登录 | `supabase.auth.signInWithOtp()` | - | Supabase Auth |
+
+### API Count Summary
+- **Supabase Auto REST API**: 12 endpoints (基础 CRUD)
+- **Supabase Auth**: 2 flows (认证授权)
+- **Supabase Storage**: 1 bucket (媒体文件)
+- **NestJS Custom API**: 7 endpoints (复杂业务逻辑)
+- **Total**: ~22 API endpoints
+
+---
+
+## 🏠 HomePage APIs
+
+### Page Overview
+- **Page Goal**: 快速激活用户开始训练，展示多个进入方式
+- **Key Features**: Hero CTA, 场景快选, 器材选择, 主题周, AI识别
+- **Performance Target**: 首屏加载 ≤2秒
+
+---
+
+### 1.1 Get Scenarios List (获取场景列表)
+
+**用途**: 首页场景区显示「办公室」「客厅/沙发」等场景选项
+
+```typescript
+GET /rest/v1/scenarios?select=*&is_active=eq.true&order=display_order
+```
+
+**Implementation**: Supabase Auto REST API
+
+**Request**: 无需 body
+
+**Response**:
+```json
+{
+  "data": [
+    {
+      "id": "scenario-001",
+      "code": "office",
+      "name": "Office",
+      "description": "Perfect for desk breaks",
+      "isActive": true,
+      "displayOrder": 1,
+      "defaultEquipment": ["chair", "wall"],  // 预设器材
+      "noiseLevel": "QUIET",
+      "spaceRequired": "SMALL"
+    },
+    {
+      "id": "scenario-002",
+      "code": "living_room",
+      "name": "Living Room",
+      "description": "Relax on your couch",
+      "isActive": true,
+      "displayOrder": 2,
+      "defaultEquipment": ["sofa", "chair"],
+      "noiseLevel": "NORMAL",
+      "spaceRequired": "MEDIUM"
+    }
+  ]
+}
+```
+
+**Frontend Usage**:
+```dart
+// Flutter code
+final scenarios = await supabase
+  .from('scenarios')
+  .select('*')
+  .eq('is_active', true)
+  .order('display_order');
+
+// 渲染场景 Chips
+scenarios.forEach((scenario) {
+  ScenarioChip(
+    label: scenario['name'],
+    onTap: () => navigateToResultPage(
+      equipment: scenario['default_equipment']
+    )
+  )
+});
+```
+
+**Caching Strategy**:
+- TTL: 1 day (场景不常变)
+- Storage: Local SharedPreferences
+
+---
+
+### 1.2 Get Equipment List (获取器材列表)
+
+**用途**: 首页物品区显示「椅子」「墙面」「水瓶」等器材选项
+
+```typescript
+GET /rest/v1/equipment?select=*&is_active=eq.true&order=display_order
+```
+
+**Implementation**: Supabase Auto REST API
+
+**Request**: 无需 body
+
+**Response**:
+```json
+{
+  "data": [
+    {
+      "id": "eq-001",
+      "code": "chair",
+      "name": "Chair",
+      "category": "FURNITURE",
+      "iconUrl": "https://storage.supabase.co/icons/chair.svg",
+      "isActive": true,
+      "displayOrder": 2
+    },
+    {
+      "id": "eq-002",
+      "code": "wall",
+      "name": "Wall",
+      "category": "WALL",
+      "iconUrl": "https://storage.supabase.co/icons/wall.svg",
+      "isActive": true,
+      "displayOrder": 3
+    },
+    {
+      "id": "eq-003",
+      "code": "hands_free",
+      "name": "No Equipment",
+      "category": "BODYWEIGHT",
+      "iconUrl": "https://storage.supabase.co/icons/hands-free.svg",
+      "isActive": true,
+      "displayOrder": 1
+    }
+  ]
+}
+```
+
+**Frontend Usage**:
+```dart
+// 渲染器材 Grid
+GridView.builder(
+  itemCount: equipment.length,
+  itemBuilder: (ctx, i) => EquipmentTile(
+    icon: equipment[i]['icon_url'],
+    label: equipment[i]['name'],
+    onTap: () => navigateToGuidePage(
+      preselectedEquipment: equipment[i]['code']
+    )
+  )
+);
+```
+
+**Caching Strategy**:
+- TTL: 1 day
+- Storage: Local Database
+
+---
+
+### 1.3 Get Current Theme Week (获取当前主题周)
+
+**用途**: 首页主题周区显示「本周:#椅子日」及奖励信息
+
+```typescript
+GET /api/v1/theme-weeks/current
+```
+
+**Implementation**: NestJS Custom API
+
+**Why NestJS**: 需要计算用户参与状态、全局统计、剩余时间等复杂逻辑
+
+**Request**:
+- Headers: `Authorization: Bearer <jwt_token>`
+
+**Response**:
+```json
+{
+  "current": {
+    "id": "theme-001",
+    "code": "chair_week_2024_44",
+    "title": "Chair Week",
+    "description": "Complete 3 chair exercises to unlock exclusive sticker skin",
+    "equipmentCode": "chair",
+    "startDate": "2024-10-28",
+    "endDate": "2024-11-03",
+    "targetExerciseCount": 3,
+    "reward": {
+      "type": "skin",
+      "data": {
+        "skinName": "Chair Master",
+        "rarityBoost": 0.1
+      }
+    },
+    "participation": {
+      "isJoined": true,          // 用户是否已加入
+      "progress": {
+        "completed": 2,           // 已完成动作数
+        "target": 3,              // 目标动作数
+        "percentage": 66.7
+      },
+      "timeLeft": "2 days 14 hours"  // 剩余时间
+    },
+    "globalStats": {
+      "totalParticipants": 12567,     // 全球参与人数
+      "completionRate": 78.3          // 完成率
+    }
+  },
+  "upcoming": [
+    {
+      "title": "Bottle Week",
+      "equipmentCode": "bottle",
+      "startDate": "2024-11-04"
+    },
+    {
+      "title": "Backpack Week",
+      "equipmentCode": "backpack",
+      "startDate": "2024-11-11"
+    }
+  ]
+}
+```
+
+**Frontend Usage**:
+```dart
+// 主题周卡片
+ThemeWeekCard(
+  title: themeWeek['title'],
+  description: themeWeek['description'],
+  progress: themeWeek['participation']['progress'],
+  onJoinTap: () => joinThemeWeek(themeWeek['id']),
+  onStartTap: () => navigateToResultPage(
+    equipment: [themeWeek['equipment_code']],
+    themeWeekId: themeWeek['id']
+  )
+);
+```
+
+**Error Handling**:
+```json
+// 无主题周时
+{
+  "current": null,
+  "upcoming": [],
+  "message": "No active theme week at the moment"
+}
+```
+
+---
+
+### 1.4 Join Theme Week (加入主题周)
+
+**用途**: 用户点击「一键加入」按钮后调用
+
+```typescript
+POST /api/v1/theme-weeks/{themeWeekId}/join
+```
+
+**Implementation**: NestJS Custom API
+
+**Why NestJS**: 需要创建参与记录、验证用户状态、防止重复加入
+
+**Request**:
+```json
+{
+  "userId": "user-123"  // 从 JWT token 自动提取
+}
+```
+
+**Response**:
+```json
+{
+  "success": true,
+  "participation": {
+    "id": "participation-456",
+    "themeWeekId": "theme-001",
+    "userId": "user-123",
+    "status": "JOINED",
+    "joinedAt": "2024-10-30T10:30:00Z",
+    "completedCount": 0,
+    "targetCount": 3,
+    "isCompleted": false
+  },
+  "message": "Successfully joined Chair Week challenge!"
+}
+```
+
+**Frontend Usage**:
+```dart
+// 加入按钮点击
+onJoinPressed() async {
+  final result = await apiService.joinThemeWeek(themeWeekId);
+  if (result['success']) {
+    showSnackBar('Successfully joined!');
+    navigateToResultPage(equipment: ['chair']);
+  }
+}
+```
+
+**Error Cases**:
+```json
+// 已加入
+{
+  "success": false,
+  "error": {
+    "code": "ALREADY_JOINED",
+    "message": "You have already joined this theme week"
+  }
+}
+
+// 主题周已结束
+{
+  "success": false,
+  "error": {
+    "code": "THEME_WEEK_ENDED",
+    "message": "This theme week has ended"
+  }
+}
+```
+
+---
+
+### 1.5 AI Equipment Recognition (AI 物体识别)
+
+**用途**: 用户点击「拍照」图标后，上传图片识别器材
+
+```typescript
+POST /api/v1/ai/recognize-equipment
+```
+
+**Implementation**: NestJS + TensorFlow
+
+**Why NestJS**: 需要运行 TensorFlow Lite 模型推理
+
+**Request**: `multipart/form-data`
+```typescript
+{
+  image: File,               // 图片文件
+  confidence: 0.85,         // 可选: 置信度阈值 (default: 0.85)
+  maxResults: 5             // 可选: 最大返回数量 (default: 5)
+}
+```
+
+**Response**:
+```json
+{
+  "success": true,
+  "recognized": [
+    {
+      "equipmentCode": "chair",
+      "confidence": 0.92,
+      "boundingBox": {
+        "x": 100,
+        "y": 150,
+        "width": 200,
+        "height": 300
+      },
+      "equipmentInfo": {
+        "id": "eq-001",
+        "name": "Chair",
+        "category": "FURNITURE",
+        "iconUrl": "https://storage.supabase.co/icons/chair.svg"
+      }
+    },
+    {
+      "equipmentCode": "wall",
+      "confidence": 0.88,
+      "boundingBox": {
+        "x": 0,
+        "y": 0,
+        "width": 100,
+        "height": 400
+      },
+      "equipmentInfo": {
+        "id": "eq-002",
+        "name": "Wall",
+        "category": "WALL",
+        "iconUrl": "https://storage.supabase.co/icons/wall.svg"
+      }
+    }
+  ],
+  "fallbackSuggestions": [
+    // 低置信度时的手动选择建议
+    {
+      "equipmentCode": "sofa",
+      "name": "Sofa",
+      "reason": "Similar to detected object"
+    }
+  ]
+}
+```
+
+**Frontend Usage**:
+```dart
+// 拍照识别流程
+onCameraPressed() async {
+  final image = await ImagePicker().pickImage(source: ImageSource.camera);
+  if (image == null) return;
+
+  showLoading('Recognizing...');
+  final result = await apiService.recognizeEquipment(image);
+  hideLoading();
+
+  if (result['recognized'].isNotEmpty) {
+    // 高置信度: 自动预选
+    if (result['recognized'][0]['confidence'] > 0.85) {
+      navigateToGuidePage(
+        preselectedEquipment: result['recognized'][0]['equipment_code']
+      );
+    } else {
+      // 低置信度: 显示候选列表
+      showEquipmentSuggestions(result['fallback_suggestions']);
+    }
+  }
+}
+```
+
+**Performance Target**:
+- Response time: <2s
+- Model: TensorFlow Lite (mobile-optimized)
+- Image preprocessing: Resize to 224×224
+
+---
+
+## 🎯 WorkoutGuidePage APIs
+
+### Page Overview
+- **Page Goal**: 通过3步引导精准捕捉用户需求
+- **Key Features**: 意图选择, 场景+器材选择, 部位选择
+- **Performance Target**: 完成引导率 ≥80%
+
+**Note**: 大部分引导选项为前端 hardcoded，复用 HomePage 的场景和器材 API
+
+---
+
+### 2.1 Get Intent Options (获取意图选项)
+
+**Implementation**: Frontend Hardcoded
+
+**Why**: 意图选项固定，无需后端 API
+
+**Options**:
+```dart
+// lib/constants/workout_intents.dart
+enum WorkoutIntent {
+  RELAX,           // 放松 - 降紧张
+  STRETCH,         // 舒展筋骨 - 拉伸活动度
+  LIGHT_CARDIO,    // 适当运动 - 轻汗微心率
+  STRENGTH         // 主体锻炼 - 轻力量稳定
+}
+
+final intentOptions = [
+  IntentOption(
+    intent: WorkoutIntent.RELAX,
+    title: 'Relax',
+    subtitle: 'Reduce tension',
+    icon: '🧘'
+  ),
+  IntentOption(
+    intent: WorkoutIntent.STRETCH,
+    title: 'Stretch',
+    subtitle: 'Improve flexibility',
+    icon: '🤸'
+  ),
+  IntentOption(
+    intent: WorkoutIntent.LIGHT_CARDIO,
+    title: 'Light Exercise',
+    subtitle: 'Light sweat, mild cardio',
+    icon: '🏃'
+  ),
+  IntentOption(
+    intent: WorkoutIntent.STRENGTH,
+    title: 'Strength',
+    subtitle: 'Light resistance, stability',
+    icon: '💪'
+  )
+];
+```
+
+---
+
+### 2.2 Get Scenarios & Equipment (获取场景和器材)
+
+**Reuse**: HomePage APIs
+- Scenarios: `GET /rest/v1/scenarios`
+- Equipment: `GET /rest/v1/equipment`
+
+**Additional Logic**: 场景切换时更新器材建议
+```dart
+// 场景切换逻辑 (前端)
+onScenarioChanged(String scenarioCode) {
+  final scenario = scenarios.firstWhere((s) => s['code'] == scenarioCode);
+  final suggestedEquipment = scenario['default_equipment'];
+
+  setState(() {
+    // 自动更新器材预选
+    selectedEquipment = suggestedEquipment;
+  });
+}
+```
+
+---
+
+### 2.3 Get Target Muscles (获取目标部位)
+
+**Implementation**: Frontend Hardcoded
+
+**Options**:
+```dart
+// lib/constants/target_muscles.dart
+enum TargetMuscle {
+  FULL_BODY,      // 全身
+  NECK_SHOULDER,  // 颈肩
+  CHEST_BACK,     // 胸背
+  CORE,           // 核心
+  LEGS,           // 大腿
+  GLUTES,         // 臀部
+  CALVES,         // 小腿
+  ARMS            // 手臂
+}
+
+final muscleOptions = [
+  MuscleOption(muscle: TargetMuscle.FULL_BODY, label: 'Full Body', icon: '🧍'),
+  MuscleOption(muscle: TargetMuscle.NECK_SHOULDER, label: 'Neck & Shoulders', icon: '🫱'),
+  MuscleOption(muscle: TargetMuscle.CHEST_BACK, label: 'Chest & Back', icon: '🫁'),
+  // ... 其他部位
+];
+```
+
+---
+
+## 🎪 WorkoutResultPage APIs
+
+### Page Overview
+- **Page Goal**: 展示精准匹配的3个动作，支持替换和跟练
+- **Key Features**: 快速推荐, 动作替换, 候选列表, 跟练模式
+- **Performance Target**: 推荐生成 <5秒
+
+---
+
+### 3.1 Quick Workout Recommendation (快速推荐)
+
+**用途**: 根据用户引导选择，生成3个推荐动作
+
+```typescript
+POST /api/v1/recommendations/quick
+```
+
+**Implementation**: NestJS Complex Algorithm
+
+**Why NestJS**: 复杂的多维匹配算法 (用户偏好、器材可用性、难度递进、部位均衡)
+
+**Request**:
+```json
+{
+  "userId": "user-123",              // 从 JWT token 自动提取
+  "intent": "STRETCH",               // 可选: 运动意图 (RELAX | STRETCH | LIGHT_CARDIO | STRENGTH)
+  "equipment": ["chair", "wall"],    // 可选: 可用器材 (默认: ["hands_free"])
+  "scenario": "office",              // 可选: 场景代码
+  "targetMuscles": ["NECK_SHOULDER"], // 可选: 目标部位 (最多2个)
+  "duration": 60,                    // 可选: 总时长限制(秒) (默认: 60)
+  "difficulty": "BEGINNER",          // 可选: 难度 (BEGINNER | INTERMEDIATE | ADVANCED)
+  "excludeExerciseIds": [],          // 可选: 排除的动作ID (用于换一批)
+  "themeWeekId": null,               // 可选: 主题周ID
+  "isOffline": false                 // 是否离线模式
+}
+```
+
+**Response**:
+```json
+{
+  "sessionId": "session-456",        // 会话ID (已创建 workout_session 记录)
+  "intent": "STRETCH",
+  "totalDuration": 60,
+  "difficulty": "BEGINNER",
+  "exercises": [
+    {
+      "id": "exercise-001",
+      "code": "wall_chest_opener",
+      "name": "Wall Chest Opener",
+      "duration": 20,
+      "sets": 1,
+      "restSeconds": 0,
+      "difficulty": "BEGINNER",
+      "primaryMuscle": "CHEST",
+      "secondaryMuscles": ["SHOULDERS"],
+      "intentType": "STRETCH",
+
+      // 安全指导
+      "keyPoints": [
+        "Keep spine in neutral position",
+        "Depress shoulders, don't shrug",
+        "Move slowly and controlled"
+      ],
+      "safetyWarnings": [
+        "Keep neck neutral, don't extend back",
+        "Shoulders down, not shrugged"
+      ],
+
+      // 媒体资源
+      "demoImageUrl": "https://storage.supabase.co/demos/wall_chest_opener.gif",
+      "demoVideoUrl": null,
+      "thumbnailUrl": "https://storage.supabase.co/thumbs/wall_chest_opener.jpg",
+
+      // 标签
+      "tags": ["standing", "wall", "stretch", "silent", "small_space"],
+
+      // 器材
+      "equipment": ["wall"],
+
+      // 效果描述
+      "benefits": "Relieves neck stiffness, relaxes shoulders",
+
+      // 详细要领 (可折叠显示)
+      "instructions": {
+        "setup": "Stand facing a wall...",
+        "execution": "Step 1: ..., Step 2: ...",
+        "breathing": "Inhale as you...",
+        "commonMistakes": ["Don't arch your back", "Don't shrug shoulders"]
+      }
+    },
+    {
+      "id": "exercise-002",
+      "code": "chair_sit_to_stand",
+      "name": "Chair Sit to Stand",
+      // ... 相同结构
+    },
+    {
+      "id": "exercise-003",
+      "code": "core_plank_hold",
+      "name": "Core Plank Hold",
+      // ... 相同结构
+    }
+  ],
+
+  // 替换候选 (6-9个)
+  "alternatives": [
+    {
+      "id": "exercise-004",
+      "code": "wall_shoulder_slide",
+      "name": "Wall Shoulder Slide",
+      "thumbnailUrl": "...",
+      "difficulty": "BEGINNER",
+      "primaryMuscle": "SHOULDERS",
+      "tags": ["wall", "stretch", "silent"],
+      "benefits": "Opens shoulders, improves posture"
+    }
+    // ... 5-8 more alternatives
+  ],
+
+  // 会话元数据
+  "metadata": {
+    "createdAt": "2024-10-30T10:30:00Z",
+    "recommendationVersion": "v1.2",
+    "algorithm": "smart_selection_v2"
+  }
+}
+```
+
+**Algorithm Logic** (NestJS Service):
+```typescript
+@Injectable()
+export class WorkoutRecommendationService {
+  async generateQuickRecommendation(dto: QuickRecommendationDto) {
+    // 1. 获取用户偏好 (UserPreference表)
+    const userPrefs = await this.getUserPreferences(dto.userId);
+
+    // 2. 筛选可用动作 (基于器材、场景、意图)
+    const availableExercises = await this.prisma.exercise.findMany({
+      where: {
+        isActive: true,
+        intentType: dto.intent || undefined,
+        exerciseEquipment: {
+          some: {
+            equipment: {
+              code: { in: dto.equipment || ['hands_free'] }
+            }
+          }
+        }
+      },
+      include: {
+        exerciseEquipment: { include: { equipment: true } },
+        exerciseScenarios: { include: { scenario: true } }
+      }
+    });
+
+    // 3. 智能选择算法
+    const selectedExercises = await this.smartSelection({
+      exercises: availableExercises,
+      userPrefs,
+      constraints: {
+        targetMuscles: dto.targetMuscles,
+        difficulty: dto.difficulty,
+        duration: dto.duration,
+        excludeIds: dto.excludeExerciseIds
+      }
+    });
+
+    // 智能选择规则:
+    // - 避免重复 (检查用户最近7天训练历史)
+    // - 难度递进 (第1个简单, 第2个中等, 第3个稍难)
+    // - 部位均衡 (如果选了颈肩, 至少1个动作针对颈肩)
+    // - 安全优先 (办公室场景过滤跳跃动作)
+    // - 时长分配 (总和接近目标时长±10%)
+
+    // 4. 创建训练会话
+    const session = await this.prisma.workoutSession.create({
+      data: {
+        userId: dto.userId,
+        status: 'PLANNED',
+        intentType: dto.intent,
+        difficulty: dto.difficulty,
+        plannedDurationSec: dto.duration,
+        themeWeekId: dto.themeWeekId,
+        sessionExercises: {
+          create: selectedExercises.map((ex, idx) => ({
+            exerciseId: ex.id,
+            position: idx + 1,
+            plannedDurationSec: ex.duration,
+            plannedSets: ex.sets
+          }))
+        }
+      }
+    });
+
+    // 5. 生成替换候选 (6-9个)
+    const alternatives = await this.generateAlternatives({
+      exercises: availableExercises,
+      selected: selectedExercises,
+      count: 9
+    });
+
+    // 6. 格式化返回
+    return this.formatResponse(session, selectedExercises, alternatives);
+  }
+
+  // 智能选择核心算法
+  private async smartSelection(params: SelectionParams): Promise<Exercise[]> {
+    const { exercises, userPrefs, constraints } = params;
+
+    // 评分系统
+    const scoredExercises = exercises.map(ex => ({
+      exercise: ex,
+      score: this.calculateScore(ex, userPrefs, constraints)
+    }));
+
+    // 排序并选择
+    scoredExercises.sort((a, b) => b.score - a.score);
+
+    // 贪心算法选择3个动作
+    const selected = [];
+    for (const item of scoredExercises) {
+      if (selected.length >= 3) break;
+
+      // 检查是否满足约束
+      if (this.meetsConstraints(item.exercise, selected, constraints)) {
+        selected.push(item.exercise);
+      }
+    }
+
+    return selected;
+  }
+}
+```
+
+**Frontend Usage**:
+```dart
+// WorkoutResultPage
+class WorkoutResultPage extends StatefulWidget {
+  @override
+  _WorkoutResultPageState createState() => _WorkoutResultPageState();
+}
+
+class _WorkoutResultPageState extends State<WorkoutResultPage> {
+  List<Exercise> exercises = [];
+  bool isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    loadRecommendation();
+  }
+
+  Future<void> loadRecommendation() async {
+    setState(() => isLoading = true);
+
+    final result = await apiService.getQuickRecommendation(
+      intent: widget.intent,
+      equipment: widget.equipment,
+      scenario: widget.scenario,
+      targetMuscles: widget.targetMuscles
+    );
+
+    setState(() {
+      exercises = result['exercises'];
+      alternatives = result['alternatives'];
+      sessionId = result['session_id'];
+      isLoading = false;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (isLoading) return LoadingIndicator();
+
+    return Column(
+      children: [
+        // 顶部信息条
+        WorkoutInfoBar(
+          equipment: exercises.first.equipment,
+          scenario: widget.scenario,
+          difficulty: result['difficulty']
+        ),
+
+        // 3张动作卡
+        ...exercises.map((ex) => ExerciseCard(
+          exercise: ex,
+          onReplace: () => showReplaceSheet(ex.id)
+        )),
+
+        // 替换候选预览条
+        AlternativesPreviewBar(alternatives: alternatives),
+
+        // 底部操作条
+        BottomActionBar(
+          onStartWorkout: () => navigateToFollowMode(sessionId),
+          onRefresh: () => refreshRecommendation()
+        )
+      ]
+    );
+  }
+}
+```
+
+**Performance Optimization**:
+- Algorithm execution: <2s
+- Database query: Use indexes on `primary_muscle`, `difficulty`, `intent_type`
+- Caching: Redis cache for frequently requested combinations
+- Offline support: Pre-load 10 common scenarios locally
+
+---
+
+### 3.2 Replace Single Exercise (替换单个动作)
+
+**用途**: 用户点击「替换此卡」或选择「更温和」时调用
+
+```typescript
+POST /api/v1/recommendations/replace
+```
+
+**Implementation**: NestJS
+
+**Request**:
+```json
+{
+  "sessionId": "session-456",
+  "exercisePosition": 2,         // 替换第几个动作 (1-3)
+  "currentExerciseId": "ex-002", // 当前动作ID
+  "filters": {
+    "intensity": "lighter",      // 可选: "lighter" | "harder" | "same"
+    "equipment": ["chair"],      // 可选: 保持相同器材
+    "targetMuscle": "LEGS",      // 可选: 指定目标部位
+    "excludeIds": ["ex-001", "ex-003"]  // 排除已选动作
+  }
+}
+```
+
+**Response**:
+```json
+{
+  "success": true,
+  "newExercise": {
+    "id": "exercise-005",
+    "code": "chair_squat_light",
+    "name": "Chair Squat (Light)",
+    // ... 完整动作信息
+  },
+  "updatedSession": {
+    "sessionId": "session-456",
+    "exercises": [
+      { /* exercise 1 */ },
+      { /* NEW exercise 2 */ },  // 已替换
+      { /* exercise 3 */ }
+    ]
+  },
+  "message": "Exercise replaced successfully"
+}
+```
+
+**Frontend Usage**:
+```dart
+// 替换动作
+onReplacePressed(int position) async {
+  final result = await apiService.replaceExercise(
+    sessionId: sessionId,
+    position: position,
+    filters: { 'intensity': 'lighter' }
+  );
+
+  setState(() {
+    exercises[position - 1] = result['new_exercise'];
+  });
+
+  showSnackBar('Exercise replaced!');
+}
+```
+
+---
+
+### 3.3 Get Alternative Exercises (获取替换候选)
+
+**用途**: 获取更多替换候选动作 (用于 Bottom Sheet 显示)
+
+```typescript
+GET /api/v1/recommendations/alternatives?sessionId={sessionId}&filters={filters}
+```
+
+**Implementation**: NestJS
+
+**Request Query Params**:
+```
+sessionId: session-456
+equipment: chair,wall
+targetMuscle: NECK_SHOULDER
+intensity: lighter
+limit: 10
+```
+
+**Response**:
+```json
+{
+  "alternatives": [
+    {
+      "id": "exercise-010",
+      "code": "gentle_neck_stretch",
+      "name": "Gentle Neck Stretch",
+      "thumbnailUrl": "...",
+      "difficulty": "BEGINNER",
+      "primaryMuscle": "NECK_SHOULDER",
+      "equipment": ["hands_free"],
+      "tags": ["stretch", "silent", "gentle"],
+      "benefits": "Relieves neck tension",
+      "duration": 20,
+      "sets": 1
+    }
+    // ... 9 more
+  ],
+  "filterSummary": {
+    "equipment": ["chair", "wall"],
+    "targetMuscle": "NECK_SHOULDER",
+    "intensity": "lighter"
+  }
+}
+```
+
+---
+
+### 3.4 Create/Update Workout Session (创建/更新训练会话)
+
+**用途**: 保存训练会话状态 (开始跟练、完成训练)
+
+```typescript
+// 创建会话 (在快速推荐时自动创建)
+POST /rest/v1/workout_sessions
+
+// 更新会话状态
+PATCH /rest/v1/workout_sessions/{sessionId}
+```
+
+**Implementation**: Supabase Auto REST API
+
+**Update Request** (开始跟练):
+```json
+{
+  "status": "IN_PROGRESS",
+  "startedAt": "2024-10-30T10:35:00Z"
+}
+```
+
+**Update Request** (完成训练):
+```json
+{
+  "status": "COMPLETED",
+  "completedAt": "2024-10-30T10:36:30Z",
+  "actualDurationSec": 90,
+  "completedExerciseCount": 3,
+  "skippedExerciseCount": 0,
+  "pausedDurationSec": 10,
+  "userFeedback": "GOOD"
+}
+```
+
+**Frontend Usage**:
+```dart
+// 开始跟练
+onStartWorkout() async {
+  await supabase
+    .from('workout_sessions')
+    .update({
+      'status': 'IN_PROGRESS',
+      'started_at': DateTime.now().toIso8601String()
+    })
+    .eq('id', sessionId);
+
+  navigateToFollowMode();
+}
+
+// 完成训练
+onWorkoutCompleted() async {
+  await supabase
+    .from('workout_sessions')
+    .update({
+      'status': 'COMPLETED',
+      'completed_at': DateTime.now().toIso8601String(),
+      'actual_duration_sec': actualDuration,
+      'completed_exercise_count': completedCount
+    })
+    .eq('id', sessionId);
+
+  navigateToResultCardPage(sessionId);
+}
+```
+
+---
+
+## 🎨 ResultCardPage APIs
+
+### Page Overview
+- **Page Goal**: 生成美观的训练成果分享卡，完成分享闭环
+- **Key Features**: 卡片生成, 稀有度计算, 风格选择, 分享
+- **Performance Target**: 卡片生成 ≤800ms
+
+---
+
+### 4.1 Generate Share Card (生成分享卡片)
+
+**用途**: 训练完成后生成成果卡片
+
+```typescript
+POST /api/v1/cards/generate
+```
+
+**Implementation**: NestJS + Canvas/Sharp
+
+**Why NestJS**: 图像合成、稀有度计算、数据聚合等复杂逻辑
+
+**Request**:
+```json
+{
+  "sessionId": "session-456",
+  "template": "classic",          // "classic" | "minimal" | "vibrant"
+  "style": {
+    "hideRealPhotos": true,       // 使用插画而非实拍
+    "autoBlurFaces": true,        // 自动人脸模糊
+    "customText": "Keep going!"   // 可选: 自定义文案
+  }
+}
+```
+
+**Response**:
+```json
+{
+  "cardId": "card-789",
+  "cardImageUrl": "https://storage.supabase.co/share-cards/user123/card-789.png",
+
+  // 稀有度信息
+  "rarity": {
+    "level": "RARE",               // COMMON | UNCOMMON | RARE | EPIC | LEGENDARY
+    "score": 0.15,                 // 稀有度分数 (0-1, 越小越稀有)
+    "equipmentSeries": "Furniture Series",
+    "specialTags": ["Silent Mode", "7-Day Streak"],
+    "cityEdition": null            // 城市限定 (如 "Beijing Limited")
+  },
+
+  // 卡片元数据
+  "metadata": {
+    "totalDuration": 180,
+    "exercisesCompleted": 3,
+    "streak": 7,
+    "equipmentUsed": ["chair", "wall"],
+    "scenario": "office",
+    "difficulty": "BEGINNER",
+    "benefits": [
+      "Relieves neck stiffness",
+      "Opens upper back mobility",
+      "Stabilizes core muscles"
+    ]
+  },
+
+  // 分享文案
+  "shareText": "I just completed a 3-min stretch workout using chair+wall and got a RARE card! 🎉 #SnapAnywhere #SnapRep",
+
+  // DeepLink (一键同款)
+  "deepLink": "snaprep://workout?equipment=chair,wall&intent=STRETCH&muscles=CHEST,BACK&ref=card-789",
+
+  // 生成信息
+  "generatedAt": "2024-10-30T10:37:00Z",
+  "renderTime": 650  // 渲染耗时 (ms)
+}
+```
+
+**Implementation Logic** (NestJS):
+```typescript
+@Injectable()
+export class CardGenerationService {
+  constructor(
+    private prisma: PrismaService,
+    private rarityService: RarityService,
+    private storageService: StorageService
+  ) {}
+
+  async generateCard(dto: GenerateCardDto): Promise<ShareCardResponse> {
+    // 1. 获取训练会话数据
+    const session = await this.prisma.workoutSession.findUnique({
+      where: { id: dto.sessionId },
+      include: {
+        sessionExercises: {
+          include: { exercise: { include: { exerciseEquipment: true } } }
+        },
+        user: true
+      }
+    });
+
+    // 2. 计算稀有度 (基于全局7日频次)
+    const rarity = await this.rarityService.calculateRarity({
+      equipment: session.equipment,
+      scenario: session.scenario,
+      userId: session.userId
+    });
+
+    // 3. 准备卡片数据
+    const cardData = {
+      equipment: session.equipment,
+      scenario: session.scenario,
+      rarity: rarity,
+      benefits: session.sessionExercises.map(se => se.exercise.benefits),
+      duration: session.actualDurationSec,
+      streak: await this.getUserStreak(session.userId),
+      specialTags: this.getSpecialTags(session)
+    };
+
+    // 4. 图像合成 (使用 Sharp 或 Canvas)
+    const cardImage = await this.composeCardImage({
+      template: dto.template,
+      data: cardData,
+      style: dto.style
+    });
+
+    // 5. 上传到 Supabase Storage
+    const imageUrl = await this.storageService.uploadCardImage(
+      cardImage,
+      `${session.userId}/${dto.sessionId}.png`
+    );
+
+    // 6. 保存到数据库 (share_cards表)
+    const shareCard = await this.prisma.shareCard.create({
+      data: {
+        userId: session.userId,
+        sessionId: session.id,
+        imageUrl: imageUrl,
+        rarity: rarity.level,
+        rarityScore: rarity.score,
+        equipmentSeries: rarity.equipmentSeries,
+        specialTags: cardData.specialTags,
+        isPublic: true,
+        template: dto.template
+      }
+    });
+
+    // 7. 生成 DeepLink
+    const deepLink = this.generateDeepLink(session);
+
+    // 8. 格式化返回
+    return {
+      cardId: shareCard.id,
+      cardImageUrl: imageUrl,
+      rarity: rarity,
+      metadata: cardData,
+      shareText: this.generateShareText(cardData, rarity),
+      deepLink: deepLink,
+      generatedAt: new Date(),
+      renderTime: performance.now() - startTime
+    };
+  }
+
+  // 图像合成 (Sharp)
+  private async composeCardImage(params: ComposeParams): Promise<Buffer> {
+    const { template, data, style } = params;
+
+    // 加载模板
+    const templatePath = `./assets/templates/${template}.png`;
+    let image = sharp(templatePath);
+
+    // 添加器材图标
+    const equipmentIcon = await this.getEquipmentIcon(data.equipment[0]);
+
+    // 添加稀有度背景效果
+    const rarityOverlay = await this.getRarityOverlay(data.rarity.level);
+
+    // 合成图层
+    image = image.composite([
+      { input: rarityOverlay, gravity: 'center' },
+      { input: equipmentIcon, gravity: 'north', top: 100 },
+      // ... 添加文字、标签等
+    ]);
+
+    // 压缩输出
+    return image
+      .png({ quality: 90, compressionLevel: 9 })
+      .toBuffer();
+  }
+}
+```
+
+**Frontend Usage**:
+```dart
+// ResultCardPage
+class ResultCardPage extends StatefulWidget {
+  final String sessionId;
+
+  @override
+  _ResultCardPageState createState() => _ResultCardPageState();
+}
+
+class _ResultCardPageState extends State<ResultCardPage> {
+  ShareCard? card;
+  bool isGenerating = true;
+  String selectedTemplate = 'classic';
+
+  @override
+  void initState() {
+    super.initState();
+    generateCard();
+  }
+
+  Future<void> generateCard() async {
+    setState(() => isGenerating = true);
+
+    final result = await apiService.generateCard(
+      sessionId: widget.sessionId,
+      template: selectedTemplate,
+      style: {
+        'hide_real_photos': true,
+        'auto_blur_faces': true
+      }
+    );
+
+    setState(() {
+      card = result;
+      isGenerating = false;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (isGenerating) {
+      return Center(
+        child: Column(
+          children: [
+            CircularProgressIndicator(),
+            Text('Generating your card...'),
+            Text('Target: <800ms')
+          ]
+        )
+      );
+    }
+
+    return Column(
+      children: [
+        // 卡片预览
+        CardPreview(
+          imageUrl: card.cardImageUrl,
+          rarity: card.rarity
+        ),
+
+        // 风格选择
+        TemplateSelector(
+          selected: selectedTemplate,
+          options: ['classic', 'minimal', 'vibrant'],
+          onChanged: (template) {
+            setState(() => selectedTemplate = template);
+            generateCard(); // 重新生成
+          }
+        ),
+
+        // 底部操作
+        Row(
+          children: [
+            ElevatedButton.icon(
+              icon: Icon(Icons.save),
+              label: Text('Save to Album'),
+              onPressed: () => saveToAlbum(card.cardImageUrl)
+            ),
+            ElevatedButton.icon(
+              icon: Icon(Icons.share),
+              label: Text('Share'),
+              onPressed: () => shareCard(card)
+            )
+          ]
+        )
+      ]
+    );
+  }
+
+  Future<void> shareCard(ShareCard card) async {
+    await Share.share(
+      '${card.shareText}\n\n${card.deepLink}',
+      subject: 'My SnapRep Workout Card'
+    );
+  }
+}
+```
+
+**Performance Optimization**:
+- Image generation: Use Sharp (faster than Canvas for Node.js)
+- Template pre-loading: Cache templates in memory
+- Parallel processing: Generate multiple sizes concurrently
+- CDN: Serve generated cards via Supabase CDN
+
+---
+
+### 4.2 Calculate Rarity (计算稀有度)
+
+**用途**: 计算器材组合的稀有度等级
+
+```typescript
+GET /api/v1/rarity/calculate/{equipmentCode}
+```
+
+**Implementation**: NestJS
+
+**Why NestJS**: 需要查询全局统计数据、计算频次排名
+
+**Request**:
+```
+GET /api/v1/rarity/calculate/chair?scenario=office&userId=user-123
+```
+
+**Response**:
+```json
+{
+  "equipmentCode": "chair",
+  "currentRarity": {
+    "level": "COMMON",
+    "score": 0.85,               // 0-1, 越小越稀有
+    "globalRank": 2,              // 全球使用频次排名
+    "dailyUsage": 15420,          // 今日全球使用次数
+    "weeklyUsage": 89567          // 本周全球使用次数
+  },
+  "trends": {
+    "lastWeek": "COMMON",
+    "prediction": "UNCOMMON",     // 下周预测
+    "changeReason": "Usage decreased by 15%"
+  },
+  "regionStats": {
+    "region": "Asia",
+    "regionRank": 1,
+    "cityBonus": "Beijing Limited Edition"  // 城市彩蛋
+  },
+  "thresholds": {
+    "LEGENDARY": 0.01,  // Top 1%
+    "EPIC": 0.05,       // Top 5%
+    "RARE": 0.15,       // Top 15%
+    "UNCOMMON": 0.40,   // Top 40%
+    "COMMON": 1.0       // Rest
+  }
+}
+```
+
+**Algorithm** (NestJS):
+```typescript
+@Injectable()
+export class RarityService {
+  async calculateRarity(params: RarityParams): Promise<RarityResult> {
+    const { equipment, scenario, userId } = params;
+
+    // 1. 查询全局7日频次 (从 equipment_frequencies 表)
+    const globalStats = await this.prisma.equipmentFrequency.findMany({
+      where: {
+        equipmentCode: { in: equipment },
+        date: { gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) }
+      }
+    });
+
+    // 2. 计算总使用次数
+    const totalUsage = globalStats.reduce((sum, stat) => sum + stat.count, 0);
+
+    // 3. 获取所有器材的总使用次数
+    const allEquipmentUsage = await this.getTotalEquipmentUsage();
+
+    // 4. 计算稀有度分数 (相对频次)
+    const score = totalUsage / allEquipmentUsage;
+
+    // 5. 确定稀有度等级
+    let level: RarityLevel;
+    if (score <= 0.01) level = 'LEGENDARY';
+    else if (score <= 0.05) level = 'EPIC';
+    else if (score <= 0.15) level = 'RARE';
+    else if (score <= 0.40) level = 'UNCOMMON';
+    else level = 'COMMON';
+
+    // 6. 确定器材系列
+    const series = this.getEquipmentSeries(equipment[0]);
+
+    // 7. 检查城市彩蛋
+    const cityBonus = await this.checkCityBonus(userId, scenario);
+
+    return {
+      level,
+      score,
+      equipmentSeries: series,
+      globalRank: await this.getGlobalRank(equipment),
+      cityBonus
+    };
+  }
+
+  private getEquipmentSeries(equipmentCode: string): string {
+    const seriesMap = {
+      'chair': 'Furniture Series',
+      'sofa': 'Furniture Series',
+      'wall': 'Wall Series',
+      'bottle': 'Bottle Series',
+      'backpack': 'Carry Series',
+      // ...
+    };
+    return seriesMap[equipmentCode] || 'Creative Series';
+  }
+}
+```
+
+---
+
+### 4.3 Upload Card Image (上传卡片图片)
+
+**用途**: 将生成的卡片图片上传到 Supabase Storage
+
+**Implementation**: Supabase Storage API
+
+**Frontend Usage**:
+```dart
+// 上传卡片图片
+Future<String> uploadCardImage(Uint8List imageBytes, String userId, String sessionId) async {
+  final fileName = '$userId/$sessionId.png';
+
+  final response = await supabase.storage
+    .from('share-cards')
+    .uploadBinary(fileName, imageBytes);
+
+  if (response.error != null) {
+    throw Exception('Failed to upload card image');
+  }
+
+  // 获取公开 URL
+  final publicUrl = supabase.storage
+    .from('share-cards')
+    .getPublicUrl(fileName);
+
+  return publicUrl;
+}
+```
+
+**Storage Bucket Configuration**:
+```sql
+-- Supabase Storage bucket setup
+INSERT INTO storage.buckets (id, name, public)
+VALUES ('share-cards', 'share-cards', true);
+
+-- RLS policy: 用户只能上传自己的卡片
+CREATE POLICY "Users can upload own cards" ON storage.objects
+FOR INSERT TO authenticated
+USING (
+  bucket_id = 'share-cards' AND
+  (storage.foldername(name))[1] = auth.uid()::text
+);
+
+-- RLS policy: 所有人可以查看公开卡片
+CREATE POLICY "Public cards are viewable" ON storage.objects
+FOR SELECT TO anon, authenticated
+USING (bucket_id = 'share-cards');
+```
+
+---
+
+### 4.4 Save Card Record (保存卡片记录)
+
+**用途**: 保存卡片元数据到数据库
+
+```typescript
+POST /rest/v1/share_cards
+```
+
+**Implementation**: Supabase Auto REST API
+
+**Request**:
+```json
+{
+  "userId": "user-123",
+  "sessionId": "session-456",
+  "imageUrl": "https://storage.supabase.co/share-cards/user123/session-456.png",
+  "rarity": "RARE",
+  "rarityScore": 0.15,
+  "equipmentSeries": "Furniture Series",
+  "specialTags": ["Silent Mode", "7-Day Streak"],
+  "cityEdition": null,
+  "themeWeek": null,
+  "isPublic": true,
+  "template": "classic"
+}
+```
+
+**Response**:
+```json
+{
+  "id": "card-789",
+  "userId": "user-123",
+  "sessionId": "session-456",
+  "imageUrl": "https://...",
+  "rarity": "RARE",
+  "createdAt": "2024-10-30T10:37:00Z",
+  // ... other fields
+}
+```
+
+---
+
+## 👤 MyPage APIs
+
+### Page Overview
+- **Page Goal**: 展示卡片收集、训练历史、个人设置
+- **Key Modules**: Album (卡片收集), History (日历历史), Settings (设置)
+
+---
+
+## 👤 MyPage - Cards Album
+
+### 5.1 Get My Cards (获取我的卡片)
+
+**用途**: 获取用户收集的所有卡片 (支持筛选、分页)
+
+```typescript
+GET /rest/v1/share_cards?userId=eq.{userId}&select=*&order=createdAt.desc
+```
+
+**Implementation**: Supabase Auto REST API
+
+**Request Query Params**:
+```
+userId: eq.user-123
+rarity: eq.RARE               // 可选: 筛选稀有度
+equipmentSeries: eq.Furniture Series  // 可选: 筛选系列
+order: createdAt.desc
+limit: 50
+offset: 0
+```
+
+**Response**:
+```json
+{
+  "data": [
+    {
+      "id": "card-789",
+      "userId": "user-123",
+      "sessionId": "session-456",
+      "imageUrl": "https://storage.supabase.co/share-cards/user123/card-789.png",
+      "rarity": "RARE",
+      "rarityScore": 0.15,
+      "equipmentSeries": "Furniture Series",
+      "specialTags": ["Silent Mode", "7-Day Streak"],
+      "cityEdition": null,
+      "themeWeek": null,
+      "template": "classic",
+      "isPublic": true,
+      "createdAt": "2024-10-30T10:37:00Z"
+    }
+    // ... more cards
+  ],
+  "count": 34,
+  "pages": 1
+}
+```
+
+**Frontend Usage**:
+```dart
+// MyPage - Cards Tab
+class CardsAlbumTab extends StatefulWidget {
+  @override
+  _CardsAlbumTabState createState() => _CardsAlbumTabState();
+}
+
+class _CardsAlbumTabState extends State<CardsAlbumTab> {
+  List<ShareCard> cards = [];
+  String? rarityFilter;
+  String? seriesFilter;
+
+  @override
+  void initState() {
+    super.initState();
+    loadCards();
+  }
+
+  Future<void> loadCards() async {
+    var query = supabase
+      .from('share_cards')
+      .select('*')
+      .eq('user_id', currentUserId)
+      .order('created_at', ascending: false);
+
+    // 应用筛选
+    if (rarityFilter != null) {
+      query = query.eq('rarity', rarityFilter);
+    }
+    if (seriesFilter != null) {
+      query = query.eq('equipment_series', seriesFilter);
+    }
+
+    final response = await query;
+
+    setState(() {
+      cards = response.map((json) => ShareCard.fromJson(json)).toList();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        // 筛选栏
+        FilterBar(
+          rarityFilter: rarityFilter,
+          seriesFilter: seriesFilter,
+          onRarityChanged: (value) {
+            setState(() => rarityFilter = value);
+            loadCards();
+          },
+          onSeriesChanged: (value) {
+            setState(() => seriesFilter = value);
+            loadCards();
+          }
+        ),
+
+        // 卡片网格
+        GridView.builder(
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 3,
+            childAspectRatio: 104 / 156,
+            mainAxisSpacing: 12,
+            crossAxisSpacing: 12
+          ),
+          itemCount: cards.length,
+          itemBuilder: (ctx, i) => CardThumbnail(
+            card: cards[i],
+            onTap: () => showCardDetail(cards[i])
+          )
+        )
+      ]
+    );
+  }
+}
+```
+
+---
+
+### 5.2 Get Card Detail (获取卡片详情)
+
+**用途**: 查看单张卡片的详细信息
+
+```typescript
+GET /rest/v1/share_cards/{cardId}?select=*,workout_session(*)
+```
+
+**Implementation**: Supabase Auto REST API
+
+**Response**:
+```json
+{
+  "id": "card-789",
+  "userId": "user-123",
+  "sessionId": "session-456",
+  "imageUrl": "https://...",
+  "rarity": "RARE",
+  "rarityScore": 0.15,
+  "equipmentSeries": "Furniture Series",
+  "specialTags": ["Silent Mode", "7-Day Streak"],
+  "template": "classic",
+  "createdAt": "2024-10-30T10:37:00Z",
+
+  // 关联的训练会话
+  "workoutSession": {
+    "id": "session-456",
+    "intentType": "STRETCH",
+    "difficulty": "BEGINNER",
+    "actualDurationSec": 180,
+    "completedExerciseCount": 3,
+    "sessionExercises": [
+      {
+        "exercise": {
+          "name": "Wall Chest Opener",
+          "benefits": "Relieves neck stiffness"
+        }
+      }
+      // ... more exercises
+    ]
+  }
+}
+```
+
+**Frontend Usage**:
+```dart
+// 卡片详情 Bottom Sheet
+showCardDetail(ShareCard card) {
+  showModalBottomSheet(
+    context: context,
+    isScrollControlled: true,
+    builder: (ctx) => DraggableScrollableSheet(
+      initialChildSize: 0.7,
+      builder: (ctx, scrollController) => CardDetailSheet(
+        card: card,
+        onReplay: () => replayWorkout(card.sessionId),
+        onShare: () => shareCard(card)
+      )
+    )
+  );
+}
+
+// 一键同款
+Future<void> replayWorkout(String sessionId) async {
+  final session = await supabase
+    .from('workout_sessions')
+    .select('*, session_exercises(*, exercise(*))')
+    .eq('id', sessionId)
+    .single();
+
+  // 复刻相同条件
+  navigateToResultPage(
+    intent: session['intent_type'],
+    equipment: session['equipment'],
+    scenario: session['scenario']
+  );
+}
+```
+
+---
+
+### 5.3 Update Card (更新卡片)
+
+**用途**: 更新卡片设置 (如切换皮肤、设置公开/私密)
+
+```typescript
+PATCH /rest/v1/share_cards/{cardId}
+```
+
+**Implementation**: Supabase Auto REST API
+
+**Request**:
+```json
+{
+  "template": "minimal",    // 切换皮肤
+  "isPublic": false         // 设为私密
+}
+```
+
+---
+
+## 👤 MyPage - History
+
+### 5.4 Get Workout History (获取训练历史)
+
+**用途**: 获取用户的训练历史记录
+
+```typescript
+GET /rest/v1/workout_sessions?userId=eq.{userId}&status=eq.COMPLETED&select=*,sessionExercises(*)&order=completedAt.desc
+```
+
+**Implementation**: Supabase Auto REST API
+
+**Request Query Params**:
+```
+userId: eq.user-123
+status: eq.COMPLETED
+completedAt: gte.2024-10-01  // 可选: 日期范围筛选
+order: completedAt.desc
+limit: 30
+```
+
+**Response**:
+```json
+{
+  "data": [
+    {
+      "id": "session-456",
+      "userId": "user-123",
+      "status": "COMPLETED",
+      "intentType": "STRETCH",
+      "difficulty": "BEGINNER",
+      "scenario": "office",
+      "startedAt": "2024-10-30T10:30:00Z",
+      "completedAt": "2024-10-30T10:33:00Z",
+      "actualDurationSec": 180,
+      "completedExerciseCount": 3,
+      "skippedExerciseCount": 0,
+      "userFeedback": "GOOD",
+      "sessionExercises": [
+        {
+          "exerciseId": "ex-001",
+          "position": 1,
+          "completedSets": 1,
+          "actualDurationSec": 60,
+          "exercise": {
+            "name": "Wall Chest Opener",
+            "primaryMuscle": "CHEST"
+          }
+        }
+        // ... more exercises
+      ]
+    }
+    // ... more sessions
+  ]
+}
+```
+
+**Frontend Usage**:
+```dart
+// 训练历史列表
+class HistoryTab extends StatefulWidget {
+  @override
+  _HistoryTabState createState() => _HistoryTabState();
+}
+
+class _HistoryTabState extends State<HistoryTab> {
+  List<WorkoutSession> sessions = [];
+
+  Future<void> loadHistory() async {
+    final response = await supabase
+      .from('workout_sessions')
+      .select('*, session_exercises(*, exercise(*))')
+      .eq('user_id', currentUserId)
+      .eq('status', 'COMPLETED')
+      .order('completed_at', ascending: false)
+      .limit(30);
+
+    setState(() {
+      sessions = response.map((json) => WorkoutSession.fromJson(json)).toList();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView.builder(
+      itemCount: sessions.length,
+      itemBuilder: (ctx, i) => WorkoutHistoryCard(
+        session: sessions[i],
+        onReplay: () => replaySession(sessions[i]),
+        onViewCard: () => viewCard(sessions[i].id)
+      )
+    );
+  }
+}
+```
+
+---
+
+### 5.5 Get Daily Training Stats (获取每日统计)
+
+**用途**: 获取每日训练聚合数据 (用于月历视图)
+
+```typescript
+GET /rest/v1/daily_trainings?userId=eq.{userId}&date=gte.2024-10-01&date=lte.2024-10-31
+```
+
+**Implementation**: Supabase Auto REST API
+
+**Response**:
+```json
+{
+  "data": [
+    {
+      "id": "daily-001",
+      "userId": "user-123",
+      "date": "2024-10-29",
+      "totalSessions": 2,
+      "totalDurationSec": 360,
+      "totalExercises": 6,
+      "completedExercises": 6,
+      "primaryDifficulty": "BEGINNER",
+      "topScenario": "office",
+      "topEquipment": ["chair", "wall"],
+      "isStreakDay": true,
+      "specialTags": ["Silent Mode", "2-Day Streak"]
+    },
+    {
+      "id": "daily-002",
+      "userId": "user-123",
+      "date": "2024-10-30",
+      "totalSessions": 1,
+      "totalDurationSec": 180,
+      // ...
+    }
+  ]
+}
+```
+
+**Frontend Usage**:
+```dart
+// 月历视图
+class CalendarView extends StatefulWidget {
+  @override
+  _CalendarViewState createState() => _CalendarViewState();
+}
+
+class _CalendarViewState extends State<CalendarView> {
+  Map<DateTime, DailyTraining> dailyStats = {};
+  DateTime selectedDate = DateTime.now();
+
+  Future<void> loadMonthStats(int year, int month) async {
+    final startDate = DateTime(year, month, 1);
+    final endDate = DateTime(year, month + 1, 0);
+
+    final response = await supabase
+      .from('daily_trainings')
+      .select('*')
+      .eq('user_id', currentUserId)
+      .gte('date', startDate.toIso8601String())
+      .lte('date', endDate.toIso8601String());
+
+    setState(() {
+      dailyStats = Map.fromEntries(
+        response.map((json) {
+          final training = DailyTraining.fromJson(json);
+          return MapEntry(training.date, training);
+        })
+      );
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return TableCalendar(
+      focusedDay: selectedDate,
+      firstDay: DateTime(2020),
+      lastDay: DateTime.now(),
+      calendarBuilders: CalendarBuilders(
+        // 自定义日期标记
+        markerBuilder: (ctx, date, events) {
+          final stats = dailyStats[date];
+          if (stats == null) return null;
+
+          return Row(
+            children: [
+              // 难度圆点
+              Container(
+                width: 8,
+                height: 8,
+                decoration: BoxDecoration(
+                  color: getDifficultyColor(stats.primaryDifficulty),
+                  shape: BoxShape.circle
+                )
+              ),
+              // 特殊徽标
+              if (stats.specialTags.contains('Silent Mode'))
+                Icon(Icons.volume_off, size: 12)
+            ]
+          );
+        }
+      ),
+      onDaySelected: (selectedDay, focusedDay) {
+        setState(() => selectedDate = selectedDay);
+        showDayDetail(selectedDay);
+      }
+    );
+  }
+}
+```
+
+---
+
+### 5.6 Get Calendar View (获取月历视图)
+
+**用途**: 获取格式化的月历数据 (包含连击高亮)
+
+```typescript
+GET /api/v1/users/{userId}/calendar?year=2024&month=10
+```
+
+**Implementation**: NestJS
+
+**Why NestJS**: 需要计算连击天数、格式化月历数据
+
+**Response**:
+```json
+{
+  "year": 2024,
+  "month": 10,
+  "calendar": {
+    "2024-10-01": null,
+    "2024-10-02": {
+      "totalSessions": 1,
+      "totalDuration": 180,
+      "difficulty": "BEGINNER",
+      "isStreakDay": true,
+      "specialTags": ["Silent Mode"]
+    },
+    "2024-10-03": {
+      "totalSessions": 2,
+      "totalDuration": 360,
+      "difficulty": "INTERMEDIATE",
+      "isStreakDay": true,
+      "specialTags": ["2-Day Streak"]
+    }
+    // ... rest of month
+  },
+  "summary": {
+    "activeDays": 18,
+    "totalDuration": 3240,
+    "longestStreak": 7,
+    "currentStreak": 3,
+    "favoriteEquipment": ["chair", "wall", "bottle"],
+    "favoriteScenario": "office"
+  },
+  "streaks": [
+    {
+      "startDate": "2024-10-23",
+      "endDate": "2024-10-29",
+      "length": 7
+    }
+  ]
+}
+```
+
+---
+
+## 👤 MyPage - Settings
+
+### 5.7 Get User Profile (获取用户信息)
+
+**用途**: 获取用户个人信息和设置
+
+```typescript
+GET /rest/v1/users/{userId}
+```
+
+**Implementation**: Supabase Auto REST API
+
+**Response**:
+```json
+{
+  "id": "user-123",
+  "email": "user@example.com",
+  "name": "John Doe",
+  "avatarUrl": "https://...",
+
+  // 统计数据
+  "totalWorkouts": 45,
+  "totalDurationSec": 8100,
+  "currentStreak": 7,
+  "longestStreak": 12,
+
+  // 偏好设置
+  "preferredIntents": ["STRETCH", "RELAX"],
+  "preferredDifficulty": "BEGINNER",
+  "preferredDuration": 60,
+  "avoidEquipment": [],
+
+  // 通知设置
+  "streakReminder": true,
+  "themeWeekReminder": true,
+  "quietHoursStart": "22:00",
+  "quietHoursEnd": "08:00",
+
+  // 隐私设置
+  "hideRealPhotos": true,
+  "autoBlurFaces": true,
+  "allowDataSync": false,
+
+  // 应用设置
+  "language": "en",
+  "theme": "auto"
+}
+```
+
+---
+
+### 5.8 Update User Settings (更新用户设置)
+
+**用途**: 更新用户设置
+
+```typescript
+PATCH /rest/v1/users/{userId}
+```
+
+**Implementation**: Supabase Auto REST API
+
+**Request Examples**:
+
+```json
+// 更新通知设置
+{
+  "streakReminder": false,
+  "quietHoursStart": "23:00",
+  "quietHoursEnd": "07:00"
+}
+
+// 更新隐私设置
+{
+  "hideRealPhotos": true,
+  "autoBlurFaces": true
+}
+
+// 更新偏好设置
+{
+  "preferredIntents": ["STRETCH"],
+  "preferredDifficulty": "INTERMEDIATE",
+  "preferredDuration": 120
+}
+```
+
+**Frontend Usage**:
+```dart
+// 设置页面
+class SettingsTab extends StatelessWidget {
+  Future<void> updateSetting(String key, dynamic value) async {
+    await supabase
+      .from('users')
+      .update({key: value})
+      .eq('id', currentUserId);
+
+    showSnackBar('Settings updated');
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView(
+      children: [
+        // 通知设置
+        SwitchListTile(
+          title: Text('Streak Reminder'),
+          value: user.streakReminder,
+          onChanged: (value) => updateSetting('streak_reminder', value)
+        ),
+
+        // 隐私设置
+        SwitchListTile(
+          title: Text('Hide Real Photos'),
+          subtitle: Text('Use illustrations instead of photos'),
+          value: user.hideRealPhotos,
+          onChanged: (value) => updateSetting('hide_real_photos', value)
+        ),
+
+        // 语言设置
+        ListTile(
+          title: Text('Language'),
+          subtitle: Text(user.language),
+          onTap: () => showLanguagePicker()
+        )
+      ]
+    );
+  }
+}
+```
+
+---
+
+### 5.9 Authentication APIs (认证)
+
+**Implementation**: Supabase Auth (无需自定义 API)
+
+#### 匿名登录
+```dart
+// 匿名登录
+final response = await supabase.auth.signInAnonymously();
+if (response.user != null) {
+  print('Signed in anonymously: ${response.user!.id}');
+}
+```
+
+#### 邮箱登录 (Magic Link)
+```dart
+// 发送 Magic Link
+await supabase.auth.signInWithOtp(
+  email: 'user@example.com',
+  emailRedirectTo: 'snaprep://login-callback'
+);
+
+// 用户点击邮件链接后自动登录
+```
+
+#### OAuth 登录
+```dart
+// Google 登录
+await supabase.auth.signInWithOAuth(
+  Provider.google,
+  redirectTo: 'snaprep://login-callback'
+);
+
+// Apple 登录
+await supabase.auth.signInWithOAuth(
+  Provider.apple,
+  redirectTo: 'snaprep://login-callback'
+);
+```
+
+#### 登出
+```dart
+await supabase.auth.signOut();
+```
+
+---
+
+## 🔐 Authentication & Authorization
+
+### Supabase Auth Flow
+
+```
+1. 匿名用户 → supabase.auth.signInAnonymously()
+   ↓
+2. (可选) 绑定邮箱 → supabase.auth.signInWithOtp(email)
+   ↓
+3. (可选) OAuth 登录 → supabase.auth.signInWithOAuth(provider)
+```
+
+### RLS (Row Level Security) Policies
+
+```sql
+-- 用户只能访问自己的数据
+CREATE POLICY "Users own data access" ON workout_sessions
+FOR ALL TO authenticated
+USING (user_id = auth.uid());
+
+CREATE POLICY "Users own cards" ON share_cards
+FOR ALL TO authenticated
+USING (user_id = auth.uid());
+
+-- 公开数据可被所有人访问
+CREATE POLICY "Public scenarios readable" ON scenarios
+FOR SELECT TO anon, authenticated
+USING (is_active = true);
+
+CREATE POLICY "Public equipment readable" ON equipment
+FOR SELECT TO anon, authenticated
+USING (is_active = true);
+
+-- 分享卡片的访问控制
+CREATE POLICY "Public cards viewable" ON share_cards
+FOR SELECT TO anon, authenticated
+USING (is_public = true OR user_id = auth.uid());
+```
+
+### JWT Token Usage
+
+```dart
+// 所有 Supabase 请求自动携带 JWT
+final response = await supabase
+  .from('workout_sessions')
+  .select('*')
+  .eq('user_id', userId);  // RLS 自动验证 userId = auth.uid()
+
+// NestJS API 需要手动传递
+final response = await http.post(
+  Uri.parse('$apiUrl/api/v1/recommendations/quick'),
+  headers: {
+    'Authorization': 'Bearer ${supabase.auth.currentSession?.accessToken}',
+    'Content-Type': 'application/json'
+  },
+  body: jsonEncode({...})
+);
+```
+
+---
+
+## ⚡ Performance & Optimization
+
+### Caching Strategy
+
+```typescript
+// Redis 缓存策略
+- Equipment list: TTL 1 day
+- Scenario list: TTL 1 day
+- Exercise library: TTL 1 hour
+- User preferences: TTL 10 minutes
+- Rarity rankings: TTL 1 hour
+- Theme week info: TTL 6 hours
+```
+
+### Database Indexes
+
+```sql
+-- 关键索引
+CREATE INDEX CONCURRENTLY idx_exercises_recommendation
+ON exercises (primary_muscle, difficulty, intent_type, is_active);
+
+CREATE INDEX CONCURRENTLY idx_user_sessions_recent
+ON workout_sessions (user_id, completed_at DESC)
+WHERE status = 'COMPLETED';
+
+CREATE INDEX CONCURRENTLY idx_share_cards_user_rarity
+ON share_cards (user_id, rarity, created_at DESC);
+
+CREATE INDEX CONCURRENTLY idx_equipment_frequency_date
+ON equipment_frequencies (equipment_code, date DESC);
+```
+
+### API Response Time Targets
+
+| API Endpoint | Target | Notes |
+|--------------|--------|-------|
+| Quick Recommendation | <5s | 复杂算法 |
+| Card Generation | <800ms | 图像合成 |
+| AI Recognition | <2s | TensorFlow 推理 |
+| Supabase CRUD | <300ms | 自动 REST |
+| Rarity Calculation | <500ms | 全局统计 |
+
+---
+
+## 📚 Error Handling
+
+### Standard Error Format
+
+```json
+{
+  "success": false,
+  "error": {
+    "code": "VALIDATION_ERROR",
+    "message": "Invalid equipment code",
+    "details": {
+      "field": "equipment",
+      "value": "invalid_code"
+    },
+    "timestamp": "2024-10-30T10:30:00Z"
+  }
+}
+```
+
+### Common Error Codes
+
+| Code | HTTP Status | Description |
+|------|-------------|-------------|
+| `VALIDATION_ERROR` | 400 | 请求参数验证失败 |
+| `UNAUTHORIZED` | 401 | JWT token 无效或过期 |
+| `FORBIDDEN` | 403 | 无权访问该资源 |
+| `NOT_FOUND` | 404 | 资源不存在 |
+| `ALREADY_JOINED` | 409 | 已加入主题周 |
+| `THEME_WEEK_ENDED` | 410 | 主题周已结束 |
+| `RATE_LIMIT_EXCEEDED` | 429 | 请求频率超限 |
+| `INTERNAL_ERROR` | 500 | 服务器内部错误 |
+
+---
+
+## 🚀 Development Phases
+
+### Phase 1: Core APIs (2 weeks)
+- [x] Database design complete
+- [ ] Supabase RLS policy configuration
+- [ ] Basic CRUD APIs (via Supabase)
+- [ ] Quick recommendation API
+- [ ] Basic authentication integration
+
+### Phase 2: AI Features (1 week)
+- [ ] TensorFlow model integration
+- [ ] Equipment recognition API
+- [ ] Image preprocessing pipeline
+
+### Phase 3: Card System (1 week)
+- [ ] Card generation API
+- [ ] Rarity calculation engine
+- [ ] Sharing feature integration
+
+### Phase 4: Enhanced Features (1 week)
+- [ ] Theme week management API
+- [ ] User preference learning
+- [ ] Performance optimization
+- [ ] Monitoring & alerting
+
+---
+
+**Summary**: This page-based API design provides a clear mapping between frontend pages and backend APIs, making it easy for developers to understand which APIs are needed for each feature. The hybrid Supabase + NestJS architecture leverages built-in features while providing flexibility for complex business logic.
