@@ -1,0 +1,26 @@
+import { Module } from '@nestjs/common';
+import { CardsService } from './cards.service';
+import { CardsController } from './cards.controller';
+// import { CardsResolver } from './cards.resolver';  // Commented out - using REST API instead of GraphQL
+import { CardsDao } from './cards.dao';
+import { CardGeneratorService } from './services/card-generator.service';
+import { RarityCalculatorService } from './services/rarity-calculator.service';
+import { WorkoutSessionsModule } from '../workout-sessions/workout-sessions.module';
+
+/**
+ * Cards 模块
+ * 处理分享卡片的生成、管理和稀有度计算
+ */
+@Module({
+  imports: [WorkoutSessionsModule],
+  providers: [
+    CardsService,
+    // CardsResolver,  // Commented out - using REST API instead of GraphQL
+    CardsDao,
+    CardGeneratorService,
+    RarityCalculatorService,
+  ],
+  controllers: [CardsController],
+  exports: [CardsService, RarityCalculatorService],
+})
+export class CardsModule {}

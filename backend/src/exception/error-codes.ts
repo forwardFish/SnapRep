@@ -119,24 +119,59 @@ export const ErrorCodes = {
         ALGORITHM_ERROR: { code: 10005, message: 'RECOMMENDATION_ALGORITHM_ERROR' },
     },
 
-    // 卡片相关错误 (11000-11999)
-    CARD: {
-        GENERATION_FAILED: { code: 11000, message: 'CARD_GENERATION_FAILED' },
-        NOT_FOUND: { code: 11001, message: 'CARD_NOT_FOUND' },
-        UPLOAD_FAILED: { code: 11002, message: 'CARD_UPLOAD_FAILED' },
-        RARITY_CALCULATION_FAILED: { code: 11003, message: 'CARD_RARITY_CALCULATION_FAILED' },
-        TEMPLATE_NOT_FOUND: { code: 11004, message: 'CARD_TEMPLATE_NOT_FOUND' },
-        IMAGE_PROCESSING_FAILED: { code: 11005, message: 'CARD_IMAGE_PROCESSING_FAILED' },
+    // 动作相关错误 (11000-11999)
+    EXERCISE: {
+        NOT_FOUND: { code: 11000, message: 'EXERCISE_NOT_FOUND' },
+        FETCH_FAILED: { code: 11001, message: 'EXERCISE_FETCH_FAILED' },
+        CREATE_FAILED: { code: 11002, message: 'EXERCISE_CREATE_FAILED' },
+        UPDATE_FAILED: { code: 11003, message: 'EXERCISE_UPDATE_FAILED' },
+        DELETE_FAILED: { code: 11004, message: 'EXERCISE_DELETE_FAILED' },
+        INVALID_CODE: { code: 11005, message: 'EXERCISE_INVALID_CODE' },
     },
 
-    // AI识别相关错误 (12000-12999)
+    // 训练会话相关错误 (11500-11599)
+    WORKOUT_SESSION: {
+        NOT_FOUND: { code: 11500, message: 'WORKOUT_SESSION_NOT_FOUND' },
+        CREATE_FAILED: { code: 11501, message: 'WORKOUT_SESSION_CREATE_FAILED' },
+        FETCH_FAILED: { code: 11502, message: 'WORKOUT_SESSION_FETCH_FAILED' },
+        UPDATE_FAILED: { code: 11503, message: 'WORKOUT_SESSION_UPDATE_FAILED' },
+        INVALID_STATUS: { code: 11504, message: 'WORKOUT_SESSION_INVALID_STATUS' },
+    },
+
+    // 分享卡片相关错误 (12000-12999)
+    SHARE_CARD: {
+        CREATE_FAILED: { code: 12000, message: 'SHARE_CARD_CREATE_FAILED' },
+        FETCH_FAILED: { code: 12001, message: 'SHARE_CARD_FETCH_FAILED' },
+        UPDATE_FAILED: { code: 12002, message: 'SHARE_CARD_UPDATE_FAILED' },
+        NOT_FOUND: { code: 12003, message: 'SHARE_CARD_NOT_FOUND' },
+        GENERATION_FAILED: { code: 12004, message: 'SHARE_CARD_GENERATION_FAILED' },
+    },
+
+    // 稀有度相关错误 (13000-13999)
+    RARITY: {
+        FETCH_FAILED: { code: 13000, message: 'RARITY_FETCH_FAILED' },
+        UPSERT_FAILED: { code: 13001, message: 'RARITY_UPSERT_FAILED' },
+        CALCULATION_FAILED: { code: 13002, message: 'RARITY_CALCULATION_FAILED' },
+    },
+
+    // 卡片相关错误 (14000-14999)
+    CARD: {
+        GENERATION_FAILED: { code: 14000, message: 'CARD_GENERATION_FAILED' },
+        NOT_FOUND: { code: 14001, message: 'CARD_NOT_FOUND' },
+        UPLOAD_FAILED: { code: 14002, message: 'CARD_UPLOAD_FAILED' },
+        RARITY_CALCULATION_FAILED: { code: 14003, message: 'CARD_RARITY_CALCULATION_FAILED' },
+        TEMPLATE_NOT_FOUND: { code: 14004, message: 'CARD_TEMPLATE_NOT_FOUND' },
+        IMAGE_PROCESSING_FAILED: { code: 14005, message: 'CARD_IMAGE_PROCESSING_FAILED' },
+    },
+
+    // AI识别相关错误 (15000-15999)
     AI_RECOGNITION: {
-        MODEL_LOAD_FAILED: { code: 12000, message: 'AI_RECOGNITION_MODEL_LOAD_FAILED' },
-        IMAGE_PROCESSING_FAILED: { code: 12001, message: 'AI_RECOGNITION_IMAGE_PROCESSING_FAILED' },
-        INFERENCE_FAILED: { code: 12002, message: 'AI_RECOGNITION_INFERENCE_FAILED' },
-        NO_OBJECTS_DETECTED: { code: 12003, message: 'AI_RECOGNITION_NO_OBJECTS_DETECTED' },
-        INVALID_IMAGE_FORMAT: { code: 12004, message: 'AI_RECOGNITION_INVALID_IMAGE_FORMAT' },
-        IMAGE_TOO_LARGE: { code: 12005, message: 'AI_RECOGNITION_IMAGE_TOO_LARGE' },
+        MODEL_LOAD_FAILED: { code: 15000, message: 'AI_RECOGNITION_MODEL_LOAD_FAILED' },
+        IMAGE_PROCESSING_FAILED: { code: 15001, message: 'AI_RECOGNITION_IMAGE_PROCESSING_FAILED' },
+        INFERENCE_FAILED: { code: 15002, message: 'AI_RECOGNITION_INFERENCE_FAILED' },
+        NO_OBJECTS_DETECTED: { code: 15003, message: 'AI_RECOGNITION_NO_OBJECTS_DETECTED' },
+        INVALID_IMAGE_FORMAT: { code: 15004, message: 'AI_RECOGNITION_INVALID_IMAGE_FORMAT' },
+        IMAGE_TOO_LARGE: { code: 15005, message: 'AI_RECOGNITION_IMAGE_TOO_LARGE' },
     },
 
 

@@ -52,7 +52,10 @@
       "Bash(del package-lock.json)",
       "Bash(yarn run prisma:generate:*)",
       "Bash(node node_modules/prisma/build/index.js:*)",
-      "Bash(DATABASE_URL=\"postgresql://postgres:Snaprep%40123@db.tvjcmleckqovnieuexgu.supabase.co:5432/postgres?sslmode=require\" npx prisma db push:*)"
+      "Bash(DATABASE_URL=\"postgresql://postgres:Snaprep%40123@db.tvjcmleckqovnieuexgu.supabase.co:5432/postgres?sslmode=require\" npx prisma db push:*)",
+      "Bash(del \"d:\\lyh\\AI\\SnapRep\\docs\\业务流程.md\")",
+      "Bash(timeout 30 npm run start:dev:*)",
+      "Bash(npm run test:e2e:*)"
     ],
     "deny": [],
     "ask": []

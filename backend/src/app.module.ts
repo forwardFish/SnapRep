@@ -10,6 +10,9 @@ import { AppResolver } from './app.resolver';
 // import { PostsModule } from './posts/posts.module';
 import { ScenariosModule } from './scenarios/scenarios.module';
 import { EquipmentModule } from './equipment/equipment.module';
+import { ExercisesModule } from './exercises/exercises.module';
+import { WorkoutSessionsModule } from './workout-sessions/workout-sessions.module';
+import { CardsModule } from './cards/cards.module';
 import config from './common/configs/config';
 import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
 import { GqlConfigService } from './gql-config.service';
@@ -33,6 +36,9 @@ import { UsersModule } from './users/users.module';
     // PostsModule,
     ScenariosModule,
     EquipmentModule,
+    ExercisesModule,
+    WorkoutSessionsModule,
+    CardsModule,
     // TEMPORARY: Comment out PrismaModule until client generation issue is resolved
     PrismaModule.forRoot({
       isGlobal: true,
