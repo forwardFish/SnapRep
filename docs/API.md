@@ -55,12 +55,20 @@ n### 🆕 Pagination Standards
 | | 匿名登录 | `supabase.auth.signInAnonymously()` | - | Supabase Auth |
 | | 邮箱登录 | `supabase.auth.signInWithOtp()` | - | Supabase Auth |
 
+| **📊 User Analytics** | 更新用户分析数据 | `/api/v1/analytics/users/{id}` | PATCH | NestJS |
+| | 获取漏斗状态 | `/api/v1/analytics/users/{id}/funnel` | GET | NestJS |
+| | 获取用户指标概览 | `/api/v1/analytics/users/{id}/metrics` | GET | NestJS |
+| | 获取每日指标 | `/api/v1/analytics/users/{id}/daily` | GET | NestJS |
+| | 获取群组分析 | `/api/v1/analytics/cohorts` | GET | NestJS |
+| | 获取平台KPI指标 | `/api/v1/analytics/platform/kpis` | GET | NestJS |
+| | 更新每日指标 | `/api/v1/analytics/daily-metrics/batch` | POST | NestJS |
+
 ### API Count Summary
 - **Supabase Auto REST API**: 12 endpoints (基础 CRUD)
 - **Supabase Auth**: 2 flows (认证授权)
 - **Supabase Storage**: 1 bucket (媒体文件)
-- **NestJS Custom API**: 7 endpoints (复杂业务逻辑)
-- **Total**: ~22 API endpoints
+- **NestJS Custom API**: 14 endpoints (复杂业务逻辑 + 用户分析)
+- **Total**: ~29 API endpoints
 
 ---
 
@@ -2364,6 +2372,546 @@ ON equipment_frequencies (equipment_code, date DESC);
 | AI Recognition | <2s | TensorFlow 推理 |
 | Supabase CRUD | <300ms | 自动 REST |
 | Rarity Calculation | <500ms | 全局统计 |
+
+---
+
+## 📊 User Analytics APIs (用户行为分析)
+
+### Page Overview
+- **Page Goal**: 支持用户行为漏斗分析和KPI指标计算
+- **Key Features**: 行为跟踪、留存分析、生命周期管理、数据指标统计
+- **Performance Target**: 分析查询 ≤1秒，实时更新
+
+---
+
+### 6.1 Update User Analytics (更新用户分析数据)
+
+**用途**: 更新用户行为漏斗关键节点和KPI指标
+
+```typescript
+PATCH /api/v1/analytics/users/{userId}
+```
+
+**Implementation**: NestJS
+
+**Why NestJS**: 复杂的指标计算逻辑和多表数据聚合
+
+**Request Body**:
+```json
+{
+  "event": "first_workout_complete",
+  "timestamp": "2024-10-30T10:30:00Z",
+  "metadata": {
+    "sessionId": "session-123",
+    "duration": 180,
+    "equipment": ["chair", "wall"],
+    "completionRate": 0.85
+  }
+}
+```
+
+**支持的事件类型**:
+- `app_installed` - 应用首次安装
+- `first_launch` - 首次启动
+- `first_setup_complete` - 完成首次设置
+- `first_recommendation` - 获得首个推荐
+- `first_workout_complete` - 完成首次训练
+- `first_card_generated` - 生成首个成果卡
+- `first_share` - 首次分享
+
+**Response**:
+```json
+{
+  "success": true,
+  "data": {
+    "userId": "user-123",
+    "lifecycleStage": "ACTIVATED",
+    "riskLevel": "LOW",
+    "updatedMetrics": [
+      "firstWorkoutComplete",
+      "totalWorkouts",
+      "sessionCompletionRate"
+    ]
+  }
+}
+```
+
+---
+
+### 6.2 Get User Funnel Status (获取用户漏斗状态)
+
+**用途**: 获取用户在行为漏斗中的进度状态
+
+```typescript
+GET /api/v1/analytics/users/{userId}/funnel
+```
+
+**Implementation**: NestJS
+
+**Response**:
+```json
+{
+  "success": true,
+  "data": {
+    "userId": "user-123",
+    "funnelSteps": {
+      "appInstalled": "2024-10-01T09:00:00Z",
+      "firstLaunch": "2024-10-01T09:00:00Z",
+      "firstSetupComplete": "2024-10-01T09:05:00Z",
+      "firstRecommendation": "2024-10-01T09:10:00Z",
+      "firstWorkoutComplete": "2024-10-01T09:25:00Z",
+      "firstCardGenerated": "2024-10-01T09:35:00Z",
+      "firstShare": null
+    },
+    "conversionRates": {
+      "installToLaunch": 1.0,
+      "launchToSetup": 1.0,
+      "setupToRecommendation": 1.0,
+      "recommendationToWorkout": 1.0,
+      "workoutToCard": 1.0,
+      "cardToShare": 0.0
+    },
+    "timeSpent": {
+      "setupTime": 300,
+      "timeToFirstWorkout": 1500,
+      "timeToFirstCard": 2100
+    },
+    "currentStage": "CARD_GENERATED"
+  }
+}
+```
+
+---
+
+### 6.3 Get User Metrics Overview (获取用户指标概览)
+
+**用途**: 获取用户核心KPI指标总览
+
+```typescript
+GET /api/v1/analytics/users/{userId}/metrics
+```
+
+**Implementation**: NestJS
+
+**Response**:
+```json
+{
+  "success": true,
+  "data": {
+    "userId": "user-123",
+    "lifecycleStage": "ENGAGED",
+    "riskLevel": "LOW",
+    "summary": {
+      "totalWorkouts": 15,
+      "totalCards": 12,
+      "totalShares": 3,
+      "currentStreak": 5,
+      "longestStreak": 7,
+      "totalActiveDays": 12
+    },
+    "quality": {
+      "averageSessionDuration": 185.5,
+      "sessionCompletionRate": 0.87,
+      "recommendationSuccessRate": 0.92
+    },
+    "retention": {
+      "day1Retention": true,
+      "day7Retention": true,
+      "day30Retention": true
+    },
+    "lastActiveDate": "2024-10-30T18:30:00Z"
+  }
+}
+```
+
+---
+
+### 6.4 Get Daily Metrics (获取每日指标)
+
+**用途**: 获取用户每日行为指标，支持趋势分析
+
+```typescript
+GET /api/v1/analytics/users/{userId}/daily?startDate=2024-10-01&endDate=2024-10-31&page=1&pageSize=31
+```
+
+**Implementation**: NestJS
+
+**Request Query Parameters**:
+- `startDate` (required): 开始日期 (YYYY-MM-DD)
+- `endDate` (required): 结束日期 (YYYY-MM-DD)
+- `page` (optional): 页码，默认值 1
+- `pageSize` (optional): 每页数量，默认值 31
+
+**Response**:
+```json
+{
+  "success": true,
+  "data": {
+    "dateRange": {
+      "startDate": "2024-10-01",
+      "endDate": "2024-10-31"
+    },
+    "dailyMetrics": [
+      {
+        "date": "2024-10-30",
+        "isActiveDay": true,
+        "sessionCount": 2,
+        "totalDuration": 360,
+        "workoutsCompleted": 2,
+        "cardsGenerated": 1,
+        "sharesCount": 0,
+        "averageSessionDuration": 180,
+        "completionRate": 0.85,
+        "primaryIntentType": "STRETCH",
+        "primaryEquipment": "chair",
+        "peakActiveHour": 18
+      },
+      {
+        "date": "2024-10-29",
+        "isActiveDay": true,
+        "sessionCount": 1,
+        "totalDuration": 210,
+        "workoutsCompleted": 1,
+        "cardsGenerated": 1,
+        "sharesCount": 1,
+        "averageSessionDuration": 210,
+        "completionRate": 1.0,
+        "primaryIntentType": "RELAX",
+        "primaryEquipment": "wall",
+        "peakActiveHour": 20
+      }
+    ],
+    "aggregation": {
+      "totalActiveDays": 25,
+      "totalSessions": 38,
+      "totalDuration": 6840,
+      "averageSessionsPerActiveDay": 1.52,
+      "averageDurationPerActiveDay": 273.6
+    },
+    "pagination": {
+      "page": 1,
+      "pageSize": 31,
+      "total": 31,
+      "totalPages": 1
+    }
+  }
+}
+```
+
+---
+
+### 6.5 Get Cohort Analysis (获取群组分析)
+
+**用途**: 分析不同注册时期用户的留存率和行为模式
+
+```typescript
+GET /api/v1/analytics/cohorts?cohortType=monthly&startMonth=2024-01&endMonth=2024-10
+```
+
+**Implementation**: NestJS
+
+**Why NestJS**: 复杂的群组计算和数据聚合逻辑
+
+**Request Query Parameters**:
+- `cohortType` (required): 群组类型 ("daily", "weekly", "monthly")
+- `startMonth` (required): 开始月份 (YYYY-MM)
+- `endMonth` (required): 结束月份 (YYYY-MM)
+
+**Response**:
+```json
+{
+  "success": true,
+  "data": {
+    "cohortType": "monthly",
+    "dateRange": {
+      "startMonth": "2024-01",
+      "endMonth": "2024-10"
+    },
+    "cohorts": [
+      {
+        "cohortMonth": "2024-01",
+        "totalUsers": 1250,
+        "retentionRates": {
+          "month0": 1.0,
+          "month1": 0.68,
+          "month3": 0.42,
+          "month6": 0.28,
+          "month9": 0.22
+        },
+        "lifecycleDistribution": {
+          "NEW": 0.05,
+          "ACTIVATED": 0.15,
+          "ENGAGED": 0.35,
+          "RETAINED": 0.30,
+          "DORMANT": 0.10,
+          "CHURNED": 0.05
+        }
+      }
+    ]
+  }
+}
+```
+
+---
+
+### 6.6 Get Platform KPIs (获取平台KPI指标)
+
+**用途**: 获取平台整体KPI指标，支持运营决策
+
+```typescript
+GET /api/v1/analytics/platform/kpis?period=last30days
+```
+
+**Implementation**: NestJS
+
+**Authorization**: 需要管理员权限
+
+**Request Query Parameters**:
+- `period` (required): 统计周期 ("today", "yesterday", "last7days", "last30days", "thisMonth", "lastMonth")
+
+**Response**:
+```json
+{
+  "success": true,
+  "data": {
+    "period": "last30days",
+    "dateRange": {
+      "startDate": "2024-10-01",
+      "endDate": "2024-10-30"
+    },
+    "userGrowth": {
+      "dau": 8500,
+      "mau": 25000,
+      "newUsers": 2400,
+      "weeklyRetention": 0.42,
+      "monthlyRetention": 0.28
+    },
+    "engagement": {
+      "averageSessionDuration": 195.5,
+      "sessionsPerUser": 2.3,
+      "sessionCompletionRate": 0.72
+    },
+    "businessMetrics": {
+      "workoutCompletionRate": 0.65,
+      "cardGenerationRate": 0.78,
+      "shareRate": 0.18,
+      "recommendationSuccessRate": 0.89
+    },
+    "funnelConversion": {
+      "installToFirstLaunch": 0.85,
+      "firstLaunchToSetup": 0.70,
+      "setupToFirstRecommendation": 0.90,
+      "recommendationToFirstWorkout": 0.65,
+      "workoutToFirstCard": 0.78,
+      "cardToFirstShare": 0.25
+    },
+    "performance": {
+      "averageLoadTime": 1.8,
+      "crashRate": 0.001,
+      "apiResponseTime": 285
+    }
+  }
+}
+```
+
+---
+
+### 6.7 Update Daily Metrics (更新每日指标)
+
+**用途**: 批量更新用户每日指标数据 (通常通过定时任务调用)
+
+```typescript
+POST /api/v1/analytics/daily-metrics/batch
+```
+
+**Implementation**: NestJS
+
+**Authorization**: 需要系统权限 (定时任务调用)
+
+**Request Body**:
+```json
+{
+  "date": "2024-10-30",
+  "userMetrics": [
+    {
+      "userId": "user-123",
+      "sessionCount": 2,
+      "totalDuration": 360,
+      "workoutsCompleted": 2,
+      "cardsGenerated": 1,
+      "sharesCount": 0,
+      "primaryIntentType": "STRETCH",
+      "primaryEquipment": "chair"
+    }
+  ]
+}
+```
+
+**Response**:
+```json
+{
+  "success": true,
+  "data": {
+    "date": "2024-10-30",
+    "processedUsers": 1,
+    "updatedMetrics": 1,
+    "errors": []
+  }
+}
+```
+
+---
+
+### Frontend Integration Example
+
+```dart
+// Analytics Service
+class AnalyticsService {
+  static const String baseUrl = '/api/v1/analytics';
+
+  // 跟踪用户行为事件
+  Future<void> trackEvent(String userId, String event, Map<String, dynamic> metadata) async {
+    await dio.patch(
+      '$baseUrl/users/$userId',
+      data: {
+        'event': event,
+        'timestamp': DateTime.now().toIso8601String(),
+        'metadata': metadata
+      }
+    );
+  }
+
+  // 获取用户指标概览
+  Future<UserMetrics> getUserMetrics(String userId) async {
+    final response = await dio.get('$baseUrl/users/$userId/metrics');
+    return UserMetrics.fromJson(response.data['data']);
+  }
+
+  // 获取每日指标趋势
+  Future<List<DailyMetric>> getDailyMetrics(
+    String userId,
+    DateTime startDate,
+    DateTime endDate
+  ) async {
+    final response = await dio.get(
+      '$baseUrl/users/$userId/daily',
+      queryParameters: {
+        'startDate': startDate.toIso8601String().split('T')[0],
+        'endDate': endDate.toIso8601String().split('T')[0]
+      }
+    );
+
+    return (response.data['data']['dailyMetrics'] as List)
+        .map((json) => DailyMetric.fromJson(json))
+        .toList();
+  }
+}
+
+// 使用示例
+class UserAnalyticsPage extends StatefulWidget {
+  @override
+  _UserAnalyticsPageState createState() => _UserAnalyticsPageState();
+}
+
+class _UserAnalyticsPageState extends State<UserAnalyticsPage> {
+  final AnalyticsService _analytics = AnalyticsService();
+  UserMetrics? userMetrics;
+  List<DailyMetric> dailyTrend = [];
+
+  @override
+  void initState() {
+    super.initState();
+    loadAnalyticsData();
+  }
+
+  Future<void> loadAnalyticsData() async {
+    final userId = Supabase.instance.client.auth.currentUser?.id;
+    if (userId == null) return;
+
+    // 加载用户指标概览
+    userMetrics = await _analytics.getUserMetrics(userId);
+
+    // 加载近30天趋势
+    final endDate = DateTime.now();
+    final startDate = endDate.subtract(Duration(days: 30));
+    dailyTrend = await _analytics.getDailyMetrics(userId, startDate, endDate);
+
+    setState(() {});
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (userMetrics == null) {
+      return Center(child: CircularProgressIndicator());
+    }
+
+    return Scaffold(
+      appBar: AppBar(title: Text('My Analytics')),
+      body: ListView(
+        padding: EdgeInsets.all(16),
+        children: [
+          // KPI 指标卡片
+          Row(
+            children: [
+              Expanded(
+                child: MetricCard(
+                  title: 'Total Workouts',
+                  value: '${userMetrics!.summary.totalWorkouts}',
+                  icon: Icons.fitness_center
+                )
+              ),
+              SizedBox(width: 16),
+              Expanded(
+                child: MetricCard(
+                  title: 'Current Streak',
+                  value: '${userMetrics!.summary.currentStreak} days',
+                  icon: Icons.local_fire_department
+                )
+              )
+            ]
+          ),
+
+          SizedBox(height: 24),
+
+          // 活跃度趋势图
+          Card(
+            child: Padding(
+              padding: EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Daily Activity Trend', style: Theme.of(context).textTheme.titleMedium),
+                  SizedBox(height: 16),
+                  Container(
+                    height: 200,
+                    child: LineChart(
+                      LineChartData(
+                        lineBarsData: [
+                          LineChartBarData(
+                            spots: dailyTrend.asMap().entries.map((entry) {
+                              return FlSpot(
+                                entry.key.toDouble(),
+                                entry.value.totalDuration.toDouble() / 60
+                              );
+                            }).toList(),
+                            isCurved: true,
+                            colors: [Theme.of(context).primaryColor],
+                            barWidth: 3
+                          )
+                        ]
+                      )
+                    )
+                  )
+                ]
+              )
+            )
+          )
+        ]
+      )
+    );
+  }
+}
+```
 
 ---
 

@@ -1,6 +1,6 @@
 import { IsOptional, IsString, IsArray, IsInt, Min, Max, IsEnum, ArrayMaxSize } from 'class-validator';
 import { Type } from 'class-transformer';
-import { IntentType, Difficulty, PrimaryMuscle } from '@prisma/client';
+import { IntentType, Difficulty, PrimaryMuscle } from '../../common/types/prisma-enums';
 
 // Re-export for Swagger metadata generation
 export { IntentType, Difficulty, PrimaryMuscle };

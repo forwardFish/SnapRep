@@ -3,7 +3,7 @@ import { CardsDao } from '../cards.dao';
 import { RarityCalculatorService } from './rarity-calculator.service';
 import { WorkoutSessionsService } from '../../workout-sessions/workout-sessions.service';
 import { GenerateCardDto } from '../dto/cards.dto';
-import { RarityLevel } from '@prisma/client';
+import { RarityLevel } from '../../common/types/prisma-enums';
 
 /**
  * 卡片生成服务
@@ -403,10 +403,10 @@ export class CardGeneratorService {
    * @returns 稀有度等级
    */
   private determineRarityLevel(score: number): RarityLevel {
-    if (score >= 0.95) return 'LEGENDARY';
-    if (score >= 0.80) return 'EPIC';
-    if (score >= 0.50) return 'RARE';
-    if (score >= 0.20) return 'UNCOMMON';
-    return 'COMMON';
+    if (score >= 0.95) return RarityLevel.LEGENDARY;
+    if (score >= 0.80) return RarityLevel.EPIC;
+    if (score >= 0.50) return RarityLevel.RARE;
+    if (score >= 0.20) return RarityLevel.UNCOMMON;
+    return RarityLevel.COMMON;
   }
 }

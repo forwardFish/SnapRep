@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { ExercisesController } from './exercises.controller';
 import { WorkoutRecommendationService } from './services/workout-recommendation.service';
 import { ExerciseMatchingService } from './services/exercise-matching.service';
-import { IntentType, Difficulty, PrimaryMuscle } from '@prisma/client';
+import { IntentType, Difficulty, PrimaryMuscle } from '../common/types/prisma-enums';
 
 describe('ExercisesController', () => {
   let controller: ExercisesController;

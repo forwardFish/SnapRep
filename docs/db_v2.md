@@ -846,9 +846,9 @@ const scenarioName = t(`scenarios.${scenario.code}`)
 | 版本 | 表数量 | 说明 |
 |------|--------|------|
 | v1.0 | 14张表 | 包含 CardSeries, UserStats, EquipmentFrequency 等 |
-| **v2.0** | **14张表** | 移除非 MVP 必需表，简化设计，增加预留功能表 |
+| **v2.0** | **16张表** | 移除非 MVP 必需表，简化设计，增加分析功能表 |
 
-**MVP + 预留功能的 14 张表**:
+**MVP + 预留功能的 16 张表**:
 1. `scenarios` - 场景表
 2. `equipment` - 器材表
 3. `exercises` - 动作表
@@ -863,6 +863,166 @@ const scenarioName = t(`scenarios.${scenario.code}`)
 12. `user_preferences` - 用户偏好学习记录表 ⭐ 新增 (个性化推荐)
 13. `theme_weeks` - 主题周活动表 ⭐ 新增 (主题周管理)
 14. `theme_week_participations` - 主题周参与记录表 ⭐ 新增 (用户参与追踪)
+15. `user_analytics` - 用户行为分析表 ⭐ 新增 (KPI指标和行为漏斗)
+16. `user_daily_metrics` - 用户每日指标表 ⭐ 新增 (趋势分析)
+
+### 13. UserAnalytics 表 - 用户行为分析表 ⭐ 新增 (支持KPI指标和行为漏斗)
+
+**设计目的**:
+- 支持用户行为漏斗分析：应用安装→首次启动→首次设置→获得推荐→完成训练→生成卡片→首次分享
+- 支持核心KPI指标计算：DAU、留存率、完成率、分享率等
+- 提供用户生命周期管理和精细化运营支持
+
+**字段设计**:
+```prisma
+model UserAnalytics {
+  id         String   @id @default(cuid())            // 主键ID
+
+  userId     String   @map("user_id")                  // 用户ID (外键，关联到User表)
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // 用户行为漏斗关键节点
+  appInstalled       DateTime? @map("app_installed")        // 应用安装时间 (首次启动时记录)
+  firstLaunch        DateTime? @map("first_launch")         // 首次启动时间
+  firstSetupComplete DateTime? @map("first_setup_complete") // 完成首次设置时间 (选择偏好等)
+  firstRecommendation DateTime? @map("first_recommendation") // 获得首个推荐时间
+  firstWorkoutComplete DateTime? @map("first_workout_complete") // 完成首次训练时间
+  firstCardGenerated DateTime? @map("first_card_generated")  // 生成首个成果卡时间
+  firstShare         DateTime? @map("first_share")          // 首次分享时间
+
+  // KPI指标统计字段 (按周期更新)
+  totalWorkouts      Int @default(0) @map("total_workouts")       // 累计训练次数
+  totalCards         Int @default(0) @map("total_cards")          // 累计生成卡片数
+  totalShares        Int @default(0) @map("total_shares")         // 累计分享次数
+  currentStreak      Int @default(0) @map("current_streak")       // 当前连续训练天数
+  longestStreak      Int @default(0) @map("longest_streak")       // 最长连续训练天数
+
+  // 会话质量指标
+  averageSessionDuration Float @default(0) @map("average_session_duration") // 平均会话时长(秒)
+  sessionCompletionRate  Float @default(0) @map("session_completion_rate")  // 会话完成率(0-1)
+  recommendationSuccessRate Float @default(0) @map("recommendation_success_rate") // 推荐成功率(0-1)
+
+  // 活跃度指标
+  lastActiveDate     DateTime? @map("last_active_date")           // 最后活跃日期
+  totalActiveDays    Int @default(0) @map("total_active_days")    // 累计活跃天数
+
+  // 留存率计算辅助字段
+  day1Retention      Boolean @default(false) @map("day1_retention")  // 次日留存
+  day7Retention      Boolean @default(false) @map("day7_retention")  // 7日留存
+  day30Retention     Boolean @default(false) @map("day30_retention") // 30日留存
+
+  // 用户生命周期状态
+  lifecycleStage     UserLifecycleStage @default(NEW) @map("lifecycle_stage") // 用户生命周期阶段
+  riskLevel          UserRiskLevel @default(LOW) @map("risk_level")            // 流失风险等级
+
+  // 元数据
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@unique([userId])                                   // 唯一约束：每个用户只有一条分析记录
+  @@index([lifecycleStage])                           // 索引：生命周期查询
+  @@index([lastActiveDate])                           // 索引：活跃度分析
+  @@index([firstLaunch])                              // 索引：按注册时间分析
+  @@map("user_analytics")
+}
+
+// 用户生命周期阶段枚举
+enum UserLifecycleStage {
+  NEW          // 新用户 (注册但未完成首次训练)
+  ACTIVATED    // 激活用户 (完成首次训练)
+  ENGAGED      // 参与用户 (7天内有2+次训练)
+  RETAINED     // 留存用户 (30天内有4+次训练)
+  DORMANT      // 休眠用户 (30天内无活动)
+  CHURNED      // 流失用户 (90天内无活动)
+}
+
+// 用户流失风险等级枚举
+enum UserRiskLevel {
+  LOW          // 低风险 (活跃且参与度高)
+  MEDIUM       // 中风险 (活跃度下降)
+  HIGH         // 高风险 (可能即将流失)
+  CRITICAL     // 严重风险 (几乎已流失)
+}
+```
+
+**表关系**:
+- 与 `User` 表一对一关系 (每个用户对应一条分析记录)
+- 通过触发器或定时任务更新统计字段
+
+---
+
+### 14. UserDailyMetrics 表 - 用户每日指标表 ⭐ 新增 (支持趋势分析)
+
+**设计目的**:
+- 记录用户每日的行为指标，支持趋势分析
+- 为DAU、活跃度、留存率等KPI提供数据基础
+- 支持用户行为模式分析和个性化推荐
+
+**字段设计**:
+```prisma
+model UserDailyMetrics {
+  id         String   @id @default(cuid())            // 主键ID
+
+  userId     String   @map("user_id")                  // 用户ID (外键，关联到User表)
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  metricDate DateTime @map("metric_date") @db.Date     // 指标日期
+
+  // 每日活跃指标
+  isActiveDay        Boolean @default(false) @map("is_active_day")        // 是否活跃日 (当天有任何操作)
+  sessionCount       Int     @default(0) @map("session_count")            // 当日会话数
+  totalDuration      Int     @default(0) @map("total_duration")           // 当日总时长(秒)
+  workoutsCompleted  Int     @default(0) @map("workouts_completed")       // 当日完成训练数
+  cardsGenerated     Int     @default(0) @map("cards_generated")          // 当日生成卡片数
+  sharesCount        Int     @default(0) @map("shares_count")             // 当日分享次数
+
+  // 行为质量指标
+  averageSessionDuration Float @default(0) @map("average_session_duration") // 当日平均会话时长
+  completionRate         Float @default(0) @map("completion_rate")          // 当日完成率
+
+  // 漏斗转化指标 (当日新增)
+  newRecommendations Int @default(0) @map("new_recommendations")  // 当日新获得推荐数
+  recommendationClicks Int @default(0) @map("recommendation_clicks") // 当日推荐点击数
+  workoutStarts      Int @default(0) @map("workout_starts")       // 当日开始训练数
+
+  // 用户行为特征
+  primaryIntentType  IntentType?    @map("primary_intent_type")   // 当日主要训练意图
+  primaryEquipment   String?        @map("primary_equipment")     // 当日主要使用器材
+  peakActiveHour     Int?           @map("peak_active_hour")      // 当日最活跃小时(0-23)
+
+  // 元数据
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@unique([userId, metricDate])                       // 唯一约束：每个用户每天只有一条记录
+  @@index([metricDate])                                // 索引：按日期查询
+  @@index([userId, metricDate(sort: Desc)])            // 索引：用户时间序列查询
+  @@index([isActiveDay, metricDate])                   // 索引：活跃用户分析
+  @@map("user_daily_metrics")
+}
+```
+
+**表关系**:
+- 与 `User` 表一对多关系
+- 与 `DailyTraining` 表互补，专注于指标分析
+
+---
+
+### 更新 User 表关系
+
+在 User 表中需要添加新的关系字段：
+
+```prisma
+model User {
+  // ... 现有字段保持不变 ...
+
+  // 新增关系
+  analytics          UserAnalytics?      // 用户分析数据 (一对一关系)
+  dailyMetrics       UserDailyMetrics[]  // 用户每日指标 (一对多关系)
+
+  // ... 其他现有关系保持不变 ...
+}
+```
 
 ---
 

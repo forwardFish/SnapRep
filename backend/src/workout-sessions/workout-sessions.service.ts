@@ -10,7 +10,7 @@ import {
   UserStatsQueryDto
 } from './dto/workout-session.dto';
 import { QuickRecommendationDto } from '../exercises/dto/exercise-recommendation.dto';
-import { SessionStatus, IntentType, Difficulty } from '@prisma/client';
+import { SessionStatus, IntentType, Difficulty } from '../common/types/prisma-enums';
 
 /**
  * WorkoutSessions 业务逻辑服务类

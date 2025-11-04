@@ -1,6 +1,6 @@
 import { IsOptional, IsString, IsArray, IsInt, IsEnum, IsBoolean, Min, Max } from 'class-validator';
 import { Type } from 'class-transformer';
-import { SessionStatus, IntentType, Difficulty } from '@prisma/client';
+import { SessionStatus, IntentType, Difficulty } from '../../common/types/prisma-enums';
 
 // Re-export for Swagger metadata generation
 export { SessionStatus, IntentType, Difficulty };

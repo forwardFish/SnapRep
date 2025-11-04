@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SnapRep - Workout Results | Your Custom 60-Second Plan</title>
+    <style>
+        /* ========== GLOBAL RESET & PREMIUM TYPOGRAPHY ========== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            /* Premium Color System */
+            --primary-gradient: linear-gradient(135deg, #FF6B6B 0%, #FF8E53 25%, #FF7F50 50%, #FFB347 75%, #FFA500 100%);
+            --crystal-white: linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(255, 255, 255, 0.92) 30%, rgba(255, 255, 255, 0.85) 60%, rgba(255, 255, 255, 0.1) 100%);
+            --glass-effect: linear-gradient(135deg, rgba(255, 255, 255, 0.25) 0%, rgba(255, 255, 255, 0.1) 50%, rgba(255, 255, 255, 0.05) 100%);
+            --shadow-soft: 0 8px 32px rgba(0, 0, 0, 0.04), 0 2px 16px rgba(255, 127, 80, 0.08);
+            --shadow-medium: 0 12px 48px rgba(0, 0, 0, 0.08), 0 4px 24px rgba(255, 127, 80, 0.12);
+            --text-primary: #2C3E50;
+            --text-secondary: #546E7A;
+            --text-caption: #90A4AE;
+
+            /* Reference UI Style - Premium Yellow CTA */
+            --yellow-cta: #FFD700;
+            --yellow-cta-hover: #FFC107;
+            --yellow-shadow: 0 8px 24px rgba(255, 215, 0, 0.25);
+            --premium-black: #1a1a1a;
+
+            /* Rarity Colors */
+            --rarity-common: #4CAF50;
+            --rarity-fine: #2196F3;
+            --rarity-rare: #9C27B0;
+            --rarity-epic: #FF9800;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Helvetica Neue', 'Roboto', 'Segoe UI', system-ui, sans-serif;
+            background: radial-gradient(ellipse at top, #f8fafc 0%, #ffffff 50%, #f1f5f9 100%);
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow-x: auto;
+            -webkit-font-smoothing: antialiased;
+            text-rendering: optimizeLegibility;
+        }
+
+        /* ========== PHONE FRAME SYSTEM ========== */
+        .phone-frame {
+            width: 375px;
+            height: 812px;
+            background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%);
+            border-radius: 40px;
+            padding: 8px;
+            box-shadow: 0 24px 80px rgba(0, 0, 0, 0.12), 0 12px 40px rgba(0, 0, 0, 0.08);
+            position: relative;
+            overflow: hidden;
+            margin: 60px auto;
+            transition: all 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+        }
+
+        .phone-frame:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 32px 120px rgba(0, 0, 0, 0.15), 0 16px 60px rgba(0, 0, 0, 0.10);
+        }
+
+        .phone-screen {
+            width: 100%;
+            height: 100%;
+            background: #000000;
+            border-radius: 32px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* ========== STATUS BAR ========== */
+        .status-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 24px 8px;
+            color: #000;
+            font-size: 14px;
+            font-weight: 600;
+            background: #ffffff;
+        }
+
+        /* ========== PAGE CONTENT & SCROLLING ========== */
+        .page-content {
+            height: calc(100% - 44px);
+            overflow-y: auto;
+            overflow-x: hidden;
+            scroll-behavior: smooth;
+            background: #ffffff;
+        }
+
+        .scrollable-content {
+            height: calc(100% - 80px);
+            overflow-y: auto;
+            padding-bottom: 20px;
+        }
+
+        /* ========== PREMIUM CARD SYSTEM ========== */
+        .premium-card {
+            background: var(--crystal-white);
+            backdrop-filter: blur(24px) saturate(1.2);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            border-radius: 20px;
+            box-shadow: var(--shadow-soft);
+            transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+            overflow: hidden;
+        }
+
+        .premium-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-medium);
+        }
+
+        /* ========== EXERCISE CARD SYSTEM ========== */
+        .exercise-card {
+            background: var(--crystal-white);
+            backdrop-filter: blur(24px) saturate(1.2);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            border-radius: 20px;
+            box-shadow: var(--shadow-soft);
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+
+        .exercise-preview {
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            border-radius: 12px;
+            height: 120px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 16px;
+        }
+
+        /* ========== RARITY BADGES ========== */
+        .rarity-badge {
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .rarity-common {
+            background: #E8F5E8;
+            color: #2E7D32;
+        }
+
+        .rarity-fine {
+            background: #E3F2FD;
+            color: #1565C0;
+        }
+
+        .rarity-rare {
+            background: #F3E5F5;
+            color: #7B1FA2;
+        }
+
+        .rarity-epic {
+            background: #FFF3E0;
+            color: #F57C00;
+        }
+
+        /* ========== SAFETY WARNING SYSTEM ========== */
+        .safety-warning {
+            background: #FFF8F8;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            border-left: 4px solid #D32F2F;
+        }
+
+        .safety-title {
+            font-size: 14px;
+            color: #D32F2F;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .safety-point {
+            font-size: 13px;
+            color: #D32F2F;
+            margin-bottom: 2px;
+        }
+
+        /* ========== TYPOGRAPHY SYSTEM ========== */
+        .hero-title {
+            font-size: 32px;
+            font-weight: 800;
+            line-height: 1.2;
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 12px;
+        }
+
+        .section-title {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 16px;
+        }
+
+        .card-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+        }
+
+        .body-text {
+            font-size: 16px;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+
+        .caption-text {
+            font-size: 14px;
+            color: var(--text-caption);
+            line-height: 1.4;
+        }
+
+        /* ========== BOTTOM NAVIGATION ========== */
+        .bottom-nav {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--crystal-white);
+            backdrop-filter: blur(20px);
+            border-top: 1px solid rgba(255, 255, 255, 0.8);
+            padding: 12px 0 24px;
+        }
+
+        .nav-items {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            padding: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: var(--text-caption);
+        }
+
+        .nav-item.active {
+            color: var(--yellow-cta);
+        }
+
+        /* ========== ANIMATIONS ========== */
+        @keyframes premiumGlow {
+            0%, 100% { box-shadow: var(--shadow-soft); }
+            50% { box-shadow: var(--shadow-medium), 0 0 40px rgba(255, 127, 80, 0.3); }
+        }
+
+        .glow { animation: premiumGlow 3s ease-in-out infinite; }
+
+        /* ========== CUSTOM SCROLLBAR ========== */
+        .page-content::-webkit-scrollbar,
+        .scrollable-content::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .page-content::-webkit-scrollbar-thumb,
+        .scrollable-content::-webkit-scrollbar-thumb {
+            background: var(--yellow-cta);
+            border-radius: 2px;
+        }
+    </style>
+</head>
+<body>
+    <div class="phone-frame glow">
+        <div class="phone-screen">
+            <div class="status-bar">
+                <span>9:45</span>
+                <span>📶 🔋</span>
+            </div>
+
+            <div class="page-content">
+                <div class="scrollable-content">
+                    <div style="padding: 24px;">
+                        <!-- Header -->
+                        <div style="text-align: center; margin-bottom: 32px;">
+                            <h1 class="hero-title">Your Workout</h1>
+                            <p class="body-text">3 exercises • 60 seconds • Chair & Full Body</p>
+                        </div>
+
+                        <!-- Exercise Card 1 -->
+                        <div class="exercise-card">
+                            <div style="padding: 24px;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                                    <h3 class="card-title">Chair Squats</h3>
+                                    <span class="rarity-badge rarity-common">Common</span>
+                                </div>
+
+                                <div class="exercise-preview">
+                                    <span style="font-size: 48px;">🪑</span>
+                                </div>
+
+                                <p class="body-text" style="margin-bottom: 12px;">Stand up and sit down using the chair for support. Focus on controlled movements and proper form.</p>
+
+                                <div class="safety-warning">
+                                    <p class="safety-title">⚠️ Safety Tips:</p>
+                                    <p class="safety-point">• Keep knees aligned with toes</p>
+                                    <p class="safety-point">• Don't let knees go past toes</p>
+                                    <p class="safety-point">• Keep back straight throughout</p>
+                                </div>
+
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <span class="caption-text">20 seconds × 1 set</span>
+                                    <button style="padding: 8px 16px; background: transparent; border: 1px solid var(--yellow-cta); color: var(--yellow-cta); border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer;">Replace</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Exercise Card 2 -->
+                        <div class="exercise-card">
+                            <div style="padding: 24px;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                                    <h3 class="card-title">Seated Shoulder Rolls</h3>
+                                    <span class="rarity-badge rarity-fine">Fine</span>
+                                </div>
+
+                                <div class="exercise-preview">
+                                    <span style="font-size: 48px;">🦢</span>
+                                </div>
+
+                                <p class="body-text" style="margin-bottom: 12px;">Sit on chair edge and roll shoulders in controlled circles. Release neck and shoulder tension.</p>
+
+                                <div class="safety-warning">
+                                    <p class="safety-title">⚠️ Safety Tips:</p>
+                                    <p class="safety-point">• Keep movements slow and controlled</p>
+                                    <p class="safety-point">• Don't force range of motion</p>
+                                    <p class="safety-point">• Stop if you feel pain</p>
+                                </div>
+
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <span class="caption-text">20 seconds × 1 set</span>
+                                    <button style="padding: 8px 16px; background: transparent; border: 1px solid var(--yellow-cta); color: var(--yellow-cta); border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer;">Replace</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Exercise Card 3 -->
+                        <div class="exercise-card">
+                            <div style="padding: 24px;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                                    <h3 class="card-title">Chair-Supported Calf Raises</h3>
+                                    <span class="rarity-badge rarity-common">Common</span>
+                                </div>
+
+                                <div class="exercise-preview">
+                                    <span style="font-size: 48px;">🦶</span>
+                                </div>
+
+                                <p class="body-text" style="margin-bottom: 12px;">Hold chair back for balance and raise up on toes. Strengthen calves and improve ankle mobility.</p>
+
+                                <div class="safety-warning">
+                                    <p class="safety-title">⚠️ Safety Tips:</p>
+                                    <p class="safety-point">• Use chair for balance only</p>
+                                    <p class="safety-point">• Rise slowly and controlled</p>
+                                    <p class="safety-point">• Keep core engaged</p>
+                                </div>
+
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <span class="caption-text">20 seconds × 1 set</span>
+                                    <button style="padding: 8px 16px; background: transparent; border: 1px solid var(--yellow-cta); color: var(--yellow-cta); border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer;">Replace</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div style="margin-top: 32px; margin-bottom: 80px; text-align: center;">
+                            <button style="width: 100%; background: var(--yellow-cta); color: var(--premium-black); border: none; border-radius: 16px; padding: 16px; font-size: 18px; font-weight: 700; margin-bottom: 12px; cursor: pointer;">
+                                Start Workout
+                            </button>
+                            <button style="width: 100%; padding: 12px; background: transparent; border: 2px solid var(--yellow-cta); color: var(--yellow-cta); border-radius: 16px; font-weight: 600; cursor: pointer;">
+                                Shuffle Different Exercises
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bottom-nav">
+                <div class="nav-items">
+                    <div class="nav-item">
+                        <span style="font-size: 20px;">🏠</span>
+                        <span style="font-size: 11px;">Home</span>
+                    </div>
+                    <div class="nav-item active">
+                        <span style="font-size: 20px;">📷</span>
+                        <span style="font-size: 11px;">Camera</span>
+                    </div>
+                    <div class="nav-item">
+                        <span style="font-size: 20px;">👤</span>
+                        <span style="font-size: 11px;">My</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

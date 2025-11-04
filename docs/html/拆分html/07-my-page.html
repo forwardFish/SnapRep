@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SnapRep - My Page | Profile & Collections</title>
+    <style>
+        /* ========== GLOBAL RESET & PREMIUM TYPOGRAPHY ========== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            /* Premium Color System */
+            --primary-gradient: linear-gradient(135deg, #FF6B6B 0%, #FF8E53 25%, #FF7F50 50%, #FFB347 75%, #FFA500 100%);
+            --crystal-white: linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(255, 255, 255, 0.92) 30%, rgba(255, 255, 255, 0.85) 60%, rgba(255, 255, 255, 0.1) 100%);
+            --glass-effect: linear-gradient(135deg, rgba(255, 255, 255, 0.25) 0%, rgba(255, 255, 255, 0.1) 50%, rgba(255, 255, 255, 0.05) 100%);
+            --shadow-soft: 0 8px 32px rgba(0, 0, 0, 0.04), 0 2px 16px rgba(255, 127, 80, 0.08);
+            --shadow-medium: 0 12px 48px rgba(0, 0, 0, 0.08), 0 4px 24px rgba(255, 127, 80, 0.12);
+            --text-primary: #2C3E50;
+            --text-secondary: #546E7A;
+            --text-caption: #90A4AE;
+
+            /* Reference UI Style - Premium Yellow CTA */
+            --yellow-cta: #FFD700;
+            --yellow-cta-hover: #FFC107;
+            --yellow-shadow: 0 8px 24px rgba(255, 215, 0, 0.25);
+            --premium-black: #1a1a1a;
+
+            /* Achievement System Colors */
+            --craftsman-blue: #00B4D8;
+            --explorer-purple: #9B59FF;
+            --safety-green: #4CAF50;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Helvetica Neue', 'Roboto', 'Segoe UI', system-ui, sans-serif;
+            background: radial-gradient(ellipse at top, #f8fafc 0%, #ffffff 50%, #f1f5f9 100%);
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow-x: auto;
+            -webkit-font-smoothing: antialiased;
+            text-rendering: optimizeLegibility;
+        }
+
+        /* ========== PHONE FRAME SYSTEM ========== */
+        .phone-frame {
+            width: 375px;
+            height: 812px;
+            background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%);
+            border-radius: 40px;
+            padding: 8px;
+            box-shadow: 0 24px 80px rgba(0, 0, 0, 0.12), 0 12px 40px rgba(0, 0, 0, 0.08);
+            position: relative;
+            overflow: hidden;
+            margin: 60px auto;
+            transition: all 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+        }
+
+        .phone-frame:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 32px 120px rgba(0, 0, 0, 0.15), 0 16px 60px rgba(0, 0, 0, 0.10);
+        }
+
+        .phone-screen {
+            width: 100%;
+            height: 100%;
+            background: #000000;
+            border-radius: 32px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* ========== STATUS BAR ========== */
+        .status-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 24px 8px;
+            color: #000;
+            font-size: 14px;
+            font-weight: 600;
+            background: #ffffff;
+        }
+
+        /* ========== PAGE CONTENT & SCROLLING ========== */
+        .page-content {
+            height: calc(100% - 44px);
+            overflow-y: auto;
+            overflow-x: hidden;
+            scroll-behavior: smooth;
+            background: #ffffff;
+        }
+
+        .scrollable-content {
+            height: calc(100% - 80px);
+            overflow-y: auto;
+            padding-bottom: 20px;
+        }
+
+        /* ========== PREMIUM CARD SYSTEM ========== */
+        .premium-card {
+            background: var(--crystal-white);
+            backdrop-filter: blur(24px) saturate(1.2);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            border-radius: 20px;
+            box-shadow: var(--shadow-soft);
+            transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+            overflow: hidden;
+        }
+
+        .premium-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-medium);
+        }
+
+        /* ========== CALENDAR SYSTEM ========== */
+        .calendar {
+            background: white;
+            border-radius: 16px;
+            padding: 16px;
+            margin: 20px 0;
+        }
+
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 8px;
+        }
+
+        .calendar-day {
+            aspect-ratio: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            position: relative;
+            font-size: 14px;
+        }
+
+        .calendar-day-header {
+            font-size: 12px;
+            color: var(--text-caption);
+            font-weight: 600;
+            padding: 4px;
+        }
+
+        .calendar-day-number {
+            font-weight: 600;
+        }
+
+        .calendar-day.has-workout {
+            background: rgba(255, 215, 0, 0.1);
+        }
+
+        .calendar-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            margin-top: 2px;
+        }
+
+        .dot-green { background: #4CAF50; }
+        .dot-blue { background: #2196F3; }
+        .dot-red { background: #F44336; }
+
+        /* ========== ACHIEVEMENT BADGES ========== */
+        .achievement-badge {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 16px;
+            background: var(--crystal-white);
+            border-radius: 16px;
+            margin-bottom: 12px;
+        }
+
+        .badge-icon {
+            font-size: 32px;
+        }
+
+        .badge-progress {
+            flex: 1;
+        }
+
+        .progress-bar {
+            height: 8px;
+            background: rgba(0,0,0,0.1);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 8px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.3s ease;
+        }
+
+        .progress-craftsman { background: var(--craftsman-blue); }
+        .progress-explorer { background: var(--explorer-purple); }
+
+        /* ========== GRID SYSTEMS ========== */
+        .grid-3x3 {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin: 20px 0;
+        }
+
+        /* ========== RARITY BADGES ========== */
+        .rarity-badge {
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .rarity-common { background: #E8F5E8; color: #2E7D32; }
+        .rarity-fine { background: #E3F2FD; color: #1565C0; }
+        .rarity-rare { background: #F3E5F5; color: #7B1FA2; }
+        .rarity-epic { background: #FFF3E0; color: #F57C00; }
+
+        /* ========== TYPOGRAPHY SYSTEM ========== */
+        .hero-title {
+            font-size: 32px;
+            font-weight: 800;
+            line-height: 1.2;
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 12px;
+        }
+
+        .section-title {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 16px;
+        }
+
+        .card-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+        }
+
+        .body-text {
+            font-size: 16px;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+
+        .caption-text {
+            font-size: 14px;
+            color: var(--text-caption);
+            line-height: 1.4;
+        }
+
+        /* ========== BOTTOM NAVIGATION ========== */
+        .bottom-nav {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--crystal-white);
+            backdrop-filter: blur(20px);
+            border-top: 1px solid rgba(255, 255, 255, 0.8);
+            padding: 12px 0 24px;
+        }
+
+        .nav-items {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            padding: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: var(--text-caption);
+        }
+
+        .nav-item.active {
+            color: var(--yellow-cta);
+        }
+
+        /* ========== ANIMATIONS ========== */
+        @keyframes premiumFloat {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-8px); }
+        }
+
+        .float { animation: premiumFloat 4s ease-in-out infinite; }
+
+        /* ========== CUSTOM SCROLLBAR ========== */
+        .page-content::-webkit-scrollbar,
+        .scrollable-content::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .page-content::-webkit-scrollbar-thumb,
+        .scrollable-content::-webkit-scrollbar-thumb {
+            background: var(--yellow-cta);
+            border-radius: 2px;
+        }
+    </style>
+</head>
+<body>
+    <div class="phone-frame float">
+        <div class="phone-screen">
+            <div class="status-bar">
+                <span>9:43</span>
+                <span>📶 🔋</span>
+            </div>
+
+            <div class="page-content">
+                <div class="scrollable-content">
+                    <div style="padding: 24px;">
+                        <!-- Profile Header -->
+                        <div style="text-align: center; margin-bottom: 32px;">
+                            <div style="width: 80px; height: 80px; border-radius: 50%; background: var(--primary-gradient); margin: 0 auto 16px; display: flex; align-items: center; justify-content: center; font-size: 32px; color: white;">👤</div>
+                            <h2 class="section-title">Alex Johnson</h2>
+                            <p class="caption-text">Fitness Enthusiast • 42 workouts</p>
+                        </div>
+
+                        <!-- Achievement Progress -->
+                        <div style="margin-bottom: 32px;">
+                            <h3 class="card-title" style="margin-bottom: 16px;">Achievement Progress</h3>
+
+                            <!-- Craftsman Line -->
+                            <div class="achievement-badge">
+                                <div class="badge-icon">🔧</div>
+                                <div class="badge-progress">
+                                    <h4 class="card-title" style="margin: 0;">Safety Master</h4>
+                                    <p class="caption-text">Craftsman Achievement Line</p>
+                                    <div class="progress-bar">
+                                        <div class="progress-fill progress-craftsman" style="width: 78%;"></div>
+                                    </div>
+                                    <p class="caption-text" style="margin-top: 8px;">78% to Expert Level</p>
+                                </div>
+                            </div>
+
+                            <!-- Explorer Line -->
+                            <div class="achievement-badge">
+                                <div class="badge-icon">🚀</div>
+                                <div class="badge-progress">
+                                    <h4 class="card-title" style="margin: 0;">Space Explorer</h4>
+                                    <p class="caption-text">Discovery Achievement Line</p>
+                                    <div class="progress-bar">
+                                        <div class="progress-fill progress-explorer" style="width: 45%;"></div>
+                                    </div>
+                                    <p class="caption-text" style="margin-top: 8px;">45% to Astronaut</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Calendar Section -->
+                        <div style="margin-bottom: 32px;">
+                            <h3 class="card-title" style="margin-bottom: 16px;">Workout Calendar</h3>
+
+                            <div class="calendar">
+                                <div class="calendar-header">
+                                    <button style="border: none; background: none; font-size: 20px; cursor: pointer;">◀</button>
+                                    <h4 class="card-title" style="margin: 0;">November 2024</h4>
+                                    <button style="border: none; background: none; font-size: 20px; cursor: pointer;">▶</button>
+                                </div>
+
+                                <div class="calendar-grid">
+                                    <div class="calendar-day-header">Sun</div>
+                                    <div class="calendar-day-header">Mon</div>
+                                    <div class="calendar-day-header">Tue</div>
+                                    <div class="calendar-day-header">Wed</div>
+                                    <div class="calendar-day-header">Thu</div>
+                                    <div class="calendar-day-header">Fri</div>
+                                    <div class="calendar-day-header">Sat</div>
+
+                                    <div class="calendar-day"></div>
+                                    <div class="calendar-day"></div>
+                                    <div class="calendar-day"></div>
+                                    <div class="calendar-day"></div>
+                                    <div class="calendar-day has-workout">
+                                        <div class="calendar-day-number">1</div>
+                                        <div class="calendar-dot dot-green"></div>
+                                    </div>
+                                    <div class="calendar-day has-workout">
+                                        <div class="calendar-day-number">2</div>
+                                        <div class="calendar-dot dot-blue"></div>
+                                    </div>
+                                    <div class="calendar-day">
+                                        <div class="calendar-day-number">3</div>
+                                    </div>
+
+                                    <div class="calendar-day has-workout">
+                                        <div class="calendar-day-number">4</div>
+                                        <div class="calendar-dot dot-green"></div>
+                                    </div>
+                                    <div class="calendar-day has-workout">
+                                        <div class="calendar-day-number">5</div>
+                                        <div class="calendar-dot dot-green"></div>
+                                    </div>
+                                    <div class="calendar-day has-workout">
+                                        <div class="calendar-day-number">6</div>
+                                        <div class="calendar-dot dot-red"></div>
+                                    </div>
+                                    <div class="calendar-day has-workout">
+                                        <div class="calendar-day-number">7</div>
+                                        <div class="calendar-dot dot-blue"></div>
+                                    </div>
+                                    <div class="calendar-day">
+                                        <div class="calendar-day-number">8</div>
+                                    </div>
+                                    <div class="calendar-day">
+                                        <div class="calendar-day-number">9</div>
+                                    </div>
+                                    <div class="calendar-day">
+                                        <div class="calendar-day-number">10</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Today's Workout Detail -->
+                            <div class="premium-card" style="margin-top: 16px; padding: 20px;">
+                                <p class="caption-text" style="margin-bottom: 8px;">Nov 4, 2024</p>
+                                <h4 class="card-title">🪑 Chair Workout • Home</h4>
+                                <p class="body-text" style="margin: 12px 0;">✅ 3 exercises • 1:02 minutes • Full Body mode</p>
+                                <p class="caption-text">Chair squats • Shoulder rolls • Calf raises</p>
+                                <button style="background: var(--yellow-cta); color: var(--premium-black); border: none; border-radius: 12px; padding: 12px 24px; font-weight: 600; margin-top: 16px; width: 100%; cursor: pointer;">
+                                    Repeat This Workout
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Card Collection -->
+                        <div style="margin-bottom: 80px;">
+                            <h3 class="card-title" style="margin-bottom: 16px;">My Collection (12 Cards)</h3>
+
+                            <div class="grid-3x3">
+                                <div class="premium-card" style="padding: 16px; text-align: center; aspect-ratio: 3/4;">
+                                    <span class="rarity-badge rarity-fine" style="font-size: 10px; margin-bottom: 8px; display: block;">FINE</span>
+                                    <div style="font-size: 24px; margin-bottom: 8px;">🪑</div>
+                                    <p style="font-size: 12px;">Chair Squats</p>
+                                </div>
+
+                                <div class="premium-card" style="padding: 16px; text-align: center; aspect-ratio: 3/4;">
+                                    <span class="rarity-badge rarity-common" style="font-size: 10px; margin-bottom: 8px; display: block;">COMMON</span>
+                                    <div style="font-size: 24px; margin-bottom: 8px;">✋</div>
+                                    <p style="font-size: 12px;">Push-ups</p>
+                                </div>
+
+                                <div class="premium-card" style="padding: 16px; text-align: center; aspect-ratio: 3/4;">
+                                    <span class="rarity-badge rarity-rare" style="font-size: 10px; margin-bottom: 8px; display: block;">RARE</span>
+                                    <div style="font-size: 24px; margin-bottom: 8px;">🎒</div>
+                                    <p style="font-size: 12px;">Bag Lifts</p>
+                                </div>
+
+                                <div class="premium-card" style="padding: 16px; text-align: center; aspect-ratio: 3/4;">
+                                    <span class="rarity-badge rarity-common" style="font-size: 10px; margin-bottom: 8px; display: block;">COMMON</span>
+                                    <div style="font-size: 24px; margin-bottom: 8px;">🧱</div>
+                                    <p style="font-size: 12px;">Wall Push</p>
+                                </div>
+
+                                <div class="premium-card" style="padding: 16px; text-align: center; aspect-ratio: 3/4;">
+                                    <span class="rarity-badge rarity-fine" style="font-size: 10px; margin-bottom: 8px; display: block;">FINE</span>
+                                    <div style="font-size: 24px; margin-bottom: 8px;">🍼</div>
+                                    <p style="font-size: 12px;">Bottle Press</p>
+                                </div>
+
+                                <div class="premium-card" style="padding: 16px; text-align: center; aspect-ratio: 3/4;">
+                                    <span class="rarity-badge rarity-epic" style="font-size: 10px; margin-bottom: 8px; display: block;">EPIC</span>
+                                    <div style="font-size: 24px; margin-bottom: 8px;">🧳</div>
+                                    <p style="font-size: 12px;">Luggage Lift</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bottom-nav">
+                <div class="nav-items">
+                    <div class="nav-item">
+                        <span style="font-size: 20px;">🏠</span>
+                        <span style="font-size: 11px;">Home</span>
+                    </div>
+                    <div class="nav-item">
+                        <span style="font-size: 20px;">📷</span>
+                        <span style="font-size: 11px;">Camera</span>
+                    </div>
+                    <div class="nav-item active">
+                        <span style="font-size: 20px;">👤</span>
+                        <span style="font-size: 11px;">My</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

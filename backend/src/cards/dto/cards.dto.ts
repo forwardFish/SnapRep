@@ -1,6 +1,6 @@
 import { IsString, IsOptional, IsBoolean, IsArray, IsNumber, Min, Max, IsEnum, IsUUID } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { RarityLevel } from '@prisma/client';
+import { RarityLevel } from '../../common/types/prisma-enums';
 
 /**
  * 生成分享卡片请求 DTO
@@ -116,12 +116,24 @@ export class UpdateCardDto {
  */
 export class CardsQueryDto {
   @ApiPropertyOptional({
-    description: '稀有度等级筛选',
+    description: '基础稀有度等级筛选',
     enum: RarityLevel
   })
   @IsOptional()
   @IsEnum(RarityLevel)
   rarity?: RarityLevel;
+
+  @ApiPropertyOptional({
+    description: '个人星级筛选 (1-5星)',
+    example: 5,
+    minimum: 1,
+    maximum: 5
+  })
+  @IsOptional()
+  @IsNumber()
+  @Min(1)
+  @Max(5)
+  personalStars?: number;
 
   @ApiPropertyOptional({
     description: '器材系列筛选',
@@ -266,7 +278,7 @@ export class BatchRarityDto {
 }
 
 /**
- * 卡片收藏统计查询 DTO
+ * 收藏统计查询 DTO
  */
 export class CollectionStatsDto {
   @ApiPropertyOptional({
@@ -289,4 +301,46 @@ export class CollectionStatsDto {
   @Min(1)
   @Max(1000)
   days?: number = 365;
+}
+
+/**
+ * 个人星级计算 DTO (v3.0 新增)
+ */
+export class PersonalStarsDto {
+  @ApiProperty({
+    description: '器材代码',
+    example: 'chair'
+  })
+  @IsString()
+  equipmentCode: string;
+
+  @ApiProperty({
+    description: '用户ID',
+    example: 'user_uuid_123'
+  })
+  @IsString()
+  @IsUUID()
+  userId: string;
+}
+
+/**
+ * 批量个人星级计算 DTO (v3.0 新增)
+ */
+export class BatchPersonalStarsDto {
+  @ApiProperty({
+    description: '器材代码列表',
+    example: ['chair', 'wall', 'bottle', 'none'],
+    isArray: true
+  })
+  @IsArray()
+  @IsString({ each: true })
+  equipmentCodes: string[];
+
+  @ApiProperty({
+    description: '用户ID',
+    example: 'user_uuid_123'
+  })
+  @IsString()
+  @IsUUID()
+  userId: string;
 }

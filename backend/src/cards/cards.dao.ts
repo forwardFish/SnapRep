@@ -3,7 +3,7 @@ import { PrismaService } from 'nestjs-prisma';
 import { PrismaBaseDao } from '../common/dao/prisma-base.dao';
 import { ResponseError } from '../exception/response-error';
 import { ErrorCodes } from '../exception/error-codes';
-import { RarityLevel, DataSource } from '@prisma/client';
+import { RarityLevel, DataSource } from '../common/types/prisma-enums';
 
 /**
  * Cards DAO 类

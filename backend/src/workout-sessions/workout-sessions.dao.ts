@@ -3,7 +3,7 @@ import { PrismaService } from 'nestjs-prisma';
 import { PrismaBaseDao } from '../common/dao/prisma-base.dao';
 import { ResponseError } from '../exception/response-error';
 import { ErrorCodes } from '../exception/error-codes';
-import { SessionStatus } from '@prisma/client';
+import { SessionStatus } from '../common/types/prisma-enums';
 
 /**
  * WorkoutSessions DAO 类
@@ -274,7 +274,7 @@ export class WorkoutSessionsDao extends PrismaBaseDao<any> {
       // 转换为日期字符串（忽略时间）
       const uniqueDays = Array.from(new Set(
         recentDays.map(day => day.completedAt?.toISOString().split('T')[0])
-      )).filter(Boolean).sort((a, b) => b!.localeCompare(a!));
+      )).filter(Boolean).sort((a, b) => (b as string).localeCompare(a as string));
 
       // 计算连续天数
       let streak = 0;

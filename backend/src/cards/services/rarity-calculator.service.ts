@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { CardsDao } from '../cards.dao';
 import { PrismaService } from 'nestjs-prisma';
-import { RarityLevel, DataSource } from '@prisma/client';
+import { RarityLevel, DataSource } from '../../common/types/prisma-enums';
 
 /**
  * 稀有度计算服务
@@ -30,7 +30,7 @@ export class RarityCalculatorService {
       // 检查是否已有当周的稀有度数据
       if (!forceRecalculate) {
         const existingRecord = await this.cardsDao.findRarityRecord(equipmentCode, weekStart);
-        if (existingRecord && existingRecord.dataSource === 'WEEKLY_TABLE') {
+        if (existingRecord && existingRecord.dataSource === DataSource.WEEKLY_TABLE) {
           this.logger.debug(`使用缓存的稀有度数据: ${equipmentCode}, rarity=${existingRecord.rarityLevel}`);
           return existingRecord;
         }
@@ -56,7 +56,7 @@ export class RarityCalculatorService {
         weekStart,
         rarityScore,
         rarityLevel,
-        dataSource: 'WEEKLY_TABLE',
+        dataSource: DataSource.WEEKLY_TABLE,
         region
       });
 
@@ -221,16 +221,20 @@ export class RarityCalculatorService {
   }
 
   /**
-   * 根据稀有度分数确定稀有度等级
+   * 根据稀有度分数确定稀有度等级 (v3.0 升级为9档)
    * @param score 稀有度分数 (0.0-1.0)
    * @returns 稀有度等级
    */
   private determineRarityLevel(score: number): RarityLevel {
-    if (score >= 0.95) return 'LEGENDARY'; // 传说 (<5%使用率)
-    if (score >= 0.80) return 'EPIC';      // 史诗 (5-20%使用率)
-    if (score >= 0.50) return 'RARE';      // 稀有 (20-50%使用率)
-    if (score >= 0.20) return 'UNCOMMON';  // 不常见 (50-80%使用率)
-    return 'COMMON';                       // 常见 (>80%使用率)
+    if (score >= 0.997) return 'APEX' as RarityLevel;       // 顶点 (<0.003%)
+    if (score >= 0.99) return 'LEGENDARY' as RarityLevel;   // 传说 (0.003-0.01%)
+    if (score >= 0.97) return 'MYTHIC' as RarityLevel;      // 神话 (0.01-0.03%)
+    if (score >= 0.9) return 'EPIC' as RarityLevel;         // 史诗 (0.03-0.1%)
+    if (score >= 0.7) return 'ELITE' as RarityLevel;        // 精英 (0.1-0.3%)
+    if (score >= 0.4) return 'RARE' as RarityLevel;         // 稀有 (0.3-1%)
+    if (score >= 0.08) return 'FINE' as RarityLevel;        // 细致 (1-3%)
+    if (score >= 0.03) return 'UNCOMMON' as RarityLevel;    // 不常见 (3-8%)
+    return 'COMMON' as RarityLevel;                         // 常见 (≥8%)
   }
 
   /**
@@ -259,7 +263,7 @@ export class RarityCalculatorService {
         weekStart,
         rarityScore: estimatedScore,
         rarityLevel,
-        dataSource: 'ON_THE_FLY_ESTIMATE',
+        dataSource: DataSource.ON_THE_FLY_ESTIMATE,
         region
       });
 
@@ -334,6 +338,109 @@ export class RarityCalculatorService {
     } catch (error) {
       this.logger.error(`获取稀有度趋势失败: ${error.message}`);
       throw error;
+    }
+  }
+
+  /**
+   * 计算个人星级 (v3.0 新增)
+   * @param userId 用户ID
+   * @param equipmentCode 器材代码
+   * @returns 个人星级 (1-5星)
+   */
+  async calculatePersonalStars(userId: string, equipmentCode: string): Promise<number> {
+    try {
+      // 获取用户近21天的训练记录
+      const twentyOneDaysAgo = new Date();
+      twentyOneDaysAgo.setDate(twentyOneDaysAgo.getDate() - 21);
+
+      // 查询用户在21天内使用该器材的次数
+      const equipmentUsageCount = await this.prisma.$queryRaw<Array<{ count: bigint }>>`
+        SELECT COUNT(*) as count
+        FROM workout_sessions ws
+        JOIN session_exercises se ON ws.id = se.session_id
+        JOIN exercise_equipment ee ON se.exercise_id = ee.exercise_id
+        JOIN equipment eq ON ee.equipment_id = eq.id
+        WHERE eq.code = ${equipmentCode}
+          AND ws.user_id = ${userId}
+          AND ws.completed_at >= ${twentyOneDaysAgo}
+          AND ws.status = 'COMPLETED'
+      `;
+
+      // 查询用户在21天内的总训练次数
+      const totalUserSessionsCount = await this.prisma.$queryRaw<Array<{ count: bigint }>>`
+        SELECT COUNT(*) as count
+        FROM workout_sessions
+        WHERE user_id = ${userId}
+          AND completed_at >= ${twentyOneDaysAgo}
+          AND status = 'COMPLETED'
+      `;
+
+      const usageCount = Number(equipmentUsageCount[0]?.count || 0);
+      const totalSessions = Number(totalUserSessionsCount[0]?.count || 1);
+
+      // 计算个人使用频率
+      const personalUsageFrequency = usageCount / totalSessions;
+
+      // 根据使用频率确定星级 (使用越少星级越高)
+      const stars = this.determinePersonalStars(personalUsageFrequency);
+
+      this.logger.debug(`个人星级计算: userId=${userId}, equipment=${equipmentCode}, usage=${usageCount}, total=${totalSessions}, frequency=${personalUsageFrequency.toFixed(4)}, stars=${stars}`);
+
+      return stars;
+
+    } catch (error) {
+      this.logger.error(`个人星级计算失败: userId=${userId}, equipment=${equipmentCode}, error=${error.message}`);
+      return 1; // 默认1星
+    }
+  }
+
+  /**
+   * 根据个人使用频率确定星级
+   * @param frequency 个人使用频率 (0.0-1.0)
+   * @returns 星级 (1-5)
+   */
+  private determinePersonalStars(frequency: number): number {
+    // 频率越低，星级越高 (新鲜感奖励)
+    if (frequency <= 0.05) return 5; // ≤5%使用 = ★★★★★ (很少使用)
+    if (frequency <= 0.15) return 4; // 5-15%使用 = ★★★★ (较少使用)
+    if (frequency <= 0.35) return 3; // 15-35%使用 = ★★★ (中等使用)
+    if (frequency <= 0.60) return 2; // 35-60%使用 = ★★ (较常使用)
+    return 1;                        // >60%使用 = ★ (经常使用)
+  }
+
+  /**
+   * 批量计算用户的个人星级
+   * @param userId 用户ID
+   * @param equipmentCodes 器材代码列表
+   * @returns 星级映射 {equipmentCode: stars}
+   */
+  async calculateBatchPersonalStars(userId: string, equipmentCodes: string[]): Promise<Record<string, number>> {
+    try {
+      const results: Record<string, number> = {};
+
+      // 并行计算所有器材的个人星级
+      const starPromises = equipmentCodes.map(async (equipmentCode) => {
+        const stars = await this.calculatePersonalStars(userId, equipmentCode);
+        return { equipmentCode, stars };
+      });
+
+      const starResults = await Promise.all(starPromises);
+
+      starResults.forEach(({ equipmentCode, stars }) => {
+        results[equipmentCode] = stars;
+      });
+
+      this.logger.log(`批量个人星级计算完成: userId=${userId}, 计算了${equipmentCodes.length}个器材`);
+      return results;
+
+    } catch (error) {
+      this.logger.error(`批量个人星级计算失败: userId=${userId}, error=${error.message}`);
+      // 返回默认值
+      const defaultResults: Record<string, number> = {};
+      equipmentCodes.forEach(code => {
+        defaultResults[code] = 1;
+      });
+      return defaultResults;
     }
   }
 }
