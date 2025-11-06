@@ -36,6 +36,21 @@ allprojects {
 rootProject.buildDir = '../build'
 subprojects {
     project.buildDir = "${rootProject.buildDir}/${project.name}"
+
+    // 强制所有子项目使用API 34
+    afterEvaluate { project ->
+        if (project.hasProperty('android')) {
+            project.android.compileSdkVersion 34
+            project.android.buildToolsVersion '34.0.0'
+
+            if (project.android.hasProperty('defaultConfig')) {
+                project.android.defaultConfig.targetSdkVersion 34
+                if (project.android.defaultConfig.hasProperty('minSdkVersion')) {
+                    // 保持原有minSdkVersion不变
+                }
+            }
+        }
+    }
 }
 subprojects {
     project.evaluationDependsOn(':app')

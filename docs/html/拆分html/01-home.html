@@ -32,7 +32,7 @@
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Helvetica Neue', 'Roboto', 'Segoe UI', system-ui, sans-serif;
-            background: radial-gradient(ellipse at top, #f8fafc 0%, #ffffff 50%, #f1f5f9 100%);
+            background: #ffffff;
             color: var(--text-primary);
             line-height: 1.6;
             overflow-x: auto;
@@ -146,7 +146,7 @@
         }
 
         .section-title {
-            font-size: 24px;
+            font-size: 18px;
             font-weight: 700;
             color: var(--text-primary);
             margin-bottom: 16px;
@@ -171,7 +171,50 @@
             line-height: 1.4;
         }
 
-        /* ========== GRID SYSTEMS ========== */
+        /* ========== HORIZONTAL SCROLLING CAROUSEL ========== */
+        .horizontal-scroll {
+            display: flex;
+            overflow-x: auto;
+            scroll-behavior: smooth;
+            gap: 16px;
+            padding: 0 24px 16px 24px;
+            margin: 0 -24px;
+            -webkit-overflow-scrolling: touch;
+            cursor: grab;
+            user-select: none;
+        }
+
+        .horizontal-scroll:active {
+            cursor: grabbing;
+        }
+
+        .horizontal-scroll::-webkit-scrollbar {
+            display: none;
+        }
+
+        .scroll-item {
+            flex: 0 0 160px;
+            height: 140px;
+        }
+
+        .scroll-indicators {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 16px;
+        }
+
+        .indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
+        }
+
+        .indicator.active {
+            background: var(--yellow-cta);
+        }
         .grid-2x2 {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -192,10 +235,10 @@
             bottom: 0;
             left: 0;
             right: 0;
-            background: var(--crystal-white);
+            background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(20px);
-            border-top: 1px solid rgba(255, 255, 255, 0.8);
-            padding: 12px 0 24px;
+            border-top: 1px solid rgba(0, 0, 0, 0.1);
+            padding: 8px 0 24px;
         }
 
         .nav-items {
@@ -209,14 +252,31 @@
             flex-direction: column;
             align-items: center;
             gap: 4px;
-            padding: 8px;
+            padding: 8px 16px;
             cursor: pointer;
             transition: all 0.3s ease;
-            color: var(--text-caption);
+            color: #9CA3AF;
+            border-radius: 12px;
+            min-width: 60px;
+        }
+
+        .nav-item:hover {
+            background: rgba(0, 0, 0, 0.05);
+            color: var(--text-primary);
         }
 
         .nav-item.active {
             color: var(--yellow-cta);
+            background: rgba(255, 215, 0, 0.1);
+        }
+
+        .nav-item.active svg {
+            color: var(--yellow-cta);
+        }
+
+        .nav-item span {
+            font-weight: 500;
+            letter-spacing: 0.5px;
         }
 
         /* ========== ANIMATIONS ========== */
@@ -248,85 +308,242 @@
 
             <div class="page-content">
                 <div class="full-height-content">
-                    <!-- Hero Section -->
-                    <div style="text-align: center; margin-bottom: 32px;">
-                        <h1 class="hero-title">SnapRep</h1>
-                        <p class="body-text" style="margin-bottom: 24px;">Transform any space into your personal gym</p>
+                    <!-- Hero Section - Large Image Style with Real Photo -->
+                    <div style="position: relative; margin-bottom: 32px; border-radius: 20px; overflow: hidden; height: 280px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                        <!-- Background Image - Fitness Model -->
+                        <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(135deg, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0.6) 100%), url('https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80') center/cover;">
+                        </div>
 
-                        <!-- Main CTA - Reference UI Style -->
-                        <button class="yellow-cta-button" style="width: 100%;">
-                            Give Me 60 Seconds
-                        </button>
+                        <!-- Tag Badge -->
+
+
+                        <!-- Hero Content -->
+                        <div style="position: absolute; bottom: 0; left: 0; right: 0; padding: 24px; color: white;">
+                            <h1 style="font-size: 28px; font-weight: 800; margin: 0 0 8px 0; text-shadow: 0 2px 8px rgba(0,0,0,0.5);">
+                                60-Second Workout
+                            </h1>
+                            <p style="font-size: 14px; margin: 0 0 20px 0; opacity: 0.95; text-shadow: 0 1px 4px rgba(0,0,0,0.5);">
+                                Transform any space into your personal gym
+                            </p>
+
+                            <!-- Main CTA - Reference UI Style -->
+                            <button class="yellow-cta-button" style="width: 100%; border-radius: 12px; font-size: 16px; padding: 14px; box-shadow: 0 4px 16px rgba(255, 215, 0, 0.4);">
+                                Give Me 60 Seconds
+                            </button>
+                        </div>
                     </div>
 
-                    <!-- Quick Scenarios -->
+                    <!-- Quick Scenarios - Horizontal Scrolling -->
                     <div style="margin-bottom: 32px;">
-                        <h2 class="section-title">Choose Your Space</h2>
-                        <div class="grid-2x2">
-                            <div class="premium-card" style="padding: 20px; text-align: center;">
-                                <div style="font-size: 32px; margin-bottom: 8px;">🏢</div>
-                                <p class="card-title">Office</p>
-                                <p class="caption-text">Desk workouts</p>
+                        <h2 class="section-title" style="padding: 0 16px;">Scenarios</h2>
+
+                        <!-- Horizontal Scrolling Container -->
+                        <div class="horizontal-scroll" id="scenarioScroll">
+                            <!-- Office Card -->
+                            <div class="scroll-item" style="position: relative; border-radius: 20px; overflow: hidden; background: url('https://images.unsplash.com/photo-1497366216548-37526070297c?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80') center/cover;">
+                                <!-- Subtle White Overlay for Better Text Readability -->
+                                <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.2) 100%);">
+                                </div>
+                                <!-- Badge -->
+                                <div style="position: absolute; top: 12px; left: 12px; background: var(--yellow-cta); color: var(--premium-black); padding: 6px 12px; border-radius: 12px; font-size: 11px; font-weight: 600;">
+                                    OFFICE
+                                </div>
+                                <!-- Content -->
+
                             </div>
-                            <div class="premium-card" style="padding: 20px; text-align: center;">
-                                <div style="font-size: 32px; margin-bottom: 8px;">🏠</div>
-                                <p class="card-title">Home</p>
-                                <p class="caption-text">Living room</p>
+
+                            <!-- Home Card -->
+                            <div class="scroll-item" style="position: relative; border-radius: 20px; overflow: hidden; background: url('https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80') center/cover;">
+                                <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.2) 100%);">
+                                </div>
+                                <div style="position: absolute; top: 12px; left: 12px; background: var(--yellow-cta); color: var(--premium-black); padding: 6px 12px; border-radius: 12px; font-size: 11px; font-weight: 600;">
+                                    HOME
+                                </div>
+
                             </div>
-                            <div class="premium-card" style="padding: 20px; text-align: center;">
-                                <div style="font-size: 32px; margin-bottom: 8px;">🏋️</div>
-                                <p class="card-title">Gym</p>
-                                <p class="caption-text">Full equipment</p>
+
+                            <!-- Gym Card -->
+                            <div class="scroll-item" style="position: relative; border-radius: 20px; overflow: hidden; background: url('https://images.unsplash.com/photo-1534438327276-14e5300c3a48?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80') center/cover;">
+                                <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.2) 100%);">
+                                </div>
+                                <div style="position: absolute; top: 12px; left: 12px; background: var(--yellow-cta); color: var(--premium-black); padding: 6px 12px; border-radius: 12px; font-size: 11px; font-weight: 600;">
+                                    GYM
+                                </div>
+
                             </div>
-                            <div class="premium-card" style="padding: 20px; text-align: center;">
-                                <div style="font-size: 32px; margin-bottom: 8px;">🌳</div>
-                                <p class="card-title">Park</p>
-                                <p class="caption-text">Outdoor space</p>
+
+                            <!-- Park Card -->
+                            <div class="scroll-item" style="position: relative; border-radius: 20px; overflow: hidden; background: url('https://images.unsplash.com/photo-1441974231531-c6227db76b6e?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80') center/cover;">
+                                <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.2) 100%);">
+                                </div>
+                                <div style="position: absolute; top: 12px; left: 12px; background: var(--yellow-cta); color: var(--premium-black); padding: 6px 12px; border-radius: 12px; font-size: 11px; font-weight: 600;">
+                                    PARK
+                                </div>
+
                             </div>
+                        </div>
+
+                        <!-- Scroll Indicators -->
+                        <div class="scroll-indicators">
+                            <div class="indicator active" data-index="0"></div>
+                            <div class="indicator" data-index="1"></div>
+                            <div class="indicator" data-index="2"></div>
+                            <div class="indicator" data-index="3"></div>
                         </div>
                     </div>
 
-                    <!-- Object Recognition Grid -->
+                    <!-- Equipment Section - Horizontal Scrolling -->
                     <div style="margin-bottom: 80px;">
-                        <h2 class="section-title">What Do You Have?</h2>
-                        <div class="grid-3x3">
-                            <div class="premium-card" style="padding: 16px; text-align: center;">
-                                <div style="font-size: 24px; margin-bottom: 8px;">✋</div>
-                                <p class="caption-text">Bodyweight</p>
+                        <h2 class="section-title" style="padding: 0 24px;">Equipments</h2>
+
+                        <!-- Horizontal Scrolling Container -->
+                        <div class="horizontal-scroll" id="equipmentScroll">
+                            <!-- Bodyweight Card -->
+                            <div class="scroll-item" style="position: relative; border-radius: 20px; overflow: hidden; background: url('https://images.unsplash.com/photo-1583454110551-21f2fa2afe61?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80') center/cover;">
+                                <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.2) 100%);">
+                                </div>
+                                <div style="position: absolute; top: 12px; left: 12px; background: var(--yellow-cta); color: var(--premium-black); padding: 6px 12px; border-radius: 12px; font-size: 11px; font-weight: 600;">
+                                    BODYWEIGHT
+                                </div>
                             </div>
-                            <div class="premium-card" style="padding: 16px; text-align: center;">
-                                <div style="font-size: 24px; margin-bottom: 8px;">🪑</div>
-                                <p class="caption-text">Chair</p>
+
+                            <!-- Chair Card -->
+                            <div class="scroll-item" style="position: relative; border-radius: 20px; overflow: hidden; background: url('https://images.unsplash.com/photo-1586023492125-27b2c045efd7?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80') center/cover;">
+                                <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.2) 100%);">
+                                </div>
+                                <div style="position: absolute; top: 12px; left: 12px; background: var(--yellow-cta); color: var(--premium-black); padding: 6px 12px; border-radius: 12px; font-size: 11px; font-weight: 600;">
+                                    CHAIR
+                                </div>
                             </div>
-                            <div class="premium-card" style="padding: 16px; text-align: center;">
-                                <div style="font-size: 24px; margin-bottom: 8px;">🧱</div>
-                                <p class="caption-text">Wall</p>
+
+                            <!-- Wall Card -->
+                            <div class="scroll-item" style="position: relative; border-radius: 20px; overflow: hidden; background: url('https://images.unsplash.com/photo-1631679706909-1844bbd07221?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80') center/cover;">
+                                <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.2) 100%);">
+                                </div>
+                                <div style="position: absolute; top: 12px; left: 12px; background: var(--yellow-cta); color: var(--premium-black); padding: 6px 12px; border-radius: 12px; font-size: 11px; font-weight: 600;">
+                                    WALL
+                                </div>
                             </div>
-                            <div class="premium-card" style="padding: 16px; text-align: center;">
-                                <div style="font-size: 24px; margin-bottom: 8px;">🍼</div>
-                                <p class="caption-text">Bottle</p>
+
+                            <!-- Bottle Card -->
+                            <div class="scroll-item" style="position: relative; border-radius: 20px; overflow: hidden; background: url('https://images.unsplash.com/photo-1523362628745-0c100150b504?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80') center/cover;">
+                                <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.2) 100%);">
+                                </div>
+                                <div style="position: absolute; top: 12px; left: 12px; background: var(--yellow-cta); color: var(--premium-black); padding: 6px 12px; border-radius: 12px; font-size: 11px; font-weight: 600;">
+                                    BOTTLE
+                                </div>
                             </div>
-                            <div class="premium-card" style="padding: 16px; text-align: center;">
-                                <div style="font-size: 24px; margin-bottom: 8px;">🎒</div>
-                                <p class="caption-text">Backpack</p>
+
+                            <!-- Backpack Card -->
+                            <div class="scroll-item" style="position: relative; border-radius: 20px; overflow: hidden; background: url('https://images.unsplash.com/photo-1548036328-c9fa89d128fa?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80') center/cover;">
+                                <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.2) 100%);">
+                                </div>
+                                <div style="position: absolute; top: 12px; left: 12px; background: var(--yellow-cta); color: var(--premium-black); padding: 6px 12px; border-radius: 12px; font-size: 11px; font-weight: 600;">
+                                    BACKPACK
+                                </div>
                             </div>
-                            <div class="premium-card" style="padding: 16px; text-align: center;">
-                                <div style="font-size: 24px; margin-bottom: 8px;">📚</div>
-                                <p class="caption-text">Book</p>
+
+                            <!-- Book Card -->
+                            <div class="scroll-item" style="position: relative; border-radius: 20px; overflow: hidden; background: url('https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80') center/cover;">
+                                <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.2) 100%);">
+                                </div>
+                                <div style="position: absolute; top: 12px; left: 12px; background: var(--yellow-cta); color: var(--premium-black); padding: 6px 12px; border-radius: 12px; font-size: 11px; font-weight: 600;">
+                                    BOOK
+                                </div>
                             </div>
-                            <div class="premium-card" style="padding: 16px; text-align: center;">
-                                <div style="font-size: 24px; margin-bottom: 8px;">🧹</div>
-                                <p class="caption-text">Broom</p>
+
+                            <!-- Broom Card -->
+                            <div class="scroll-item" style="position: relative; border-radius: 20px; overflow: hidden; background: url('https://images.unsplash.com/photo-1558618666-fcd25c85cd64?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80') center/cover;">
+                                <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.2) 100%);">
+                                </div>
+                                <div style="position: absolute; top: 12px; left: 12px; background: var(--yellow-cta); color: var(--premium-black); padding: 6px 12px; border-radius: 12px; font-size: 11px; font-weight: 600;">
+                                    BROOM
+                                </div>
                             </div>
-                            <div class="premium-card" style="padding: 16px; text-align: center;">
-                                <div style="font-size: 24px; margin-bottom: 8px;">🧳</div>
-                                <p class="caption-text">Luggage</p>
+
+                            <!-- Luggage Card -->
+                            <div class="scroll-item" style="position: relative; border-radius: 20px; overflow: hidden; background: url('https://images.unsplash.com/photo-1544427920-c49ccfb85579?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80') center/cover;">
+                                <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.2) 100%);">
+                                </div>
+                                <div style="position: absolute; top: 12px; left: 12px; background: var(--yellow-cta); color: var(--premium-black); padding: 6px 12px; border-radius: 12px; font-size: 11px; font-weight: 600;">
+                                    LUGGAGE
+                                </div>
                             </div>
-                            <div class="premium-card" style="padding: 16px; text-align: center;">
-                                <div style="font-size: 24px; margin-bottom: 8px;">📷</div>
-                                <p class="caption-text">AI Scan</p>
+
+                            <!-- AI Scan Card -->
+                            <div class="scroll-item" style="position: relative; border-radius: 20px; overflow: hidden; background: url('https://images.unsplash.com/photo-1485827404703-89b55fcc595e?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80') center/cover;">
+                                <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.2) 100%);">
+                                </div>
+                                <div style="position: absolute; top: 12px; left: 12px; background: var(--yellow-cta); color: var(--premium-black); padding: 6px 12px; border-radius: 12px; font-size: 11px; font-weight: 600;">
+                                    AI SCAN
+                                </div>
                             </div>
                         </div>
+
+                        <!-- Equipment Scroll Indicators -->
+                        <div class="scroll-indicators">
+                            <div class="indicator active" data-index="0"></div>
+                            <div class="indicator" data-index="1"></div>
+                            <div class="indicator" data-index="2"></div>
+                            <div class="indicator" data-index="3"></div>
+                            <div class="indicator" data-index="4"></div>
+                            <div class="indicator" data-index="5"></div>
+                            <div class="indicator" data-index="6"></div>
+                            <div class="indicator" data-index="7"></div>
+                            <div class="indicator" data-index="8"></div>
+                        </div>
+                    </div>
+
+                    <!-- Theme Week Section - 主题周 -->
+                    <div style="margin-bottom: 80px;">
+                        <h2 class="section-title" style="padding: 0 24px;">Theme Week</h2>
+
+                        <!-- Current Theme Card - 当前主题 -->
+                        <div style="margin: 16px 24px 24px 24px;">
+                            <div style="position: relative; border-radius: 20px; overflow: hidden; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 24px;">
+                                <!-- Theme Background Image -->
+                                <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(135deg, rgba(255,215,0,0.1) 0%, rgba(255,215,0,0.2) 100%), url('https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80') center/cover;">
+                                </div>
+
+                                <!-- Theme Content -->
+                                <div style="position: relative; color: white; z-index: 1;">
+                                    <!-- Theme Badge -->
+                                    <div style="background: var(--yellow-cta); color: var(--premium-black); padding: 8px 16px; border-radius: 20px; font-size: 12px; font-weight: 700; margin-bottom: 16px; display: inline-block;">
+                                        This Week #ChairDay
+                                    </div>
+
+                                    <!-- Theme Title -->
+                                    <h3 style="font-size: 20px; font-weight: 800; margin: 0 0 8px 0; text-shadow: 0 2px 8px rgba(0,0,0,0.5);">
+                                        3 Chair Exercises · Unlock Sticker Skins
+                                    </h3>
+
+                                    <!-- Theme Description -->
+<!--                                     <p style="font-size: 14px; margin: 0 0 20px 0; opacity: 0.95; text-shadow: 0 1px 4px rgba(0,0,0,0.5);">
+                                        Practice anytime in office, complete to earn rare badges
+                                    </p>
+ -->
+
+                                    <!-- Theme Progress -->
+                                    <div style="background: rgba(255,255,255,0.2); border-radius: 12px; padding: 12px; margin-bottom: 20px;">
+                                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                            <span style="font-size: 12px; font-weight: 600;">Progress: 2/3 completed</span>
+                                            <span style="font-size: 12px;">🎁 Rarity Upgrade</span>
+                                        </div>
+                                        <!-- Progress Bar -->
+                                        <div style="background: rgba(255,255,255,0.3); border-radius: 8px; height: 6px; overflow: hidden;">
+                                            <div style="background: var(--yellow-cta); height: 100%; width: 66%; border-radius: 8px; transition: width 0.3s ease;"></div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Theme CTA Button -->
+                                    <button style="background: var(--yellow-cta); color: var(--premium-black); border: none; padding: 14px 24px; border-radius: 12px; font-size: 16px; font-weight: 700; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 4px 16px rgba(255, 215, 0, 0.4); width: 100%;">
+                                        Join Now 🚀
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+
                     </div>
                 </div>
             </div>
@@ -334,20 +551,129 @@
             <div class="bottom-nav">
                 <div class="nav-items">
                     <div class="nav-item active">
-                        <span style="font-size: 20px;">🏠</span>
+                        <!-- Home Icon -->
+                        <svg style="width: 24px; height: 24px; margin-bottom: 4px;" viewBox="0 0 24 24" fill="none">
+                            <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <polyline points="9,22 9,12 15,12 15,22" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
                         <span style="font-size: 11px;">Home</span>
                     </div>
                     <div class="nav-item">
-                        <span style="font-size: 20px;">📷</span>
+                        <!-- Camera Icon -->
+                        <svg style="width: 24px; height: 24px; margin-bottom: 4px;" viewBox="0 0 24 24" fill="none">
+                            <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <circle cx="12" cy="13" r="4" stroke="currentColor" stroke-width="2"/>
+                        </svg>
                         <span style="font-size: 11px;">Camera</span>
                     </div>
                     <div class="nav-item">
-                        <span style="font-size: 20px;">👤</span>
-                        <span style="font-size: 11px;">My</span>
+                        <!-- User Icon -->
+                        <svg style="width: 24px; height: 24px; margin-bottom: 4px;" viewBox="0 0 24 24" fill="none">
+                            <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <circle cx="12" cy="7" r="4" stroke="currentColor" stroke-width="2"/>
+                        </svg>
+                        <span style="font-size: 11px;">Profile</span>
                     </div>
                 </div>
             </div>
         </div>
     </div>
+
+    <script>
+        // 水平滚动功能实现 - 支持多个滚动容器
+        document.addEventListener('DOMContentLoaded', function() {
+            // 设置场景滚动
+            setupScrollContainer('scenarioScroll');
+            // 设置设备滚动
+            setupScrollContainer('equipmentScroll');
+
+            function setupScrollContainer(containerId) {
+                const scrollContainer = document.getElementById(containerId);
+                if (!scrollContainer) return;
+
+                const containerParent = scrollContainer.closest('div[style*="margin-bottom"]');
+                const indicators = containerParent.querySelectorAll('.indicator');
+
+                // 更新滚动指示器
+                function updateScrollIndicators() {
+                    const scrollLeft = scrollContainer.scrollLeft;
+                    const itemWidth = 140 + 16; // item width + gap
+                    const currentIndex = Math.round(scrollLeft / itemWidth);
+
+                    indicators.forEach((indicator, index) => {
+                        indicator.classList.toggle('active', index === currentIndex);
+                    });
+                }
+
+                // 滚动到指定项目
+                function scrollToItem(index) {
+                    const itemWidth = 140 + 16; // item width + gap
+                    const targetScroll = index * itemWidth;
+                    scrollContainer.scrollTo({
+                        left: targetScroll,
+                        behavior: 'smooth'
+                    });
+                }
+
+                // 监听滚动事件
+                scrollContainer.addEventListener('scroll', updateScrollIndicators);
+
+                // 指示器点击事件
+                indicators.forEach((indicator, index) => {
+                    indicator.addEventListener('click', () => {
+                        scrollToItem(index);
+                    });
+                });
+
+                // 触摸滑动支持
+                let isDown = false;
+                let startX;
+                let scrollLeftStart;
+
+                scrollContainer.addEventListener('mousedown', (e) => {
+                    isDown = true;
+                    startX = e.pageX - scrollContainer.offsetLeft;
+                    scrollLeftStart = scrollContainer.scrollLeft;
+                    scrollContainer.style.cursor = 'grabbing';
+                });
+
+                scrollContainer.addEventListener('mouseleave', () => {
+                    isDown = false;
+                    scrollContainer.style.cursor = 'grab';
+                });
+
+                scrollContainer.addEventListener('mouseup', () => {
+                    isDown = false;
+                    scrollContainer.style.cursor = 'grab';
+                });
+
+                scrollContainer.addEventListener('mousemove', (e) => {
+                    if (!isDown) return;
+                    e.preventDefault();
+                    const x = e.pageX - scrollContainer.offsetLeft;
+                    const walk = (x - startX) * 2;
+                    scrollContainer.scrollLeft = scrollLeftStart - walk;
+                });
+
+                // 触摸设备支持
+                let touchStartX = 0;
+                let touchScrollStart = 0;
+
+                scrollContainer.addEventListener('touchstart', (e) => {
+                    touchStartX = e.touches[0].clientX;
+                    touchScrollStart = scrollContainer.scrollLeft;
+                });
+
+                scrollContainer.addEventListener('touchmove', (e) => {
+                    const touchX = e.touches[0].clientX;
+                    const diff = touchStartX - touchX;
+                    scrollContainer.scrollLeft = touchScrollStart + diff;
+                });
+
+                // 初始化指示器状态
+                updateScrollIndicators();
+            }
+        });
+    </script>
 </body>
 </html>

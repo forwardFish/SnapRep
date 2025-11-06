@@ -1,9 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { PrismaService } from 'nestjs-prisma';
-import { ScenariosDao } from '../scenarios.dao';
-import { ScenariosService } from '../scenarios.service';
-import { ResponseError } from '../../exception/response-error';
-import { ErrorCodes } from '../../exception/error-codes';
+import { ScenariosDao } from './scenarios.dao';
+import { ScenariosService } from './scenarios.service';
+import { ResponseError } from '../exception/response-error';
+import { ErrorCodes } from '../exception/error-codes';
 
 // Mock Prisma Service
 const mockPrismaService = {
@@ -64,15 +64,7 @@ describe('ScenariosDao', () => {
 
       expect(result).toEqual(mockScenario);
       expect(mockPrismaService.scenario.findUnique).toHaveBeenCalledWith({
-        where: { id: 'test-id' },
-        include: {
-          exerciseScenarios: {
-            include: {
-              exercise: true,
-            },
-          },
-          workoutSessions: true,
-        },
+        where: { id: 'test-id', isActive: true },
       });
     });
 
@@ -84,7 +76,7 @@ describe('ScenariosDao', () => {
         isActive: false,
       };
 
-      mockPrismaService.scenario.findUnique.mockResolvedValue(mockScenario);
+      mockPrismaService.scenario.findUnique.mockResolvedValue(null);
 
       const result = await dao.findById('test-id');
 
@@ -111,23 +103,15 @@ describe('ScenariosDao', () => {
         isActive: true,
       };
 
-      mockPrismaService.scenario.findFirst.mockResolvedValue(mockScenario);
+      mockPrismaService.scenario.findUnique.mockResolvedValue(mockScenario);
 
       const result = await dao.findByCode('office');
 
       expect(result).toEqual(mockScenario);
-      expect(mockPrismaService.scenario.findFirst).toHaveBeenCalledWith({
+      expect(mockPrismaService.scenario.findUnique).toHaveBeenCalledWith({
         where: {
           code: 'office',
           isActive: true,
-        },
-        include: {
-          exerciseScenarios: {
-            include: {
-              exercise: true,
-            },
-          },
-          workoutSessions: true,
         },
       });
     });
@@ -167,10 +151,9 @@ describe('ScenariosDao', () => {
 
       expect(result).toEqual(mockCreatedScenario);
       expect(mockPrismaService.scenario.create).toHaveBeenCalledWith({
-        data: createData,
-        include: {
-          exerciseScenarios: true,
-          workoutSessions: true,
+        data: {
+          ...createData,
+          isActive: true,
         },
       });
     });

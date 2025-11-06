@@ -1,9 +1,10 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { PrismaService } from 'nestjs-prisma';
-import { EquipmentDao } from '../equipment.dao';
-import { EquipmentService } from '../equipment.service';
-import { ResponseError } from '../../exception/response-error';
-import { ErrorCodes } from '../../exception/error-codes';
+import { EquipmentDao } from './equipment.dao';
+import { EquipmentService } from './equipment.service';
+import { ResponseError } from '../exception/response-error';
+import { ErrorCodes } from '../exception/error-codes';
+import { EquipmentCategory } from './dto/create-update-equipment.dto';
 
 // Mock Prisma Service
 const mockPrismaService = {
@@ -53,7 +54,7 @@ describe('EquipmentDao', () => {
         code: 'DUMBBELLS_5KG',
         name: '5kg哑铃',
         description: '适合初学者使用的5公斤哑铃',
-        category: 'STRENGTH',
+        category: EquipmentCategory.STRENGTH,
         imageUrl: 'https://example.com/images/dumbbells-5kg.jpg',
         displayOrder: 1,
         isActive: true,
@@ -67,23 +68,21 @@ describe('EquipmentDao', () => {
 
       expect(result).toEqual(mockEquipment);
       expect(mockPrismaService.equipment.findUnique).toHaveBeenCalledWith({
-        where: { id: 'test-equipment-id' },
+        where: { id: 'test-equipment-id', isActive: true },
       });
     });
 
     it('should return null when equipment is inactive', async () => {
-      const mockEquipment = {
-        id: 'test-equipment-id',
-        code: 'DUMBBELLS_5KG',
-        name: '5kg哑铃',
-        isActive: false,
-      };
-
-      mockPrismaService.equipment.findUnique.mockResolvedValue(mockEquipment);
+      // When includeInactive=false (default), the DAO adds isActive: true to where clause
+      // So an inactive equipment would not be found by the query
+      mockPrismaService.equipment.findUnique.mockResolvedValue(null);
 
       const result = await dao.findById('test-equipment-id');
 
       expect(result).toBeNull();
+      expect(mockPrismaService.equipment.findUnique).toHaveBeenCalledWith({
+        where: { id: 'test-equipment-id', isActive: true },
+      });
     });
 
     it('should return inactive equipment when includeInactive is true', async () => {
@@ -99,6 +98,9 @@ describe('EquipmentDao', () => {
       const result = await dao.findById('test-equipment-id', true);
 
       expect(result).toEqual(mockEquipment);
+      expect(mockPrismaService.equipment.findUnique).toHaveBeenCalledWith({
+        where: { id: 'test-equipment-id' },
+      });
     });
 
     it('should throw ResponseError when database error occurs', async () => {
@@ -121,12 +123,12 @@ describe('EquipmentDao', () => {
         isActive: true,
       };
 
-      mockPrismaService.equipment.findFirst.mockResolvedValue(mockEquipment);
+      mockPrismaService.equipment.findUnique.mockResolvedValue(mockEquipment);
 
       const result = await dao.findByCode('DUMBBELLS_5KG');
 
       expect(result).toEqual(mockEquipment);
-      expect(mockPrismaService.equipment.findFirst).toHaveBeenCalledWith({
+      expect(mockPrismaService.equipment.findUnique).toHaveBeenCalledWith({
         where: {
           code: 'DUMBBELLS_5KG',
           isActive: true,
@@ -135,7 +137,7 @@ describe('EquipmentDao', () => {
     });
 
     it('should return null when equipment not found', async () => {
-      mockPrismaService.equipment.findFirst.mockResolvedValue(null);
+      mockPrismaService.equipment.findUnique.mockResolvedValue(null);
 
       const result = await dao.findByCode('NON_EXISTENT_CODE');
 
@@ -144,7 +146,7 @@ describe('EquipmentDao', () => {
 
     it('should throw ResponseError when database error occurs', async () => {
       const dbError = new Error('Database error');
-      mockPrismaService.equipment.findFirst.mockRejectedValue(dbError);
+      mockPrismaService.equipment.findUnique.mockRejectedValue(dbError);
 
       await expect(dao.findByCode('DUMBBELLS_5KG')).rejects.toThrow(ResponseError);
       await expect(dao.findByCode('DUMBBELLS_5KG')).rejects.toMatchObject({
@@ -159,7 +161,7 @@ describe('EquipmentDao', () => {
         code: 'NEW_EQUIPMENT',
         name: 'New Equipment',
         description: 'A new piece of equipment',
-        category: 'STRENGTH',
+        category: EquipmentCategory.STRENGTH,
         isActive: true,
       };
 
@@ -257,7 +259,7 @@ describe('EquipmentDao', () => {
           id: 'equipment-1',
           code: 'DUMBBELLS_5KG',
           name: '5kg哑铃',
-          category: 'STRENGTH',
+          category: EquipmentCategory.STRENGTH,
           isActive: true,
         },
         {
@@ -314,7 +316,7 @@ describe('EquipmentDao', () => {
         inactive: 2,
         categories: [
           {
-            category: 'STRENGTH',
+            category: EquipmentCategory.STRENGTH,
             count: 2,
             items: [
               { id: 'eq1', code: 'DUMBBELLS', name: '哑铃' },
@@ -358,7 +360,7 @@ describe('EquipmentDao', () => {
           code: 'DUMBBELLS_5KG',
           name: '5kg哑铃',
           description: '适合初学者',
-          category: 'STRENGTH',
+          category: EquipmentCategory.STRENGTH,
           isActive: true,
           createdAt: new Date('2024-01-01'),
           updatedAt: new Date('2024-01-01'),
@@ -375,7 +377,7 @@ describe('EquipmentDao', () => {
         id: 'equipment-1',
         code: 'DUMBBELLS_5KG',
         name: '5kg哑铃',
-        category: 'STRENGTH',
+        category: EquipmentCategory.STRENGTH,
         isActive: true,
         createdAt: '2024-01-01T00:00:00.000Z',
         updatedAt: '2024-01-01T00:00:00.000Z',
@@ -397,7 +399,7 @@ describe('EquipmentDao', () => {
         code: 'NEW_EQUIPMENT',
         name: 'New Equipment',
         description: 'Description',
-        category: 'STRENGTH' as const,
+        category: EquipmentCategory.STRENGTH,
         isActive: true,
       };
 
@@ -418,7 +420,7 @@ describe('EquipmentDao', () => {
         id: 'new-id',
         code: 'NEW_EQUIPMENT',
         name: 'New Equipment',
-        category: 'STRENGTH',
+        category: EquipmentCategory.STRENGTH,
         isActive: true,
         createdAt: '2024-01-01T00:00:00.000Z',
         updatedAt: '2024-01-01T00:00:00.000Z',
@@ -459,7 +461,7 @@ export class EquipmentUsageExample {
       );
 
       return {
-        category: 'STRENGTH',
+        category: EquipmentCategory.STRENGTH,
         equipment: sortedEquipment,
         count: sortedEquipment.length,
         summary: {

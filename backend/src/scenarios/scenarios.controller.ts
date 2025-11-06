@@ -24,13 +24,70 @@ import {
 } from './dto/get-scenarios-response.dto';
 import { ResponseError } from '../exception/response-error';
 import { ErrorCodes } from '../exception/error-codes';
+import { ConfigService } from '@nestjs/config';
 
 @ApiTags('scenarios')
 @Controller('rest/v1/scenarios')
 export class ScenariosController {
   private readonly logger = new Logger(ScenariosController.name);
 
-  constructor(private readonly scenariosService: ScenariosService) {}
+  constructor(
+    private readonly scenariosService: ScenariosService,
+    private readonly configService: ConfigService,
+  ) {}
+
+  /**
+   * 临时修复：直接使用Supabase HTTP API
+   * 绕过Prisma数据库连接问题
+   */
+  private async getScenariosDirect(): Promise<any> {
+    const supabaseUrl = this.configService.get<string>('SUPABASE_URL');
+    const anonKey = this.configService.get<string>('SUPABASE_ANON_KEY');
+
+    try {
+      const response = await fetch(
+        `${supabaseUrl}/rest/v1/scenarios?is_active=eq.true&order=created_at`,
+        {
+          headers: {
+            'apikey': anonKey,
+            'Authorization': `Bearer ${anonKey}`,
+            'Content-Type': 'application/json',
+          },
+        },
+      );
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const scenarios = await response.json();
+
+      return {
+        data: scenarios.map((scenario: any) => ({
+          id: scenario.id,
+          code: scenario.code,
+          name: scenario.name,
+          noiseTolerance: scenario.noise_tolerance,
+          spaceRequirement: scenario.space_requirement,
+          iconUrl: scenario.icon_url,
+          isActive: scenario.is_active,
+          createdAt: scenario.created_at,
+          updatedAt: scenario.updated_at,
+        })),
+        pagination: {
+          total: scenarios.length,
+          page: 1,
+          pageSize: scenarios.length,
+          totalPages: 1,
+          hasNextPage: false,
+          hasPreviousPage: false,
+        },
+      };
+    } catch (error) {
+      this.logger.error('Direct Supabase API call failed:', error);
+      throw new InternalServerErrorException('Failed to fetch scenarios');
+    }
+  }
 
   /**
    * 获取场景列表
@@ -72,7 +129,8 @@ export class ScenariosController {
     @Query() queryDto: GetScenariosQueryDto,
   ): Promise<GetScenariosResponseDto> {
     try {
-      return await this.scenariosService.findAll(queryDto);
+      this.logger.log('Using direct Supabase API due to database connection issue');
+      return await this.getScenariosDirect();
     } catch (error) {
       this.handleError(error, 'findAll', { queryDto });
     }

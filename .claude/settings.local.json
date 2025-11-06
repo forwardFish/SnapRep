@@ -71,7 +71,15 @@
       "Bash(prisma:*)",
       "Bash(PRISMA_SKIP_POSTINSTALL_GENERATE=true npx prisma generate:*)",
       "Bash(docker --version:*)",
-      "Bash(PRISMA_SKIP_POSTINSTALL_GENERATE=false npx prisma generate:*)"
+      "Bash(PRISMA_SKIP_POSTINSTALL_GENERATE=false npx prisma generate:*)",
+      "Bash(flutter packages pub run build_runner build:*)",
+      "Bash(flutter devices:*)",
+      "Bash(flutter build:*)",
+      "Bash(del \"前端开发指南.md\")",
+      "Bash(ping:*)",
+      "Bash(docker-compose up:*)",
+      "Bash(nslookup:*)",
+      "Bash(npm run test:full:*)"
     ],
     "deny": [],
     "ask": []

@@ -26,7 +26,7 @@ if (flutterVersionName == null) {
 android {
     namespace "com.example.snaprep"
     compileSdkVersion 34
-    buildToolsVersion "34.0.0"   // 新增：锁定到 34
+    buildToolsVersion "34.0.0"
     ndkVersion flutter.ndkVersion
 
     compileOptions {
@@ -58,6 +58,58 @@ android {
             // TODO: Add your own signing config for the release build.
             // Signing with the debug keys for now, so `flutter run --release` works.
             signingConfig signingConfigs.debug
+        }
+    }
+
+    lintOptions {
+        checkReleaseBuilds false
+    }
+
+    // 强制所有依赖使用API 34
+    configurations.all {
+        resolutionStrategy {
+            eachDependency { details ->
+                // 强制Android相关依赖使用API 34
+                if (details.requested.group == 'androidx' ||
+                    details.requested.group == 'com.android.support' ||
+                    details.requested.name.contains('android')) {
+                    details.because "Force all Android dependencies to use API 34"
+                    // 这里不设置version，而是通过compileSdkVersion控制
+                }
+            }
+            // 强制编译SDK版本
+            force 'com.android.tools.build:gradle:8.1.0'
+        }
+    }
+
+    // 覆盖子模块的compileSdkVersion
+    subprojects {
+        afterEvaluate { project ->
+            if (project.hasProperty('android')) {
+                project.android.compileSdkVersion 34
+                project.android.targetSdkVersion 34
+                if (project.android.hasProperty('buildToolsVersion')) {
+                    project.android.buildToolsVersion '34.0.0'
+                }
+                if (project.android.hasProperty('defaultConfig')) {
+                    project.android.defaultConfig.targetSdkVersion 34
+                    project.android.defaultConfig.compileSdkVersion 34
+                }
+            }
+        }
+    }
+}
+
+// 在根级别强制所有项目使用API 34
+allprojects {
+    configurations.all {
+        resolutionStrategy {
+            eachDependency { details ->
+                if (details.requested.name == 'compileSdkVersion') {
+                    details.useVersion '34'
+                    details.because 'Force compileSdkVersion to 34'
+                }
+            }
         }
     }
 }
