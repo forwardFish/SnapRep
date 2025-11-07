@@ -79,7 +79,15 @@
       "Bash(ping:*)",
       "Bash(docker-compose up:*)",
       "Bash(nslookup:*)",
-      "Bash(npm run test:full:*)"
+      "Bash(npm run test:full:*)",
+      "Bash(DATABASE_URL=\"postgresql://postgres:Snaprep%40123@db.tvjcmleckqovnieuexgu.supabase.co:5432/postgres?sslmode=require\" npx prisma generate:*)",
+      "Bash(npm run test:health:*)",
+      "Bash(start ms-settings:developers)",
+      "Bash(./gradlew:*)",
+      "Bash(netstat:*)",
+      "Bash(npm run docker:db:*)",
+      "Bash(adb devices:*)",
+      "Bash(adb shell:*)"
     ],
     "deny": [],
     "ask": []

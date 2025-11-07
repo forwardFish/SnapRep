@@ -153,8 +153,10 @@ export class ExercisesDao extends PrismaBaseDao<any> {
             include: { scenario: true }
           }
         },
-        criteria.limit || 50,
-        { createdAt: 'desc' }
+        undefined,               // select
+        { createdAt: 'desc' },   // orderBy
+        undefined,               // skip
+        criteria.limit || 50     // take
       );
     } catch (error) {
       this.logger.error(`智能筛选动作失败: criteria=${JSON.stringify(criteria)}, error=${error.message}`);

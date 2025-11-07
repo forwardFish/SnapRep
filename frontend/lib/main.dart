@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'core/services/supabase_service.dart';
 import 'core/providers/home_provider.dart';
 import 'features/home/screens/home_page.dart';
+import 'features/splash/splash_screen_simple.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -45,7 +46,10 @@ class SnapRepApp extends StatelessWidget {
             ),
           ),
         ),
-        home: const AuthWrapper(),
+        home: const SplashScreen(),
+        routes: {
+          '/home': (context) => const AuthWrapper(),
+        },
         debugShowCheckedModeBanner: false,
       ),
     );
@@ -61,7 +65,6 @@ class AuthWrapper extends StatefulWidget {
 
 class _AuthWrapperState extends State<AuthWrapper> {
   bool _isInitializing = true;
-  String? _error;
 
   @override
   void initState() {
@@ -89,14 +92,13 @@ class _AuthWrapperState extends State<AuthWrapper> {
 
       setState(() {
         _isInitializing = false;
-        _error = null;
       });
 
     } catch (e) {
       debugPrint('❌ Authentication error: $e');
+      // 对于启动页后的认证，如果失败就跳过认证直接进入主页
       setState(() {
         _isInitializing = false;
-        _error = e.toString();
       });
     }
   }
@@ -120,78 +122,7 @@ class _AuthWrapperState extends State<AuthWrapper> {
                   fontWeight: FontWeight.w500,
                 ),
               ),
-              SizedBox(height: 8),
-              Text(
-                'Connecting to backend services',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.grey,
-                ),
-              ),
             ],
-          ),
-        ),
-      );
-    }
-
-    if (_error != null) {
-      return Scaffold(
-        body: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(
-                  Icons.error_outline,
-                  size: 64,
-                  color: Colors.red,
-                ),
-                const SizedBox(height: 16),
-                const Text(
-                  'Failed to connect to backend',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Please make sure the backend is running:\nnpm run start:dev',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey[600],
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  'Error: $_error',
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: Colors.red,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 24),
-                ElevatedButton(
-                  onPressed: () {
-                    setState(() {
-                      _isInitializing = true;
-                      _error = null;
-                    });
-                    _initializeAuth();
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFFFD700),
-                    foregroundColor: const Color(0xFF1A1A1A),
-                    padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-                  ),
-                  child: const Text('Retry'),
-                ),
-              ],
-            ),
           ),
         ),
       );

@@ -97,8 +97,8 @@ BEGIN
     (gen_random_uuid(), 'chair_hip_circles', '椅上髋部环绕', 'STRETCH', 'GREEN', 'HIPS', ARRAY['CORE'], 30, 1, 'TIME', ARRAY['chair', 'silent'], '动作缓慢控制', '髋关节损伤', true, NOW(), NOW()),
 
     -- 适当运动类 (CARDIO)
-    (gen_random_uuid(), 'chair_marching', '椅上原地踏步', 'MODERATE', 'BLUE', 'LEGS', ARRAY['CORE'], 30, 1, 'TIME', ARRAY['chair'], '保持节奏稳定', '心脏病', true, NOW(), NOW()),
-    (gen_random_uuid(), 'chair_arm_swings', '椅上手臂摆动', 'MODERATE', 'BLUE', 'ARMS', ARRAY['SHOULDERS'], 30, 1, 'TIME', ARRAY['chair', 'office'], '避免碰撞周围物品', '肩关节脱位史', true, NOW(), NOW()),
+    (gen_random_uuid(), 'chair_marching', '椅上原地踏步', 'CARDIO', 'BLUE', 'LEGS', ARRAY['CORE'], 30, 1, 'TIME', ARRAY['chair'], '保持节奏稳定', '心脏病', true, NOW(), NOW()),
+    (gen_random_uuid(), 'chair_arm_swings', '椅上手臂摆动', 'CARDIO', 'BLUE', 'ARMS', ARRAY['SHOULDERS'], 30, 1, 'TIME', ARRAY['chair', 'office'], '避免碰撞周围物品', '肩关节脱位史', true, NOW(), NOW()),
 
     -- 主体锻炼类 (STRENGTH)
     (gen_random_uuid(), 'chair_squat', '椅子深蹲', 'STRENGTH', 'BLUE', 'LEGS', ARRAY['GLUTES', 'CORE'], 30, 3, 'REPS', ARRAY['chair'], '膝盖不要超过脚尖', '膝关节损伤', true, NOW(), NOW()),
@@ -115,7 +115,7 @@ BEGIN
     (gen_random_uuid(), 'wall_hip_flexor_stretch', '靠墙髋屈肌拉伸', 'STRETCH', 'BLUE', 'HIPS', ARRAY['LEGS'], 30, 1, 'TIME', ARRAY['wall'], '后腿保持伸直', '髋关节损伤', true, NOW(), NOW()),
 
     -- 适当运动类
-    (gen_random_uuid(), 'wall_slides', '靠墙滑动', 'MODERATE', 'BLUE', 'LEGS', ARRAY['GLUTES'], 30, 3, 'REPS', ARRAY['wall'], '保持背部贴墙', '膝关节疾病', true, NOW(), NOW()),
+    (gen_random_uuid(), 'wall_slides', '靠墙滑动', 'CARDIO', 'BLUE', 'LEGS', ARRAY['GLUTES'], 30, 3, 'REPS', ARRAY['wall'], '保持背部贴墙', '膝关节疾病', true, NOW(), NOW()),
 
     -- 主体锻炼类
     (gen_random_uuid(), 'wall_push_up', '靠墙俯卧撑', 'STRENGTH', 'BLUE', 'CHEST', ARRAY['ARMS', 'CORE'], 30, 3, 'REPS', ARRAY['wall'], '保持身体一条线', '腕关节损伤', true, NOW(), NOW()),
@@ -133,9 +133,9 @@ BEGIN
     (gen_random_uuid(), 'leg_swings', '腿部摆动', 'STRETCH', 'BLUE', 'HIPS', ARRAY['LEGS'], 30, 1, 'TIME', ARRAY['anywhere'], '保持平衡', '髋关节炎', true, NOW(), NOW()),
 
     -- 适当运动类
-    (gen_random_uuid(), 'marching_in_place', '原地踏步', 'MODERATE', 'BLUE', 'LEGS', ARRAY['CORE'], 30, 1, 'TIME', ARRAY['anywhere'], '膝盖抬到舒适高度', '膝关节损伤', true, NOW(), NOW()),
-    (gen_random_uuid(), 'jumping_jacks', '开合跳', 'MODERATE', 'BLUE', 'FULL_BODY', ARRAY['LEGS', 'ARMS'], 30, 1, 'TIME', ARRAY['anywhere'], '着地轻柔', '膝关节疾病', true, NOW(), NOW()),
-    (gen_random_uuid(), 'high_knees', '高抬腿', 'MODERATE', 'RED', 'LEGS', ARRAY['CORE'], 20, 1, 'TIME', ARRAY['anywhere'], '保持上身挺直', '心脏病', true, NOW(), NOW()),
+    (gen_random_uuid(), 'marching_in_place', '原地踏步', 'CARDIO', 'BLUE', 'LEGS', ARRAY['CORE'], 30, 1, 'TIME', ARRAY['anywhere'], '膝盖抬到舒适高度', '膝关节损伤', true, NOW(), NOW()),
+    (gen_random_uuid(), 'jumping_jacks', '开合跳', 'CARDIO', 'BLUE', 'FULL_BODY', ARRAY['LEGS', 'ARMS'], 30, 1, 'TIME', ARRAY['anywhere'], '着地轻柔', '膝关节疾病', true, NOW(), NOW()),
+    (gen_random_uuid(), 'high_knees', '高抬腿', 'CARDIO', 'RED', 'LEGS', ARRAY['CORE'], 20, 1, 'TIME', ARRAY['anywhere'], '保持上身挺直', '心脏病', true, NOW(), NOW()),
 
     -- 主体锻炼类
     (gen_random_uuid(), 'push_up', '标准俯卧撑', 'STRENGTH', 'BLUE', 'CHEST', ARRAY['ARMS', 'CORE'], 30, 3, 'REPS', ARRAY['anywhere'], '保持身体一条线', '腕关节损伤', true, NOW(), NOW()),
@@ -152,17 +152,17 @@ BEGIN
 
     -- ========== 背包系列动作 (4个) ==========
     (gen_random_uuid(), 'backpack_deadlift', '背包硬拉', 'STRENGTH', 'BLUE', 'BACK', ARRAY['LEGS', 'GLUTES'], 30, 3, 'REPS', ARRAY['backpack'], '保持背部挺直', '腰椎间盘突出', true, NOW(), NOW()),
-    (gen_random_uuid(), 'backpack_farmer_walk', '背包农夫行走', 'MODERATE', 'BLUE', 'FULL_BODY', ARRAY['CORE'], 30, 1, 'TIME', ARRAY['backpack'], '保持良好姿态', '腰背疼痛', true, NOW(), NOW()),
+    (gen_random_uuid(), 'backpack_farmer_walk', '背包农夫行走', 'CARDIO', 'BLUE', 'FULL_BODY', ARRAY['CORE'], 30, 1, 'TIME', ARRAY['backpack'], '保持良好姿态', '腰背疼痛', true, NOW(), NOW()),
     (gen_random_uuid(), 'backpack_overhead_press', '背包过顶推举', 'STRENGTH', 'RED', 'SHOULDERS', ARRAY['CORE'], 30, 3, 'REPS', ARRAY['backpack'], '确保背包重量适中', '肩关节疾病', true, NOW(), NOW()),
     (gen_random_uuid(), 'backpack_squat', '背包深蹲', 'STRENGTH', 'BLUE', 'LEGS', ARRAY['GLUTES'], 30, 3, 'REPS', ARRAY['backpack'], '背包贴近身体', '膝关节疾病', true, NOW(), NOW()),
 
     -- ========== 沙发系列动作 (3个) ==========
-    (gen_random_uuid(), 'sofa_step_up', '沙发踏步', 'MODERATE', 'BLUE', 'LEGS', ARRAY['GLUTES'], 30, 3, 'REPS', ARRAY['sofa'], '确保沙发稳固', '膝关节疾病', true, NOW(), NOW()),
+    (gen_random_uuid(), 'sofa_step_up', '沙发踏步', 'CARDIO', 'BLUE', 'LEGS', ARRAY['GLUTES'], 30, 3, 'REPS', ARRAY['sofa'], '确保沙发稳固', '膝关节疾病', true, NOW(), NOW()),
     (gen_random_uuid(), 'sofa_incline_push_up', '沙发斜板俯卧撑', 'STRENGTH', 'BLUE', 'CHEST', ARRAY['ARMS'], 30, 3, 'REPS', ARRAY['sofa'], '手部位置稳定', '腕关节损伤', true, NOW(), NOW()),
     (gen_random_uuid(), 'sofa_tricep_dip', '沙发三头肌撑体', 'STRENGTH', 'BLUE', 'ARMS', ARRAY['SHOULDERS'], 30, 3, 'REPS', ARRAY['sofa'], '沙发边缘要稳固', '肩关节损伤', true, NOW(), NOW()),
 
     -- ========== 台阶系列动作 (3个) ==========
-    (gen_random_uuid(), 'stair_step_up', '台阶踏步', 'MODERATE', 'BLUE', 'LEGS', ARRAY['GLUTES'], 30, 3, 'REPS', ARRAY['stairs'], '全脚掌着地', '膝关节炎', true, NOW(), NOW()),
+    (gen_random_uuid(), 'stair_step_up', '台阶踏步', 'CARDIO', 'BLUE', 'LEGS', ARRAY['GLUTES'], 30, 3, 'REPS', ARRAY['stairs'], '全脚掌着地', '膝关节炎', true, NOW(), NOW()),
     (gen_random_uuid(), 'stair_calf_raise', '台阶提踵', 'STRENGTH', 'GREEN', 'LEGS', ARRAY[], 30, 3, 'REPS', ARRAY['stairs'], '保持平衡', '跟腱炎', true, NOW(), NOW()),
     (gen_random_uuid(), 'stair_incline_push_up', '台阶斜板俯卧撑', 'STRENGTH', 'BLUE', 'CHEST', ARRAY['ARMS'], 30, 3, 'REPS', ARRAY['stairs'], '手部稳定支撑', '腕关节疾病', true, NOW(), NOW());
 
@@ -267,14 +267,14 @@ BEGIN
     -- 用户1的会话
     INSERT INTO workout_sessions (id, user_id, intent_type, difficulty, total_duration, status, completed_at, created_at, updated_at)
     VALUES (gen_random_uuid(), v_user1_id,
-           CASE WHEN i % 4 = 0 THEN 'RELAX' WHEN i % 4 = 1 THEN 'STRETCH' WHEN i % 4 = 2 THEN 'MODERATE' ELSE 'STRENGTH' END,
+           CASE WHEN i % 4 = 0 THEN 'RELAX' WHEN i % 4 = 1 THEN 'STRETCH' WHEN i % 4 = 2 THEN 'CARDIO' ELSE 'STRENGTH' END,
            CASE WHEN i % 3 = 0 THEN 'GREEN' WHEN i % 3 = 1 THEN 'BLUE' ELSE 'RED' END,
            60, 'COMPLETED', NOW() - INTERVAL '1 day' * i, NOW() - INTERVAL '1 day' * i, NOW());
 
     -- 用户2的会话
     INSERT INTO workout_sessions (id, user_id, intent_type, difficulty, total_duration, status, completed_at, created_at, updated_at)
     VALUES (gen_random_uuid(), v_user2_id,
-           CASE WHEN i % 4 = 0 THEN 'STRETCH' WHEN i % 4 = 1 THEN 'MODERATE' WHEN i % 4 = 2 THEN 'STRENGTH' ELSE 'RELAX' END,
+           CASE WHEN i % 4 = 0 THEN 'STRETCH' WHEN i % 4 = 1 THEN 'CARDIO' WHEN i % 4 = 2 THEN 'STRENGTH' ELSE 'RELAX' END,
            CASE WHEN i % 3 = 0 THEN 'BLUE' WHEN i % 3 = 1 THEN 'GREEN' ELSE 'RED' END,
            90, 'COMPLETED', NOW() - INTERVAL '2 days' * i, NOW() - INTERVAL '2 days' * i, NOW());
   END LOOP;
@@ -376,7 +376,7 @@ DECLARE
   v_user1_id UUID;
   v_user2_id UUID;
   equipment_codes TEXT[] := ARRAY['chair', 'wall', 'hands_free', 'water_bottle'];
-  intent_types TEXT[] := ARRAY['RELAX', 'STRETCH', 'MODERATE', 'STRENGTH'];
+  intent_types TEXT[] := ARRAY['RELAX', 'STRETCH', 'CARDIO', 'STRENGTH'];
   i INTEGER;
 BEGIN
   -- 获取用户ID

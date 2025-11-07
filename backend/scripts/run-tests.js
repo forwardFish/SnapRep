@@ -523,7 +523,28 @@ async function runTestSuite(suite) {
       }
     });
 
-    const result = JSON.parse(output);
+    // 尝试解析JSON，如果失败则提供默认值
+    let result;
+    try {
+      // 提取JSON部分（Jest可能会输出其他内容）
+      const jsonMatch = output.match(/\{.*"testResults".*\}/s);
+      const jsonString = jsonMatch ? jsonMatch[0] : output;
+      result = JSON.parse(jsonString);
+    } catch (parseError) {
+      colorLog('yellow', '⚠️ Jest JSON解析失败，使用默认结果');
+      result = {
+        numTotalTests: 0,
+        numPassedTests: 0,
+        numFailedTests: 1,
+        numPendingTests: 0,
+        testResults: [{
+          title: suite.name,
+          message: `JSON解析错误: ${parseError.message}`,
+          stack: output.substring(0, 500) // 截取前500字符作为错误信息
+        }]
+      };
+    }
+
     const duration = Date.now() - startTime;
 
     return {
@@ -545,6 +566,18 @@ async function runTestSuite(suite) {
 
   } catch (error) {
     const duration = Date.now() - startTime;
+
+    // 更好的错误处理，检查错误输出
+    let errorMessage = error.message;
+    let errorOutput = '';
+
+    if (error.stdout) {
+      errorOutput += `STDOUT: ${error.stdout}`;
+    }
+    if (error.stderr) {
+      errorOutput += `STDERR: ${error.stderr}`;
+    }
+
     return {
       duration,
       tests: 0,
@@ -553,9 +586,9 @@ async function runTestSuite(suite) {
       skipped: 0,
       errors: [{
         test: suite.name,
-        message: error.message,
+        message: errorMessage,
         type: 'Suite Execution Error',
-        stack: error.stack,
+        stack: errorOutput || error.stack,
       }],
     };
   }

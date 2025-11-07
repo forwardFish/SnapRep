@@ -1,0 +1,406 @@
+{
+  "summary": {
+    "totalTests": 33,
+    "passedTests": 13,
+    "failedTests": 20,
+    "skippedTests": 0,
+    "successRate": 39
+  },
+  "businessFlows": [
+    {
+      "id": 1,
+      "name": "用户认证与首次进入",
+      "description": "用户认证与首次进入",
+      "status": "FAILED",
+      "duration": 3219,
+      "testsRun": 1,
+      "testsPassed": 0,
+      "testsFailed": 1,
+      "errors": [
+        {
+          "message": "Jest执行错误: Command failed: npx jest \"flow-1-auth-entry.e2e-spec.ts\" --verbose --testTimeout=30000",
+          "type": "Execution Error"
+        }
+      ],
+      "details": "No tests found, exiting with code 1\nRun with `--passWithNoTests` to exit with code 0\nIn D:\\lyh\\AI\\SnapRep\\backend\\src\n  94 files checked.\n  testMatch:  - 0 matches\n  testPathIgnorePatterns: \\\\node_modules\\\\ - 94 matches\n  testRegex: .*\\.spec\\.ts$ - 8 matches\nPattern: flow-1-auth-entry.e2e-spec.ts - 0 matches\n"
+    },
+    {
+      "id": 2,
+      "name": "首页快速启动",
+      "description": "首页快速启动",
+      "status": "FAILED",
+      "duration": 2691,
+      "testsRun": 1,
+      "testsPassed": 0,
+      "testsFailed": 1,
+      "errors": [
+        {
+          "message": "Jest执行错误: Command failed: npx jest \"flow-2-quick-start.e2e-spec.ts\" --verbose --testTimeout=30000",
+          "type": "Execution Error"
+        }
+      ],
+      "details": "No tests found, exiting with code 1\nRun with `--passWithNoTests` to exit with code 0\nIn D:\\lyh\\AI\\SnapRep\\backend\\src\n  94 files checked.\n  testMatch:  - 0 matches\n  testPathIgnorePatterns: \\\\node_modules\\\\ - 94 matches\n  testRegex: .*\\.spec\\.ts$ - 8 matches\nPattern: flow-2-quick-start.e2e-spec.ts - 0 matches\n"
+    },
+    {
+      "id": 3,
+      "name": "锻炼引导3步骤",
+      "description": "锻炼引导3步骤",
+      "status": "FAILED",
+      "duration": 2637,
+      "testsRun": 1,
+      "testsPassed": 0,
+      "testsFailed": 1,
+      "errors": [
+        {
+          "message": "Jest执行错误: Command failed: npx jest \"flow-3-guided-workout.e2e-spec.ts\" --verbose --testTimeout=30000",
+          "type": "Execution Error"
+        }
+      ],
+      "details": "No tests found, exiting with code 1\nRun with `--passWithNoTests` to exit with code 0\nIn D:\\lyh\\AI\\SnapRep\\backend\\src\n  94 files checked.\n  testMatch:  - 0 matches\n  testPathIgnorePatterns: \\\\node_modules\\\\ - 94 matches\n  testRegex: .*\\.spec\\.ts$ - 8 matches\nPattern: flow-3-guided-workout.e2e-spec.ts - 0 matches\n"
+    },
+    {
+      "id": 4,
+      "name": "动作结果页",
+      "description": "动作结果页",
+      "status": "FAILED",
+      "duration": 2671,
+      "testsRun": 1,
+      "testsPassed": 0,
+      "testsFailed": 1,
+      "errors": [
+        {
+          "message": "Jest执行错误: Command failed: npx jest \"flow-4-result-page.e2e-spec.ts\" --verbose --testTimeout=30000",
+          "type": "Execution Error"
+        }
+      ],
+      "details": "No tests found, exiting with code 1\nRun with `--passWithNoTests` to exit with code 0\nIn D:\\lyh\\AI\\SnapRep\\backend\\src\n  94 files checked.\n  testMatch:  - 0 matches\n  testPathIgnorePatterns: \\\\node_modules\\\\ - 94 matches\n  testRegex: .*\\.spec\\.ts$ - 8 matches\nPattern: flow-4-result-page.e2e-spec.ts - 0 matches\n"
+    },
+    {
+      "id": 5,
+      "name": "成果卡生成与分享",
+      "description": "成果卡生成与分享",
+      "status": "FAILED",
+      "duration": 2769,
+      "testsRun": 1,
+      "testsPassed": 0,
+      "testsFailed": 1,
+      "errors": [
+        {
+          "message": "Jest执行错误: Command failed: npx jest \"flow-5-card-generation.e2e-spec.ts\" --verbose --testTimeout=30000",
+          "type": "Execution Error"
+        }
+      ],
+      "details": "No tests found, exiting with code 1\nRun with `--passWithNoTests` to exit with code 0\nIn D:\\lyh\\AI\\SnapRep\\backend\\src\n  94 files checked.\n  testMatch:  - 0 matches\n  testPathIgnorePatterns: \\\\node_modules\\\\ - 94 matches\n  testRegex: .*\\.spec\\.ts$ - 8 matches\nPattern: flow-5-card-generation.e2e-spec.ts - 0 matches\n"
+    },
+    {
+      "id": 6,
+      "name": "我的页面功能",
+      "description": "我的页面功能",
+      "status": "FAILED",
+      "duration": 2738,
+      "testsRun": 1,
+      "testsPassed": 0,
+      "testsFailed": 1,
+      "errors": [
+        {
+          "message": "Jest执行错误: Command failed: npx jest \"flow-6-user-center.e2e-spec.ts\" --verbose --testTimeout=30000",
+          "type": "Execution Error"
+        }
+      ],
+      "details": "No tests found, exiting with code 1\nRun with `--passWithNoTests` to exit with code 0\nIn D:\\lyh\\AI\\SnapRep\\backend\\src\n  94 files checked.\n  testMatch:  - 0 matches\n  testPathIgnorePatterns: \\\\node_modules\\\\ - 94 matches\n  testRegex: .*\\.spec\\.ts$ - 8 matches\nPattern: flow-6-user-center.e2e-spec.ts - 0 matches\n"
+    },
+    {
+      "id": 7,
+      "name": "主题周参与",
+      "description": "主题周参与",
+      "status": "FAILED",
+      "duration": 2721,
+      "testsRun": 1,
+      "testsPassed": 0,
+      "testsFailed": 1,
+      "errors": [
+        {
+          "message": "Jest执行错误: Command failed: npx jest \"flow-7-theme-week.e2e-spec.ts\" --verbose --testTimeout=30000",
+          "type": "Execution Error"
+        }
+      ],
+      "details": "No tests found, exiting with code 1\nRun with `--passWithNoTests` to exit with code 0\nIn D:\\lyh\\AI\\SnapRep\\backend\\src\n  94 files checked.\n  testMatch:  - 0 matches\n  testPathIgnorePatterns: \\\\node_modules\\\\ - 94 matches\n  testRegex: .*\\.spec\\.ts$ - 8 matches\nPattern: flow-7-theme-week.e2e-spec.ts - 0 matches\n"
+    }
+  ],
+  "apiEndpoints": {
+    "supabaseRest": [
+      {
+        "endpoint": "/rest/v1/scenarios (场景列表)",
+        "method": "GET",
+        "status": "FAILED",
+        "responseTime": 160,
+        "statusCode": 401,
+        "errorMessage": "HTTP 401",
+        "testDetails": "Supabase REST API - 场景列表"
+      },
+      {
+        "endpoint": "/rest/v1/equipment (器材列表)",
+        "method": "GET",
+        "status": "FAILED",
+        "responseTime": 58,
+        "statusCode": 401,
+        "errorMessage": "HTTP 401",
+        "testDetails": "Supabase REST API - 器材列表"
+      },
+      {
+        "endpoint": "/rest/v1/exercises (运动列表)",
+        "method": "GET",
+        "status": "FAILED",
+        "responseTime": 67,
+        "statusCode": 401,
+        "errorMessage": "HTTP 401",
+        "testDetails": "Supabase REST API - 运动列表"
+      },
+      {
+        "endpoint": "/rest/v1/theme_weeks (主题周)",
+        "method": "GET",
+        "status": "FAILED",
+        "responseTime": 60,
+        "statusCode": 401,
+        "errorMessage": "HTTP 401",
+        "testDetails": "Supabase REST API - 主题周"
+      },
+      {
+        "endpoint": "/rest/v1/workout_sessions (训练会话)",
+        "method": "GET",
+        "status": "FAILED",
+        "responseTime": 58,
+        "statusCode": 401,
+        "errorMessage": "HTTP 401",
+        "testDetails": "Supabase REST API - 训练会话"
+      },
+      {
+        "endpoint": "/rest/v1/session_exercises (会话运动)",
+        "method": "GET",
+        "status": "FAILED",
+        "responseTime": 58,
+        "statusCode": 401,
+        "errorMessage": "HTTP 401",
+        "testDetails": "Supabase REST API - 会话运动"
+      },
+      {
+        "endpoint": "/rest/v1/share_cards (分享卡片)",
+        "method": "GET",
+        "status": "FAILED",
+        "responseTime": 61,
+        "statusCode": 401,
+        "errorMessage": "HTTP 401",
+        "testDetails": "Supabase REST API - 分享卡片"
+      },
+      {
+        "endpoint": "/rest/v1/theme_week_participations (主题周参与)",
+        "method": "GET",
+        "status": "FAILED",
+        "responseTime": 72,
+        "statusCode": 401,
+        "errorMessage": "HTTP 401",
+        "testDetails": "Supabase REST API - 主题周参与"
+      },
+      {
+        "endpoint": "/rest/v1/users (用户信息)",
+        "method": "GET",
+        "status": "FAILED",
+        "responseTime": 59,
+        "statusCode": 401,
+        "errorMessage": "HTTP 401",
+        "testDetails": "Supabase REST API - 用户信息"
+      },
+      {
+        "endpoint": "/rest/v1/user_preferences (用户偏好)",
+        "method": "GET",
+        "status": "FAILED",
+        "responseTime": 57,
+        "statusCode": 401,
+        "errorMessage": "HTTP 401",
+        "testDetails": "Supabase REST API - 用户偏好"
+      },
+      {
+        "endpoint": "/rest/v1/rarity_stats (稀有度统计)",
+        "method": "GET",
+        "status": "FAILED",
+        "responseTime": 63,
+        "statusCode": 401,
+        "errorMessage": "HTTP 401",
+        "testDetails": "Supabase REST API - 稀有度统计"
+      },
+      {
+        "endpoint": "/rest/v1/daily_trainings (每日训练)",
+        "method": "GET",
+        "status": "FAILED",
+        "responseTime": 62,
+        "statusCode": 401,
+        "errorMessage": "HTTP 401",
+        "testDetails": "Supabase REST API - 每日训练"
+      }
+    ],
+    "nestjsCustom": [
+      {
+        "endpoint": "/api/v1/recommendations/quick (快速推荐)",
+        "method": "POST",
+        "status": "FAILED",
+        "responseTime": 259,
+        "statusCode": 500,
+        "errorMessage": "HTTP 500",
+        "testDetails": "NestJS Custom API - 快速推荐"
+      },
+      {
+        "endpoint": "/api/v1/recommendations/scenario (场景推荐)",
+        "method": "POST",
+        "status": "PASSED",
+        "responseTime": 5,
+        "statusCode": 404,
+        "errorMessage": "",
+        "testDetails": "NestJS Custom API - 场景推荐"
+      },
+      {
+        "endpoint": "/api/v1/recommendations/with-equipment (器材推荐)",
+        "method": "POST",
+        "status": "PASSED",
+        "responseTime": 3,
+        "statusCode": 404,
+        "errorMessage": "",
+        "testDetails": "NestJS Custom API - 器材推荐"
+      },
+      {
+        "endpoint": "/api/v1/ai/recognize-equipment (AI设备识别)",
+        "method": "POST",
+        "status": "PASSED",
+        "responseTime": 2,
+        "statusCode": 404,
+        "errorMessage": "",
+        "testDetails": "NestJS Custom API - AI设备识别"
+      },
+      {
+        "endpoint": "/api/v1/workout-sessions/start (开始训练)",
+        "method": "POST",
+        "status": "PASSED",
+        "responseTime": 3,
+        "statusCode": 404,
+        "errorMessage": "",
+        "testDetails": "NestJS Custom API - 开始训练"
+      },
+      {
+        "endpoint": "/api/v1/workout-sessions/complete-exercise (完成动作)",
+        "method": "POST",
+        "status": "PASSED",
+        "responseTime": 2,
+        "statusCode": 404,
+        "errorMessage": "",
+        "testDetails": "NestJS Custom API - 完成动作"
+      },
+      {
+        "endpoint": "/api/v1/workout-sessions/replace-exercise (替换动作)",
+        "method": "POST",
+        "status": "PASSED",
+        "responseTime": 3,
+        "statusCode": 404,
+        "errorMessage": "",
+        "testDetails": "NestJS Custom API - 替换动作"
+      },
+      {
+        "endpoint": "/api/v1/workout-sessions/regenerate (重新生成)",
+        "method": "POST",
+        "status": "PASSED",
+        "responseTime": 2,
+        "statusCode": 404,
+        "errorMessage": "",
+        "testDetails": "NestJS Custom API - 重新生成"
+      },
+      {
+        "endpoint": "/api/v1/cards/generate (生成卡片)",
+        "method": "POST",
+        "status": "PASSED",
+        "responseTime": 2,
+        "statusCode": 401,
+        "errorMessage": "",
+        "testDetails": "NestJS Custom API - 生成卡片"
+      },
+      {
+        "endpoint": "/api/v1/theme-weeks/current (当前主题周)",
+        "method": "GET",
+        "status": "PASSED",
+        "responseTime": 2,
+        "statusCode": 404,
+        "errorMessage": "",
+        "testDetails": "NestJS Custom API - 当前主题周"
+      },
+      {
+        "endpoint": "/api/v1/theme-weeks/join (加入主题周)",
+        "method": "POST",
+        "status": "PASSED",
+        "responseTime": 2,
+        "statusCode": 404,
+        "errorMessage": "",
+        "testDetails": "NestJS Custom API - 加入主题周"
+      },
+      {
+        "endpoint": "/api/v1/workouts/copy-from-deeplink (复制训练)",
+        "method": "POST",
+        "status": "PASSED",
+        "responseTime": 1,
+        "statusCode": 404,
+        "errorMessage": "",
+        "testDetails": "NestJS Custom API - 复制训练"
+      },
+      {
+        "endpoint": "/api/v1/analytics/users/metrics (用户分析)",
+        "method": "GET",
+        "status": "PASSED",
+        "responseTime": 1,
+        "statusCode": 404,
+        "errorMessage": "",
+        "testDetails": "NestJS Custom API - 用户分析"
+      },
+      {
+        "endpoint": "/api/v1/analytics/platform/kpis (平台KPI)",
+        "method": "GET",
+        "status": "PASSED",
+        "responseTime": 2,
+        "statusCode": 404,
+        "errorMessage": "",
+        "testDetails": "NestJS Custom API - 平台KPI"
+      }
+    ],
+    "authentication": [],
+    "storage": []
+  },
+  "performance": {
+    "violations": [],
+    "measurements": [
+      {
+        "metric": "TTV",
+        "value": 1002,
+        "target": 30000,
+        "status": "PASS",
+        "timestamp": "2025-11-07T08:37:10.010Z"
+      },
+      {
+        "metric": "AI设备识别",
+        "value": 1500,
+        "target": 3000,
+        "status": "PASS",
+        "timestamp": "2025-11-07T08:37:10.012Z"
+      },
+      {
+        "metric": "卡片生成",
+        "value": 650,
+        "target": 800,
+        "status": "PASS",
+        "timestamp": "2025-11-07T08:37:10.012Z"
+      }
+    ]
+  },
+  "errors": [],
+  "environment": {
+    "nodeVersion": "v22.18.0",
+    "testEnv": "test",
+    "databaseConnected": true,
+    "serverRunning": false,
+    "supabaseConnected": false
+  }
+}

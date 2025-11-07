@@ -1,12 +1,30 @@
 buildscript {
     ext.kotlin_version = '1.7.10'
      repositories {
-        maven { url 'https://maven.aliyun.com/repository/google' }
-        maven { url 'https://repo.huaweicloud.com/repository/maven/google/' }
-        maven { url 'https://mirrors.tuna.tsinghua.edu.cn/android/maven2/' }
-        maven { url 'https://maven.aliyun.com/repository/gradle-plugin' }
-        maven { url 'https://maven.aliyun.com/repository/public' }
-        maven { url 'https://mirrors.cloud.tencent.com/nexus/repository/maven-public/' }
+        maven {
+            url 'https://maven.aliyun.com/repository/google'
+            allowInsecureProtocol = false
+        }
+        maven {
+            url 'https://repo.huaweicloud.com/repository/maven/google/'
+            allowInsecureProtocol = false
+        }
+        maven {
+            url 'https://mirrors.tuna.tsinghua.edu.cn/android/maven2/'
+            allowInsecureProtocol = false
+        }
+        maven {
+            url 'https://maven.aliyun.com/repository/gradle-plugin'
+            allowInsecureProtocol = false
+        }
+        maven {
+            url 'https://maven.aliyun.com/repository/public'
+            allowInsecureProtocol = false
+        }
+        maven {
+            url 'https://mirrors.cloud.tencent.com/nexus/repository/maven-public/'
+            allowInsecureProtocol = false
+        }
         mavenCentral()
         // 不再写 google()
     }
@@ -18,17 +36,27 @@ buildscript {
 }
 
 allprojects {
-    // repositories {
-    //     google()
-
-    //     mavenCentral()
-    // }
     repositories {
-        maven { url 'https://maven.aliyun.com/repository/google' }
-        maven { url 'https://repo.huaweicloud.com/repository/maven/google/' }
-        maven { url 'https://mirrors.tuna.tsinghua.edu.cn/android/maven2/' }
-        maven { url 'https://maven.aliyun.com/repository/public' }
-        maven { url 'https://mirrors.cloud.tencent.com/nexus/repository/maven-public/' }
+        maven {
+            url 'https://maven.aliyun.com/repository/google'
+            allowInsecureProtocol = false
+        }
+        maven {
+            url 'https://repo.huaweicloud.com/repository/maven/google/'
+            allowInsecureProtocol = false
+        }
+        maven {
+            url 'https://mirrors.tuna.tsinghua.edu.cn/android/maven2/'
+            allowInsecureProtocol = false
+        }
+        maven {
+            url 'https://maven.aliyun.com/repository/public'
+            allowInsecureProtocol = false
+        }
+        maven {
+            url 'https://mirrors.cloud.tencent.com/nexus/repository/maven-public/'
+            allowInsecureProtocol = false
+        }
         mavenCentral()
     }
 }

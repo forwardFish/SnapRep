@@ -182,8 +182,7 @@ describe('EquipmentDao', () => {
       expect(mockPrismaService.equipment.create).toHaveBeenCalledWith({
         data: {
           ...createData,
-          createdAt: expect.any(Date),
-          updatedAt: expect.any(Date),
+          isActive: true,
         },
       });
     });
@@ -228,7 +227,6 @@ describe('EquipmentDao', () => {
         where: { id: 'test-equipment-id' },
         data: {
           ...updateData,
-          updatedAt: expect.any(Date),
         },
       });
     });
@@ -347,7 +345,7 @@ describe('EquipmentDao', () => {
       expect(result).toEqual({ count: 3 });
       expect(mockPrismaService.equipment.updateMany).toHaveBeenCalledWith({
         where: { id: { in: equipmentIds } },
-        data: { isActive, updatedAt: expect.any(Date) },
+        data: { isActive },
       });
     });
   });

@@ -3,9 +3,11 @@ import '../models/scenario.dart';
 import '../models/equipment.dart';
 import '../models/theme_week.dart';
 import '../services/api_service.dart';
+import '../services/default_data_service.dart';
 
 class HomeProvider extends ChangeNotifier {
   final ApiService _apiService = ApiService.instance;
+  final DefaultDataService _defaultDataService = DefaultDataService.instance;
 
   // Loading states
   bool _isLoadingScenarios = false;
@@ -60,8 +62,11 @@ class HomeProvider extends ChangeNotifier {
       _scenarios = await _apiService.getScenarios();
       _scenariosError = null;
     } catch (e) {
-      _scenariosError = e.toString();
-      _scenarios = [];
+      // Fallback to default data when API fails
+      debugPrint('⚠️  API failed, using default scenarios: $e');
+      _scenarios = _defaultDataService.getDefaultScenarios();
+      // Don't set error when we have fallback data
+      _scenariosError = null;
     } finally {
       _isLoadingScenarios = false;
       notifyListeners();
@@ -78,8 +83,11 @@ class HomeProvider extends ChangeNotifier {
       _equipment = await _apiService.getEquipment();
       _equipmentError = null;
     } catch (e) {
-      _equipmentError = e.toString();
-      _equipment = [];
+      // Fallback to default data when API fails
+      debugPrint('⚠️  API failed, using default equipment: $e');
+      _equipment = _defaultDataService.getDefaultEquipment();
+      // Don't set error when we have fallback data
+      _equipmentError = null;
     } finally {
       _isLoadingEquipment = false;
       notifyListeners();
@@ -96,8 +104,11 @@ class HomeProvider extends ChangeNotifier {
       _currentThemeWeek = await _apiService.getCurrentThemeWeek();
       _themeWeekError = null;
     } catch (e) {
-      _themeWeekError = e.toString();
-      _currentThemeWeek = null;
+      // Fallback to default data when API fails
+      debugPrint('⚠️  API failed, using default theme week: $e');
+      _currentThemeWeek = _defaultDataService.getDefaultThemeWeek();
+      // Don't set error when we have fallback data
+      _themeWeekError = null;
     } finally {
       _isLoadingThemeWeek = false;
       notifyListeners();

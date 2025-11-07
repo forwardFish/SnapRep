@@ -69,14 +69,19 @@ export class ExercisesController {
   @ApiResponse({ status: 400, description: '请求参数验证失败' })
   @ApiResponse({ status: 500, description: '服务器内部错误' })
   async quickRecommendation(@Body() dto: QuickRecommendationDto) {
+    console.log('🚨 QUICK RECOMMENDATION CALLED:', JSON.stringify(dto));
     this.logger.log(`快速推荐请求: ${JSON.stringify(dto)}`);
 
     try {
+      console.log('🚨 CALLING WORKOUT RECOMMENDATION SERVICE...');
       const result = await this.workoutRecommendationService.generateQuickRecommendation(dto);
 
+      console.log('🚨 WORKOUT RECOMMENDATION SUCCESS:', result.exercises.length, 'exercises');
       this.logger.log(`快速推荐成功: 生成${result.exercises.length}个动作`);
       return result;
     } catch (error) {
+      console.log('🚨 WORKOUT RECOMMENDATION ERROR:', error.message);
+      console.log('🚨 ERROR STACK:', error.stack);
       this.logger.error(`快速推荐失败: ${error.message}`, error.stack);
       throw error;
     }
