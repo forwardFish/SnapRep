@@ -2,8 +2,8 @@
 
 ## 📊 测试概览
 
-**执行时间**: 2025/11/7 16:36:43 - 2025/11/7 16:37:10
-**总耗时**: 27秒
+**执行时间**: 2025/11/8 10:06:21 - 2025/11/8 10:07:32
+**总耗时**: 71秒
 **测试环境**: test
 **API基地址**: http://localhost:3000
 **数据库**: ✅ 已连接
@@ -25,7 +25,7 @@
 
 **描述**: 用户认证与首次进入
 **状态**: FAILED
-**耗时**: 3秒
+**耗时**: 9秒
 **测试数量**: 1
 **通过**: 0
 **失败**: 1
@@ -73,7 +73,7 @@ Pattern: flow-2-quick-start.e2e-spec.ts - 0 matches
 
 **描述**: 锻炼引导3步骤
 **状态**: FAILED
-**耗时**: 3秒
+**耗时**: 5秒
 **测试数量**: 1
 **通过**: 0
 **失败**: 1
@@ -97,7 +97,7 @@ Pattern: flow-3-guided-workout.e2e-spec.ts - 0 matches
 
 **描述**: 动作结果页
 **状态**: FAILED
-**耗时**: 3秒
+**耗时**: 5秒
 **测试数量**: 1
 **通过**: 0
 **失败**: 1
@@ -121,7 +121,7 @@ Pattern: flow-4-result-page.e2e-spec.ts - 0 matches
 
 **描述**: 成果卡生成与分享
 **状态**: FAILED
-**耗时**: 3秒
+**耗时**: 6秒
 **测试数量**: 1
 **通过**: 0
 **失败**: 1
@@ -145,7 +145,7 @@ Pattern: flow-5-card-generation.e2e-spec.ts - 0 matches
 
 **描述**: 我的页面功能
 **状态**: FAILED
-**耗时**: 3秒
+**耗时**: 14秒
 **测试数量**: 1
 **通过**: 0
 **失败**: 1
@@ -169,7 +169,7 @@ Pattern: flow-6-user-center.e2e-spec.ts - 0 matches
 
 **描述**: 主题周参与
 **状态**: FAILED
-**耗时**: 3秒
+**耗时**: 5秒
 **测试数量**: 1
 **通过**: 0
 **失败**: 1
@@ -193,36 +193,36 @@ Pattern: flow-7-theme-week.e2e-spec.ts - 0 matches
 
 ### Supabase Auto REST API (目标: 12个端点)
 
-- ❌ `GET /rest/v1/scenarios (场景列表)` (160ms) - HTTP 401
-- ❌ `GET /rest/v1/equipment (器材列表)` (58ms) - HTTP 401
-- ❌ `GET /rest/v1/exercises (运动列表)` (67ms) - HTTP 401
-- ❌ `GET /rest/v1/theme_weeks (主题周)` (60ms) - HTTP 401
-- ❌ `GET /rest/v1/workout_sessions (训练会话)` (58ms) - HTTP 401
-- ❌ `GET /rest/v1/session_exercises (会话运动)` (58ms) - HTTP 401
-- ❌ `GET /rest/v1/share_cards (分享卡片)` (61ms) - HTTP 401
-- ❌ `GET /rest/v1/theme_week_participations (主题周参与)` (72ms) - HTTP 401
-- ❌ `GET /rest/v1/users (用户信息)` (59ms) - HTTP 401
-- ❌ `GET /rest/v1/user_preferences (用户偏好)` (57ms) - HTTP 401
-- ❌ `GET /rest/v1/rarity_stats (稀有度统计)` (63ms) - HTTP 401
-- ❌ `GET /rest/v1/daily_trainings (每日训练)` (62ms) - HTTP 401
+- ❌ `GET /rest/v1/scenarios (场景列表)` (593ms) - HTTP 401
+- ❌ `GET /rest/v1/equipment (器材列表)` (205ms) - HTTP 401
+- ❌ `GET /rest/v1/exercises (运动列表)` (196ms) - HTTP 401
+- ❌ `GET /rest/v1/theme_weeks (主题周)` (211ms) - HTTP 401
+- ❌ `GET /rest/v1/workout_sessions (训练会话)` (208ms) - HTTP 401
+- ❌ `GET /rest/v1/session_exercises (会话运动)` (204ms) - HTTP 401
+- ❌ `GET /rest/v1/share_cards (分享卡片)` (194ms) - HTTP 401
+- ❌ `GET /rest/v1/theme_week_participations (主题周参与)` (195ms) - HTTP 401
+- ❌ `GET /rest/v1/users (用户信息)` (198ms) - HTTP 401
+- ❌ `GET /rest/v1/user_preferences (用户偏好)` (198ms) - HTTP 401
+- ❌ `GET /rest/v1/rarity_stats (稀有度统计)` (196ms) - HTTP 401
+- ❌ `GET /rest/v1/daily_trainings (每日训练)` (201ms) - HTTP 401
 
 
 ### NestJS Custom API (目标: 14个端点)
 
-- ❌ `POST /api/v1/recommendations/quick (快速推荐)` (259ms) - HTTP 500
-- ✅ `POST /api/v1/recommendations/scenario (场景推荐)` (5ms)
-- ✅ `POST /api/v1/recommendations/with-equipment (器材推荐)` (3ms)
-- ✅ `POST /api/v1/ai/recognize-equipment (AI设备识别)` (2ms)
-- ✅ `POST /api/v1/workout-sessions/start (开始训练)` (3ms)
-- ✅ `POST /api/v1/workout-sessions/complete-exercise (完成动作)` (2ms)
-- ✅ `POST /api/v1/workout-sessions/replace-exercise (替换动作)` (3ms)
-- ✅ `POST /api/v1/workout-sessions/regenerate (重新生成)` (2ms)
-- ✅ `POST /api/v1/cards/generate (生成卡片)` (2ms)
-- ✅ `GET /api/v1/theme-weeks/current (当前主题周)` (2ms)
-- ✅ `POST /api/v1/theme-weeks/join (加入主题周)` (2ms)
+- ❌ `POST /api/v1/recommendations/quick (快速推荐)` (965ms) - HTTP 500
+- ✅ `POST /api/v1/recommendations/scenario (场景推荐)` (3ms)
+- ✅ `POST /api/v1/recommendations/with-equipment (器材推荐)` (2ms)
+- ✅ `POST /api/v1/ai/recognize-equipment (AI设备识别)` (1ms)
+- ✅ `POST /api/v1/workout-sessions/start (开始训练)` (1ms)
+- ✅ `POST /api/v1/workout-sessions/complete-exercise (完成动作)` (1ms)
+- ✅ `POST /api/v1/workout-sessions/replace-exercise (替换动作)` (1ms)
+- ✅ `POST /api/v1/workout-sessions/regenerate (重新生成)` (1ms)
+- ✅ `POST /api/v1/cards/generate (生成卡片)` (3ms)
+- ✅ `GET /api/v1/theme-weeks/current (当前主题周)` (3ms)
+- ✅ `POST /api/v1/theme-weeks/join (加入主题周)` (1ms)
 - ✅ `POST /api/v1/workouts/copy-from-deeplink (复制训练)` (1ms)
 - ✅ `GET /api/v1/analytics/users/metrics (用户分析)` (1ms)
-- ✅ `GET /api/v1/analytics/platform/kpis (平台KPI)` (2ms)
+- ✅ `GET /api/v1/analytics/platform/kpis (平台KPI)` (1ms)
 
 
 ### Authentication API (目标: 2个端点)
@@ -241,7 +241,7 @@ Pattern: flow-7-theme-week.e2e-spec.ts - 0 matches
 
 | 指标 | 实际值 | 目标值 | 状态 |
 |------|--------|--------|------|
-| TTV | 1002ms | 30000ms | ✅ |
+| TTV | 1004ms | 30000ms | ✅ |
 | AI设备识别 | 1500ms | 3000ms | ✅ |
 | 卡片生成 | 650ms | 800ms | ✅ |
 
@@ -268,6 +268,6 @@ Pattern: flow-7-theme-week.e2e-spec.ts - 0 matches
 
 ---
 
-**报告生成时间**: 2025/11/7 16:37:10
+**报告生成时间**: 2025/11/8 10:07:32
 **生成工具**: SnapRep 全面API测试器 v2.0
 **Node.js版本**: v22.18.0

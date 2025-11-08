@@ -10,17 +10,7 @@ import {
   Max,
   IsUrl,
 } from 'class-validator';
-
-/**
- * 器材分类枚举
- */
-export enum EquipmentCategory {
-  CARDIO = 'CARDIO',
-  STRENGTH = 'STRENGTH',
-  FLEXIBILITY = 'FLEXIBILITY',
-  BALANCE = 'BALANCE',
-  OTHER = 'OTHER',
-}
+import { EquipmentCategory } from './get-equipment-query.dto';
 
 /**
  * 创建器材请求 DTO
@@ -59,7 +49,7 @@ export class CreateEquipmentDto {
   @ApiPropertyOptional({
     description: '器材分类',
     enum: EquipmentCategory,
-    example: EquipmentCategory.STRENGTH,
+    example: EquipmentCategory.FURNITURE,
   })
   @IsOptional()
   @IsEnum(EquipmentCategory, { message: 'category必须是有效的器材分类' })
@@ -134,7 +124,7 @@ export class UpdateEquipmentDto {
   @ApiPropertyOptional({
     description: '器材分类',
     enum: EquipmentCategory,
-    example: EquipmentCategory.STRENGTH,
+    example: EquipmentCategory.FURNITURE,
   })
   @IsOptional()
   @IsEnum(EquipmentCategory, { message: 'category必须是有效的器材分类' })

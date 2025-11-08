@@ -13,7 +13,6 @@ import {
   ApiTags,
   ApiOperation,
   ApiResponse,
-  ApiQuery,
   ApiParam,
 } from '@nestjs/swagger';
 import { ScenariosService } from './scenarios.service';
@@ -94,24 +93,7 @@ export class ScenariosController {
    * 用途: 首页场景区显示「办公室」「客厅/沙发」等场景选项
    */
   @Get()
-  @ApiOperation({
-    summary: '获取场景列表',
-    description: '首页场景区显示「办公室」「客厅/沙发」等场景选项',
-  })
-  @ApiQuery({
-    name: 'page',
-    required: false,
-    type: Number,
-    description: '页码，默认值 1',
-    example: 1,
-  })
-  @ApiQuery({
-    name: 'pageSize',
-    required: false,
-    type: Number,
-    description: '每页数量，默认值 10',
-    example: 20,
-  })
+  @ApiOperation({ summary: '获取场景列表' })
   @ApiResponse({
     status: HttpStatus.OK,
     description: '成功获取场景列表',

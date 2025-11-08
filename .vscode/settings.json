@@ -1,0 +1,143 @@
+{
+  // TypeScript and JavaScript settings
+  "typescript.preferences.importModuleSpecifier": "relative",
+  "typescript.suggest.autoImports": true,
+  "typescript.suggest.paths": true,
+  "javascript.suggest.autoImports": true,
+
+  // Dart and Flutter settings
+  "dart.debugSdkLibraries": false,
+  "dart.debugExternalPackageLibraries": false,
+  "dart.previewHotReloadOnSaveWatcher": true,
+  "dart.previewCommitCharacters": true,
+  "dart.devToolsLocation": "beside",
+  "dart.flutterOutline": true,
+  "dart.previewFlutterUiGuides": true,
+
+  // File associations
+  "files.associations": {
+    "*.prisma": "prisma",
+    "*.dart": "dart"
+  },
+
+  // Auto save
+  "files.autoSave": "onFocusChange",
+
+  // Format on save
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+
+  // Code lens
+  "typescript.referencesCodeLens.enabled": true,
+  "typescript.implementationsCodeLens.enabled": true,
+
+  // Terminal
+  "terminal.integrated.defaultProfile.windows": "Command Prompt",
+  "terminal.integrated.cwd": "${workspaceFolder}",
+
+  // Git
+  "git.autofetch": true,
+  "git.confirmSync": false,
+
+  // Search exclusions for better performance
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/backend/dist": true,
+    "**/backend/coverage": true,
+    "**/frontend/build": true,
+    "**/frontend/.dart_tool": true,
+    "**/frontend/ios/Pods": true,
+    "**/frontend/android/.gradle": true,
+    "**/.git": true,
+    "**/backend/prisma/migrations": false
+  },
+
+  // File watcher exclusions
+  "files.watcherExclude": {
+    "**/node_modules/**": true,
+    "**/backend/dist/**": true,
+    "**/backend/coverage/**": true,
+    "**/frontend/build/**": true,
+    "**/frontend/.dart_tool/**": true,
+    "**/frontend/ios/Pods/**": true,
+    "**/frontend/android/.gradle/**": true
+  },
+
+  // Emmet
+  "emmet.includeLanguages": {
+    "typescript": "html",
+    "dart": "html"
+  },
+
+  // ESLint (Backend only)
+  "eslint.validate": [
+    "javascript",
+    "typescript"
+  ],
+  "eslint.workingDirectories": [
+    "backend"
+  ],
+  "eslint.run": "onType",
+
+  // Language specific formatting
+  "[typescript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.tabSize": 2
+  },
+  "[javascript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.tabSize": 2
+  },
+  "[json]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.tabSize": 2
+  },
+  "[dart]": {
+    "editor.defaultFormatter": "Dart-Code.dart-code",
+    "editor.tabSize": 2,
+    "editor.selectionHighlight": false,
+    "editor.suggest.snippetsPreventQuickSuggestions": false,
+    "editor.suggestSelection": "first",
+    "editor.wordBasedSuggestions": "off"
+  },
+  "[prisma]": {
+    "editor.tabSize": 2
+  },
+
+  // Debug
+  "debug.terminal.clearBeforeReusing": true,
+  "debug.openDebug": "openOnDebugBreak",
+
+  // Explorer
+  "explorer.compactFolders": false,
+  "explorer.fileNesting.enabled": true,
+  "explorer.fileNesting.patterns": {
+    "*.ts": "$(capture).spec.ts, $(capture).e2e-spec.ts",
+    "*.module.ts": "$(capture).controller.ts, $(capture).service.ts, $(capture).resolver.ts, $(capture).dto.ts",
+    "*.dart": "$(capture).g.dart, $(capture).freezed.dart",
+    "pubspec.yaml": "pubspec.lock",
+    "package.json": "package-lock.json, yarn.lock"
+  },
+
+  // Multi-root workspace specific
+  "typescript.preferences.includePackageJsonAutoImports": "auto",
+  "dart.projects": [
+    "frontend"
+  ],
+
+  // Project specific paths
+  "typescript.preferences.includeCompletionsForModuleExports": true,
+
+  // Backend specific (NestJS/Node.js)
+  "npm.packageManager": "npm",
+  "npm.enableScriptExplorer": true,
+
+  // Frontend specific (Flutter)
+  "flutter.sdkPath": null,
+  "flutter.checkForSdkUpdates": true,
+
+  // Exclude from timeline
+  "timeline.excludeSources": [
+    "git-history"
+  ]
+}

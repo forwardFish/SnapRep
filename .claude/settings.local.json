@@ -87,7 +87,18 @@
       "Bash(netstat:*)",
       "Bash(npm run docker:db:*)",
       "Bash(adb devices:*)",
-      "Bash(adb shell:*)"
+      "Bash(adb shell:*)",
+      "Bash(npm run seed:*)",
+      "Bash(powershell \"taskkill /F /PID 41060\")",
+      "Bash(powershell \"Stop-Process -Id 34792 -Force\")",
+      "Bash(del /s /q backend.vscode)",
+      "Bash(powershell \"Remove-Item -Recurse -Force backend\\.vscode\")",
+      "Bash(timeout 15 npm run start:debug)",
+      "Bash(del /s /q \"frontend\\android\\app\\src\\main\\kotlin\\com\\example\")",
+      "Bash(powershell \"Remove-Item -Recurse -Force frontend\\android\\app\\src\\main\\kotlin\\com\\example\")",
+      "Bash(npm run migrate:status:*)",
+      "Bash(npm run migrate:dev:*)",
+      "Bash(powershell:*)"
     ],
     "deny": [],
     "ask": []

@@ -17,7 +17,6 @@ import {
   ApiOperation,
   ApiResponse,
   ApiParam,
-  ApiQuery,
   ApiBearerAuth,
   ApiBody
 } from '@nestjs/swagger';
@@ -179,14 +178,6 @@ export class CardsController {
     description: '用户ID',
     example: 'user-uuid-123'
   })
-  @ApiQuery({ name: 'rarity', required: false, description: '稀有度筛选' })
-  @ApiQuery({ name: 'equipmentSeries', required: false, description: '器材系列筛选' })
-  @ApiQuery({ name: 'themeWeek', required: false, description: '主题周筛选' })
-  @ApiQuery({ name: 'fromDate', required: false, description: '开始日期' })
-  @ApiQuery({ name: 'toDate', required: false, description: '结束日期' })
-  @ApiQuery({ name: 'publicOnly', required: false, type: Boolean, description: '只显示公开卡片' })
-  @ApiQuery({ name: 'limit', required: false, type: Number, description: '返回数量' })
-  @ApiQuery({ name: 'offset', required: false, type: Number, description: '偏移量' })
   @ApiResponse({
     status: HttpStatus.OK,
     description: '用户卡片列表获取成功'
@@ -315,8 +306,6 @@ export class CardsController {
     summary: '获取公开卡片',
     description: '获取所有公开分享的卡片，用于首页展示'
   })
-  @ApiQuery({ name: 'limit', required: false, type: Number, description: '返回数量' })
-  @ApiQuery({ name: 'offset', required: false, type: Number, description: '偏移量' })
   @ApiResponse({
     status: HttpStatus.OK,
     description: '公开卡片列表获取成功'
@@ -355,8 +344,6 @@ export class CardsController {
     description: '器材代码',
     example: 'chair'
   })
-  @ApiQuery({ name: 'region', required: false, description: '地区代码' })
-  @ApiQuery({ name: 'forceRecalculate', required: false, type: Boolean, description: '强制重新计算' })
   @ApiResponse({
     status: HttpStatus.OK,
     description: '稀有度计算成功',
@@ -438,7 +425,6 @@ export class CardsController {
     summary: '获取稀有度排行榜',
     description: '获取当前周器材稀有度排行榜'
   })
-  @ApiQuery({ name: 'limit', required: false, type: Number, description: '返回数量' })
   @ApiResponse({
     status: HttpStatus.OK,
     description: '稀有度排行榜获取成功'
@@ -473,7 +459,6 @@ export class CardsController {
     description: '器材代码',
     example: 'chair'
   })
-  @ApiQuery({ name: 'weeks', required: false, type: Number, description: '历史周数' })
   @ApiResponse({
     status: HttpStatus.OK,
     description: '稀有度趋势获取成功'
@@ -511,8 +496,6 @@ export class CardsController {
     description: '用户ID',
     example: 'user-uuid-123'
   })
-  @ApiQuery({ name: 'dimension', required: false, description: '统计维度' })
-  @ApiQuery({ name: 'days', required: false, type: Number, description: '统计天数' })
   @ApiResponse({
     status: HttpStatus.OK,
     description: '收藏统计获取成功'

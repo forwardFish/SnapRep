@@ -1,0 +1,46 @@
+{
+  "recommendations": [
+    // Backend - NestJS and TypeScript
+    "ms-vscode.vscode-typescript-next",
+
+    // Backend - Code formatting and linting
+    "esbenp.prettier-vscode",
+    "dbaeumer.vscode-eslint",
+
+    // Backend - GraphQL
+    "graphql.vscode-graphql",
+    "apollographql.vscode-apollo",
+
+    // Backend - Database and Prisma
+    "prisma.prisma",
+
+    // Backend - Testing
+    "hbenl.vscode-test-explorer",
+
+    // Backend - Docker
+    "ms-azuretools.vscode-docker",
+
+    // Frontend - Flutter and Dart
+    "dart-code.dart-code",
+    "dart-code.flutter",
+
+    // Frontend - Flutter utilities
+    "alexisvt.flutter-snippets",
+    "nash.awesome-flutter-snippets",
+    "jeroen-meijer.pubspec-assist",
+
+    // Git
+    "eamodio.gitlens",
+
+    // REST API testing
+    "humao.rest-client",
+
+    // General utilities
+    "ms-vscode.vscode-json",
+    "redhat.vscode-yaml",
+    "visualstudioexptteam.vscodeintellicode",
+    "gruntfuggly.todo-tree",
+    "christian-kohler.path-intellisense",
+    "wayou.vscode-todo-highlight"
+  ]
+}

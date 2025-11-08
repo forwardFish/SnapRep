@@ -30,10 +30,22 @@ export class EquipmentDto {
 
   @ApiPropertyOptional({
     description: '器材分类',
-    example: 'STRENGTH',
-    enum: ['CARDIO', 'STRENGTH', 'FLEXIBILITY', 'BALANCE', 'OTHER'],
+    example: 'FURNITURE',
+    enum: ['NONE', 'FURNITURE', 'WALL', 'BOTTLE', 'BAG', 'STAIRS', 'FABRIC', 'STICK', 'OUTDOOR', 'CREATIVE'],
   })
   category?: string;
+
+  @ApiPropertyOptional({
+    description: '是否可通过相机识别',
+    example: true,
+  })
+  recognizable?: boolean;
+
+  @ApiPropertyOptional({
+    description: '器材图标URL',
+    example: '/equipment/chair.jpg',
+  })
+  iconUrl?: string;
 
   @ApiPropertyOptional({
     description: '器材图片URL',

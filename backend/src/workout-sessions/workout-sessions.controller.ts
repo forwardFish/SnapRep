@@ -18,7 +18,6 @@ import {
   ApiOperation,
   ApiResponse,
   ApiParam,
-  ApiQuery,
   ApiBearerAuth,
   ApiBody
 } from '@nestjs/swagger';
@@ -174,13 +173,6 @@ export class WorkoutSessionsController {
     name: 'id',
     description: '训练会话ID',
     example: 'cuid_session_123'
-  })
-  @ApiQuery({
-    name: 'includeExercises',
-    required: false,
-    type: Boolean,
-    description: '是否包含动作详情',
-    example: true
   })
   @ApiResponse({
     status: HttpStatus.OK,
@@ -373,11 +365,6 @@ export class WorkoutSessionsController {
     description: '用户ID',
     example: 'user-uuid-123'
   })
-  @ApiQuery({ name: 'status', required: false, description: '会话状态筛选' })
-  @ApiQuery({ name: 'fromDate', required: false, description: '开始日期' })
-  @ApiQuery({ name: 'toDate', required: false, description: '结束日期' })
-  @ApiQuery({ name: 'limit', required: false, type: Number, description: '返回数量限制' })
-  @ApiQuery({ name: 'offset', required: false, type: Number, description: '偏移量' })
   @ApiResponse({
     status: HttpStatus.OK,
     description: '用户训练会话列表获取成功'
@@ -459,13 +446,6 @@ export class WorkoutSessionsController {
     name: 'userId',
     description: '用户ID',
     example: 'user-uuid-123'
-  })
-  @ApiQuery({
-    name: 'days',
-    required: false,
-    type: Number,
-    description: '统计天数',
-    example: 30
   })
   @ApiResponse({
     status: HttpStatus.OK,

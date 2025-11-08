@@ -12,7 +12,7 @@
       "name": "用户认证与首次进入",
       "description": "用户认证与首次进入",
       "status": "FAILED",
-      "duration": 3219,
+      "duration": 8927,
       "testsRun": 1,
       "testsPassed": 0,
       "testsFailed": 1,
@@ -29,7 +29,7 @@
       "name": "首页快速启动",
       "description": "首页快速启动",
       "status": "FAILED",
-      "duration": 2691,
+      "duration": 3471,
       "testsRun": 1,
       "testsPassed": 0,
       "testsFailed": 1,
@@ -46,7 +46,7 @@
       "name": "锻炼引导3步骤",
       "description": "锻炼引导3步骤",
       "status": "FAILED",
-      "duration": 2637,
+      "duration": 5490,
       "testsRun": 1,
       "testsPassed": 0,
       "testsFailed": 1,
@@ -63,7 +63,7 @@
       "name": "动作结果页",
       "description": "动作结果页",
       "status": "FAILED",
-      "duration": 2671,
+      "duration": 5497,
       "testsRun": 1,
       "testsPassed": 0,
       "testsFailed": 1,
@@ -80,7 +80,7 @@
       "name": "成果卡生成与分享",
       "description": "成果卡生成与分享",
       "status": "FAILED",
-      "duration": 2769,
+      "duration": 5602,
       "testsRun": 1,
       "testsPassed": 0,
       "testsFailed": 1,
@@ -97,7 +97,7 @@
       "name": "我的页面功能",
       "description": "我的页面功能",
       "status": "FAILED",
-      "duration": 2738,
+      "duration": 14254,
       "testsRun": 1,
       "testsPassed": 0,
       "testsFailed": 1,
@@ -114,7 +114,7 @@
       "name": "主题周参与",
       "description": "主题周参与",
       "status": "FAILED",
-      "duration": 2721,
+      "duration": 4680,
       "testsRun": 1,
       "testsPassed": 0,
       "testsFailed": 1,
@@ -133,7 +133,7 @@
         "endpoint": "/rest/v1/scenarios (场景列表)",
         "method": "GET",
         "status": "FAILED",
-        "responseTime": 160,
+        "responseTime": 593,
         "statusCode": 401,
         "errorMessage": "HTTP 401",
         "testDetails": "Supabase REST API - 场景列表"
@@ -142,7 +142,7 @@
         "endpoint": "/rest/v1/equipment (器材列表)",
         "method": "GET",
         "status": "FAILED",
-        "responseTime": 58,
+        "responseTime": 205,
         "statusCode": 401,
         "errorMessage": "HTTP 401",
         "testDetails": "Supabase REST API - 器材列表"
@@ -151,7 +151,7 @@
         "endpoint": "/rest/v1/exercises (运动列表)",
         "method": "GET",
         "status": "FAILED",
-        "responseTime": 67,
+        "responseTime": 196,
         "statusCode": 401,
         "errorMessage": "HTTP 401",
         "testDetails": "Supabase REST API - 运动列表"
@@ -160,7 +160,7 @@
         "endpoint": "/rest/v1/theme_weeks (主题周)",
         "method": "GET",
         "status": "FAILED",
-        "responseTime": 60,
+        "responseTime": 211,
         "statusCode": 401,
         "errorMessage": "HTTP 401",
         "testDetails": "Supabase REST API - 主题周"
@@ -169,7 +169,7 @@
         "endpoint": "/rest/v1/workout_sessions (训练会话)",
         "method": "GET",
         "status": "FAILED",
-        "responseTime": 58,
+        "responseTime": 208,
         "statusCode": 401,
         "errorMessage": "HTTP 401",
         "testDetails": "Supabase REST API - 训练会话"
@@ -178,7 +178,7 @@
         "endpoint": "/rest/v1/session_exercises (会话运动)",
         "method": "GET",
         "status": "FAILED",
-        "responseTime": 58,
+        "responseTime": 204,
         "statusCode": 401,
         "errorMessage": "HTTP 401",
         "testDetails": "Supabase REST API - 会话运动"
@@ -187,7 +187,7 @@
         "endpoint": "/rest/v1/share_cards (分享卡片)",
         "method": "GET",
         "status": "FAILED",
-        "responseTime": 61,
+        "responseTime": 194,
         "statusCode": 401,
         "errorMessage": "HTTP 401",
         "testDetails": "Supabase REST API - 分享卡片"
@@ -196,7 +196,7 @@
         "endpoint": "/rest/v1/theme_week_participations (主题周参与)",
         "method": "GET",
         "status": "FAILED",
-        "responseTime": 72,
+        "responseTime": 195,
         "statusCode": 401,
         "errorMessage": "HTTP 401",
         "testDetails": "Supabase REST API - 主题周参与"
@@ -205,7 +205,7 @@
         "endpoint": "/rest/v1/users (用户信息)",
         "method": "GET",
         "status": "FAILED",
-        "responseTime": 59,
+        "responseTime": 198,
         "statusCode": 401,
         "errorMessage": "HTTP 401",
         "testDetails": "Supabase REST API - 用户信息"
@@ -214,7 +214,7 @@
         "endpoint": "/rest/v1/user_preferences (用户偏好)",
         "method": "GET",
         "status": "FAILED",
-        "responseTime": 57,
+        "responseTime": 198,
         "statusCode": 401,
         "errorMessage": "HTTP 401",
         "testDetails": "Supabase REST API - 用户偏好"
@@ -223,7 +223,7 @@
         "endpoint": "/rest/v1/rarity_stats (稀有度统计)",
         "method": "GET",
         "status": "FAILED",
-        "responseTime": 63,
+        "responseTime": 196,
         "statusCode": 401,
         "errorMessage": "HTTP 401",
         "testDetails": "Supabase REST API - 稀有度统计"
@@ -232,7 +232,7 @@
         "endpoint": "/rest/v1/daily_trainings (每日训练)",
         "method": "GET",
         "status": "FAILED",
-        "responseTime": 62,
+        "responseTime": 201,
         "statusCode": 401,
         "errorMessage": "HTTP 401",
         "testDetails": "Supabase REST API - 每日训练"
@@ -243,7 +243,7 @@
         "endpoint": "/api/v1/recommendations/quick (快速推荐)",
         "method": "POST",
         "status": "FAILED",
-        "responseTime": 259,
+        "responseTime": 965,
         "statusCode": 500,
         "errorMessage": "HTTP 500",
         "testDetails": "NestJS Custom API - 快速推荐"
@@ -252,7 +252,7 @@
         "endpoint": "/api/v1/recommendations/scenario (场景推荐)",
         "method": "POST",
         "status": "PASSED",
-        "responseTime": 5,
+        "responseTime": 3,
         "statusCode": 404,
         "errorMessage": "",
         "testDetails": "NestJS Custom API - 场景推荐"
@@ -261,7 +261,7 @@
         "endpoint": "/api/v1/recommendations/with-equipment (器材推荐)",
         "method": "POST",
         "status": "PASSED",
-        "responseTime": 3,
+        "responseTime": 2,
         "statusCode": 404,
         "errorMessage": "",
         "testDetails": "NestJS Custom API - 器材推荐"
@@ -270,7 +270,7 @@
         "endpoint": "/api/v1/ai/recognize-equipment (AI设备识别)",
         "method": "POST",
         "status": "PASSED",
-        "responseTime": 2,
+        "responseTime": 1,
         "statusCode": 404,
         "errorMessage": "",
         "testDetails": "NestJS Custom API - AI设备识别"
@@ -279,7 +279,7 @@
         "endpoint": "/api/v1/workout-sessions/start (开始训练)",
         "method": "POST",
         "status": "PASSED",
-        "responseTime": 3,
+        "responseTime": 1,
         "statusCode": 404,
         "errorMessage": "",
         "testDetails": "NestJS Custom API - 开始训练"
@@ -288,7 +288,7 @@
         "endpoint": "/api/v1/workout-sessions/complete-exercise (完成动作)",
         "method": "POST",
         "status": "PASSED",
-        "responseTime": 2,
+        "responseTime": 1,
         "statusCode": 404,
         "errorMessage": "",
         "testDetails": "NestJS Custom API - 完成动作"
@@ -297,7 +297,7 @@
         "endpoint": "/api/v1/workout-sessions/replace-exercise (替换动作)",
         "method": "POST",
         "status": "PASSED",
-        "responseTime": 3,
+        "responseTime": 1,
         "statusCode": 404,
         "errorMessage": "",
         "testDetails": "NestJS Custom API - 替换动作"
@@ -306,7 +306,7 @@
         "endpoint": "/api/v1/workout-sessions/regenerate (重新生成)",
         "method": "POST",
         "status": "PASSED",
-        "responseTime": 2,
+        "responseTime": 1,
         "statusCode": 404,
         "errorMessage": "",
         "testDetails": "NestJS Custom API - 重新生成"
@@ -315,7 +315,7 @@
         "endpoint": "/api/v1/cards/generate (生成卡片)",
         "method": "POST",
         "status": "PASSED",
-        "responseTime": 2,
+        "responseTime": 3,
         "statusCode": 401,
         "errorMessage": "",
         "testDetails": "NestJS Custom API - 生成卡片"
@@ -324,7 +324,7 @@
         "endpoint": "/api/v1/theme-weeks/current (当前主题周)",
         "method": "GET",
         "status": "PASSED",
-        "responseTime": 2,
+        "responseTime": 3,
         "statusCode": 404,
         "errorMessage": "",
         "testDetails": "NestJS Custom API - 当前主题周"
@@ -333,7 +333,7 @@
         "endpoint": "/api/v1/theme-weeks/join (加入主题周)",
         "method": "POST",
         "status": "PASSED",
-        "responseTime": 2,
+        "responseTime": 1,
         "statusCode": 404,
         "errorMessage": "",
         "testDetails": "NestJS Custom API - 加入主题周"
@@ -360,7 +360,7 @@
         "endpoint": "/api/v1/analytics/platform/kpis (平台KPI)",
         "method": "GET",
         "status": "PASSED",
-        "responseTime": 2,
+        "responseTime": 1,
         "statusCode": 404,
         "errorMessage": "",
         "testDetails": "NestJS Custom API - 平台KPI"
@@ -374,24 +374,24 @@
     "measurements": [
       {
         "metric": "TTV",
-        "value": 1002,
+        "value": 1004,
         "target": 30000,
         "status": "PASS",
-        "timestamp": "2025-11-07T08:37:10.010Z"
+        "timestamp": "2025-11-08T02:07:32.461Z"
       },
       {
         "metric": "AI设备识别",
         "value": 1500,
         "target": 3000,
         "status": "PASS",
-        "timestamp": "2025-11-07T08:37:10.012Z"
+        "timestamp": "2025-11-08T02:07:32.462Z"
       },
       {
         "metric": "卡片生成",
         "value": 650,
         "target": 800,
         "status": "PASS",
-        "timestamp": "2025-11-07T08:37:10.012Z"
+        "timestamp": "2025-11-08T02:07:32.462Z"
       }
     ]
   },

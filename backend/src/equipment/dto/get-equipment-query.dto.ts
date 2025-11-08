@@ -1,6 +1,22 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsOptional, IsString, IsNumberString, Min } from 'class-validator';
-import { Transform } from 'class-transformer';
+import { IsOptional, IsInt, Min, Max, IsEnum } from 'class-validator';
+import { Type, Transform } from 'class-transformer';
+
+/**
+ * 器材分类枚举 - 与 Prisma schema 保持一致
+ */
+export enum EquipmentCategory {
+  NONE = 'NONE',
+  FURNITURE = 'FURNITURE',
+  WALL = 'WALL',
+  BOTTLE = 'BOTTLE',
+  BAG = 'BAG',
+  STAIRS = 'STAIRS',
+  FABRIC = 'FABRIC',
+  STICK = 'STICK',
+  OUTDOOR = 'OUTDOOR',
+  CREATIVE = 'CREATIVE',
+}
 
 /**
  * 获取器材列表查询参数 DTO
@@ -15,8 +31,8 @@ export class GetEquipmentQueryDto {
     default: 1,
   })
   @IsOptional()
-  @IsNumberString({}, { message: 'page必须是数字' })
-  @Transform(({ value }) => parseInt(value) || 1)
+  @Type(() => Number)
+  @IsInt({ message: 'page必须是整数' })
   @Min(1, { message: 'page必须大于0' })
   page?: number = 1;
 
@@ -31,9 +47,10 @@ export class GetEquipmentQueryDto {
     maximum: 100,
   })
   @IsOptional()
-  @IsNumberString({}, { message: 'pageSize必须是数字' })
-  @Transform(({ value }) => Math.min(parseInt(value) || 10, 100))
+  @Type(() => Number)
+  @IsInt({ message: 'pageSize必须是整数' })
   @Min(1, { message: 'pageSize必须大于0' })
+  @Max(100, { message: 'pageSize不能超过100' })
   pageSize?: number = 10;
 
   /**
@@ -41,12 +58,12 @@ export class GetEquipmentQueryDto {
    */
   @ApiPropertyOptional({
     description: '器材分类筛选',
-    example: 'CARDIO',
-    enum: ['CARDIO', 'STRENGTH', 'FLEXIBILITY', 'BALANCE', 'OTHER'],
+    example: 'FURNITURE',
+    enum: EquipmentCategory,
   })
   @IsOptional()
-  @IsString({ message: 'category必须是字符串' })
-  category?: string;
+  @IsEnum(EquipmentCategory, { message: 'category必须是有效的器材分类' })
+  category?: EquipmentCategory;
 
   /**
    * 是否包含非活跃器材

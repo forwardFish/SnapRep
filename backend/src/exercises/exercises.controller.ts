@@ -1,5 +1,5 @@
 import { Controller, Post, Get, Body, Param, Query, HttpCode, HttpStatus, Logger } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBody, ApiParam, ApiQuery } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiBody, ApiParam } from '@nestjs/swagger';
 import { WorkoutRecommendationService } from './services/workout-recommendation.service';
 import { ExerciseMatchingService } from './services/exercise-matching.service';
 import { QuickRecommendationDto, ReplaceExerciseDto, AlternativesQueryDto } from './dto/exercise-recommendation.dto';
@@ -133,11 +133,6 @@ export class ExercisesController {
     summary: 'Get Alternative Exercises',
     description: '获取替换候选动作列表，用于Bottom Sheet显示'
   })
-  @ApiQuery({ name: 'sessionId', description: '训练会话ID', required: true })
-  @ApiQuery({ name: 'equipment', description: '器材列表', required: false, type: [String] })
-  @ApiQuery({ name: 'targetMuscle', description: '目标肌群', required: false })
-  @ApiQuery({ name: 'intensity', description: '强度调整', required: false, enum: ['lighter', 'harder', 'same'] })
-  @ApiQuery({ name: 'limit', description: '返回数量限制', required: false, type: Number })
   @ApiResponse({
     status: 200,
     description: '成功获取候选列表',

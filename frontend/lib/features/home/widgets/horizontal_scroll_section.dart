@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 
 class HorizontalScrollSection<T> extends StatefulWidget {
   final String title;
@@ -29,17 +28,17 @@ class HorizontalScrollSection<T> extends StatefulWidget {
 }
 
 class _HorizontalScrollSectionState<T> extends State<HorizontalScrollSection<T>> {
-  late PageController _pageController;
+  late ScrollController _scrollController;
 
   @override
   void initState() {
     super.initState();
-    _pageController = PageController(viewportFraction: 0.35);
+    _scrollController = ScrollController();
   }
 
   @override
   void dispose() {
-    _pageController.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -84,14 +83,14 @@ class _HorizontalScrollSectionState<T> extends State<HorizontalScrollSection<T>>
 
   Widget _buildLoadingState() {
     return SizedBox(
-      height: 80,
+      height: 140, // Updated to match new card height
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 24),
         itemCount: 3,
         itemBuilder: (context, index) => Container(
-          width: 140,
-          height: 80,
+          width: 160, // Updated to match new card width
+          height: 140, // Updated to match new card height
           margin: EdgeInsets.only(right: index < 2 ? 16 : 0),
           decoration: BoxDecoration(
             color: Colors.grey[300],
@@ -107,7 +106,7 @@ class _HorizontalScrollSectionState<T> extends State<HorizontalScrollSection<T>>
 
   Widget _buildErrorState() {
     return Container(
-      height: 80,
+      height: 140, // Updated to match new card height
       margin: const EdgeInsets.symmetric(horizontal: 24),
       decoration: BoxDecoration(
         color: Colors.red[50],
@@ -140,7 +139,7 @@ class _HorizontalScrollSectionState<T> extends State<HorizontalScrollSection<T>>
 
   Widget _buildEmptyState() {
     return Container(
-      height: 80,
+      height: 140, // Updated to match new card height
       margin: const EdgeInsets.symmetric(horizontal: 24),
       decoration: BoxDecoration(
         color: Colors.grey[100],
@@ -160,14 +159,16 @@ class _HorizontalScrollSectionState<T> extends State<HorizontalScrollSection<T>>
 
   Widget _buildItemsList() {
     return SizedBox(
-      height: 80,
-      child: PageView.builder(
-        controller: _pageController,
+      height: 140, // Increased height to match HTML reference
+      child: ListView.builder(
+        controller: _scrollController, // Use scroll controller
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.only(left: 24, right: 8), // Left align to match section title
         itemCount: widget.items.length,
         itemBuilder: (context, index) {
           final item = widget.items[index];
           return Container(
-            margin: const EdgeInsets.symmetric(horizontal: 8),
+            margin: EdgeInsets.only(right: index < widget.items.length - 1 ? 16 : 16),
             child: _buildItemCard(item),
           );
         },
@@ -183,8 +184,8 @@ class _HorizontalScrollSectionState<T> extends State<HorizontalScrollSection<T>>
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        width: 140,
-        height: 80,
+        width: 160, // Increased width to match HTML reference
+        height: 140, // Increased height to match HTML reference
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
@@ -269,19 +270,22 @@ class _HorizontalScrollSectionState<T> extends State<HorizontalScrollSection<T>>
   }
 
   Widget _buildIndicators() {
-    if (widget.items.length <= 1) return const SizedBox.shrink();
+    if (widget.items.length <= 4) return const SizedBox.shrink(); // Only show indicators for more than 4 items
 
     return Container(
       padding: const EdgeInsets.only(top: 16),
-      child: Center(
-        child: SmoothPageIndicator(
-          controller: _pageController,
-          count: widget.items.length,
-          effect: const WormEffect(
-            dotHeight: 8,
-            dotWidth: 8,
-            activeDotColor: Color(0xFFFFD700),
-            dotColor: Color(0xFFE5E7EB),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: List.generate(
+          (widget.items.length / 4).ceil(), // Show one indicator per group of 4 items
+          (index) => Container(
+            width: 8,
+            height: 8,
+            margin: const EdgeInsets.symmetric(horizontal: 4),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: index == 0 ? const Color(0xFFFFD700) : const Color(0xFFE5E7EB),
+            ),
           ),
         ),
       ),

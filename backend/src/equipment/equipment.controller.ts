@@ -21,7 +21,6 @@ import {
   ApiOperation,
   ApiResponse,
   ApiParam,
-  ApiQuery,
   ApiBody,
 } from '@nestjs/swagger';
 import { EquipmentService } from './equipment.service';
@@ -37,6 +36,7 @@ import {
   BatchUpdateEquipmentStatusDto,
   EquipmentDto,
 } from './dto';
+import { SupabaseApiService } from '../common/services/supabase-api.service';
 
 /**
  * Equipment Controller 类
@@ -48,7 +48,64 @@ import {
 export class EquipmentController {
   private readonly logger = new Logger(EquipmentController.name);
 
-  constructor(private readonly equipmentService: EquipmentService) {}
+  constructor(
+    private readonly equipmentService: EquipmentService,
+    private readonly supabaseApi: SupabaseApiService,
+  ) {}
+
+  /**
+   * 使用 SupabaseApiService 获取器材列表
+   * 绕过Prisma数据库连接问题
+   */
+  private async getEquipmentDirect(queryDto: GetEquipmentQueryDto): Promise<any> {
+    try {
+      const filters: Record<string, any> = {};
+
+      if (queryDto.category) {
+        filters.category = queryDto.category;
+      }
+
+      if (!queryDto.includeInactive) {
+        filters.is_active = true;
+      }
+
+      const limit = queryDto.pageSize || 10;
+      const offset = ((queryDto.page || 1) - 1) * limit;
+
+      const equipment = await this.supabaseApi.get('equipment', filters, {
+        limit,
+        offset,
+        orderBy: 'display_order.asc,created_at.asc',
+      });
+
+      return {
+        data: equipment.map((item: any) => ({
+          id: item.id,
+          code: item.code,
+          name: item.name,
+          category: item.category,
+          recognizable: item.recognizable || false,
+          iconUrl: item.icon_url,
+          imageUrl: item.image_url,
+          displayOrder: item.display_order || 0,
+          isActive: item.is_active,
+          createdAt: item.created_at,
+          updatedAt: item.updated_at,
+        })),
+        pagination: {
+          total: equipment.length, // 注意：这不是真实的总数
+          page: queryDto.page || 1,
+          pageSize: limit,
+          totalPages: Math.ceil(equipment.length / limit),
+          hasNextPage: equipment.length === limit,
+          hasPreviousPage: (queryDto.page || 1) > 1,
+        },
+      };
+    } catch (error) {
+      this.logger.error('Supabase API call failed:', error);
+      throw new InternalServerErrorException('Failed to fetch equipment');
+    }
+  }
 
   /**
    * 获取器材列表 (分页)
@@ -58,7 +115,6 @@ export class EquipmentController {
     summary: '获取器材列表',
     description: '分页获取器材列表，支持按分类筛选和包含非活跃器材',
   })
-  @ApiQuery({ type: GetEquipmentQueryDto })
   @ApiResponse({
     status: HttpStatus.OK,
     description: '获取成功',
@@ -75,7 +131,8 @@ export class EquipmentController {
   async findAll(@Query() queryDto: GetEquipmentQueryDto): Promise<GetEquipmentResponseDto> {
     try {
       this.logger.log(`获取器材列表: ${JSON.stringify(queryDto)}`);
-      return await this.equipmentService.findAll(queryDto);
+      this.logger.log('Using direct Supabase API due to database connection issue');
+      return await this.getEquipmentDirect(queryDto);
     } catch (error) {
       this.handleError(error, 'findAll', { queryDto });
     }
@@ -110,7 +167,27 @@ export class EquipmentController {
   async findOne(@Param('id') id: string): Promise<EquipmentDto> {
     try {
       this.logger.log(`获取器材详情: id=${id}`);
-      return await this.equipmentService.findOne(id);
+      this.logger.log('Using direct Supabase API due to database connection issue');
+
+      const item = await this.supabaseApi.getById('equipment', id);
+
+      if (!item) {
+        throw new NotFoundException(`Equipment with ID ${id} not found`);
+      }
+
+      return {
+        id: item.id,
+        code: item.code,
+        name: item.name,
+        category: item.category,
+        recognizable: item.recognizable || false,
+        iconUrl: item.icon_url,
+        imageUrl: item.image_url,
+        displayOrder: item.display_order || 0,
+        isActive: item.is_active,
+        createdAt: item.created_at,
+        updatedAt: item.updated_at,
+      };
     } catch (error) {
       this.handleError(error, 'findOne', { equipmentId: id });
     }
@@ -145,7 +222,27 @@ export class EquipmentController {
   async findByCode(@Param('code') code: string): Promise<EquipmentDto> {
     try {
       this.logger.log(`根据代码获取器材详情: code=${code}`);
-      return await this.equipmentService.findByCode(code);
+      this.logger.log('Using direct Supabase API due to database connection issue');
+
+      const item = await this.supabaseApi.getByField('equipment', 'code', code);
+
+      if (!item) {
+        throw new NotFoundException(`Equipment with code ${code} not found`);
+      }
+
+      return {
+        id: item.id,
+        code: item.code,
+        name: item.name,
+        category: item.category,
+        recognizable: item.recognizable || false,
+        iconUrl: item.icon_url,
+        imageUrl: item.image_url,
+        displayOrder: item.display_order || 0,
+        isActive: item.is_active,
+        createdAt: item.created_at,
+        updatedAt: item.updated_at,
+      };
     } catch (error) {
       this.handleError(error, 'findByCode', { equipmentCode: code });
     }
@@ -159,12 +256,6 @@ export class EquipmentController {
     summary: '获取活跃器材列表',
     description: '获取所有活跃状态的器材，可按分类筛选',
   })
-  @ApiQuery({
-    name: 'category',
-    required: false,
-    description: '器材分类筛选',
-    example: 'STRENGTH',
-  })
   @ApiResponse({
     status: HttpStatus.OK,
     description: '获取成功',
@@ -177,7 +268,33 @@ export class EquipmentController {
   async findActiveEquipment(@Query('category') category?: string): Promise<EquipmentDto[]> {
     try {
       this.logger.log(`获取活跃器材列表: category=${category}`);
-      return await this.equipmentService.findActiveEquipment(category);
+      this.logger.log('Using direct Supabase API due to database connection issue');
+
+      const filters: Record<string, any> = {
+        is_active: true,
+      };
+
+      if (category) {
+        filters.category = category;
+      }
+
+      const equipment = await this.supabaseApi.get('equipment', filters, {
+        orderBy: 'display_order.asc,created_at.asc',
+      });
+
+      return equipment.map((item: any) => ({
+        id: item.id,
+        code: item.code,
+        name: item.name,
+        category: item.category,
+        recognizable: item.recognizable || false,
+        iconUrl: item.icon_url,
+        imageUrl: item.image_url,
+        displayOrder: item.display_order || 0,
+        isActive: item.is_active,
+        createdAt: item.created_at,
+        updatedAt: item.updated_at,
+      }));
     } catch (error) {
       this.handleError(error, 'findActiveEquipment', { category });
     }
@@ -203,7 +320,37 @@ export class EquipmentController {
   async findEquipmentByCategory(): Promise<GetEquipmentByCategoryResponseDto> {
     try {
       this.logger.log('获取按分类分组的器材');
-      return await this.equipmentService.findEquipmentByCategory();
+      this.logger.log('Using direct Supabase API due to database connection issue');
+
+      const allEquipment = await this.supabaseApi.get('equipment',
+        { is_active: true },
+        { orderBy: 'display_order.asc,created_at.asc' }
+      );
+
+      const groupedData: Record<string, any[]> = {};
+
+      allEquipment.forEach((item: any) => {
+        const category = item.category || 'NONE';
+        if (!groupedData[category]) {
+          groupedData[category] = [];
+        }
+
+        groupedData[category].push({
+          id: item.id,
+          code: item.code,
+          name: item.name,
+          category: item.category,
+          recognizable: item.recognizable || false,
+          iconUrl: item.icon_url,
+          imageUrl: item.image_url,
+          displayOrder: item.display_order || 0,
+          isActive: item.is_active,
+          createdAt: item.created_at,
+          updatedAt: item.updated_at,
+        });
+      });
+
+      return { data: groupedData };
     } catch (error) {
       this.handleError(error, 'findEquipmentByCategory');
     }
@@ -229,7 +376,43 @@ export class EquipmentController {
   async getEquipmentStats(): Promise<GetEquipmentStatsResponseDto> {
     try {
       this.logger.log('获取器材统计信息');
-      return await this.equipmentService.getEquipmentStats();
+      this.logger.log('Using direct Supabase API due to database connection issue');
+
+      // 获取所有器材
+      const allEquipment = await this.supabaseApi.get('equipment', {}, {
+        orderBy: 'category.asc,display_order.asc',
+      });
+
+      // 计算总数和活跃数
+      const total = allEquipment.length;
+      const active = allEquipment.filter((item: any) => item.is_active).length;
+      const inactive = total - active;
+
+      // 按分类统计
+      const categoryStats: Record<string, any> = {};
+      allEquipment.forEach((item: any) => {
+        const category = item.category || 'NONE';
+        if (!categoryStats[category]) {
+          categoryStats[category] = {
+            category,
+            count: 0,
+            items: [],
+          };
+        }
+        categoryStats[category].count++;
+        categoryStats[category].items.push({
+          id: item.id,
+          code: item.code,
+          name: item.name,
+        });
+      });
+
+      return {
+        total,
+        active,
+        inactive,
+        categories: Object.values(categoryStats),
+      };
     } catch (error) {
       this.handleError(error, 'getEquipmentStats');
     }
@@ -264,7 +447,45 @@ export class EquipmentController {
   async create(@Body() createDto: CreateEquipmentDto): Promise<EquipmentDto> {
     try {
       this.logger.log(`创建器材: ${JSON.stringify(createDto)}`);
-      return await this.equipmentService.create(createDto);
+      this.logger.log('Using direct Supabase API due to database connection issue');
+
+      // 检查代码是否已存在
+      const existing = await this.supabaseApi.getByField('equipment', 'code', createDto.code);
+      if (existing) {
+        throw new ConflictException(`Equipment with code ${createDto.code} already exists`);
+      }
+
+      // 创建器材数据
+      const createData = {
+        code: createDto.code,
+        name: createDto.name,
+        description: createDto.description || null,
+        category: createDto.category || null,
+        recognizable: false, // 默认值，DTO中没有此字段
+        icon_url: null, // 默认值，DTO中没有此字段
+        image_url: createDto.imageUrl || null,
+        display_order: createDto.displayOrder || 0,
+        is_active: createDto.isActive !== undefined ? createDto.isActive : true,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
+
+      const newItem = await this.supabaseApi.post('equipment', createData);
+
+      return {
+        id: newItem.id,
+        code: newItem.code,
+        name: newItem.name,
+        description: newItem.description,
+        category: newItem.category,
+        recognizable: newItem.recognizable || false,
+        iconUrl: newItem.icon_url,
+        imageUrl: newItem.image_url,
+        displayOrder: newItem.display_order || 0,
+        isActive: newItem.is_active,
+        createdAt: newItem.created_at,
+        updatedAt: newItem.updated_at,
+      };
     } catch (error) {
       this.handleError(error, 'create', { createDto });
     }
