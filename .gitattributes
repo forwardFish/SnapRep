@@ -1,0 +1,6 @@
+# 以 LF 作为仓库规范；Windows 工作区不自动改行尾
+*           text=auto eol=lf
+
+# 仅对确实需要 CRLF 的脚本保留 CRLF（可选）
+*.bat       eol=crlf
+*.cmd       eol=crlf
