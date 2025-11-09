@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import 'core/services/supabase_service.dart';
 import 'core/providers/home_provider.dart';
 import 'features/home/screens/home_page.dart';
-import 'features/splash/splash_screen_simple.dart';
+import 'features/splash/splash_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();

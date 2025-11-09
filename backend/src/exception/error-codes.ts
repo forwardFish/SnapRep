@@ -1,6 +1,9 @@
+import { HttpStatus } from '@nestjs/common';
+import { ErrorCodeType, ErrorCategory } from './response-error';
+
 /**
  * 统一错误代码定义
- * 错误代码格式: { code: 数字编码, message: 错误消息标识 }
+ * 错误代码格式: { code: 数字编码, message: 错误消息标识, httpStatus?: HTTP状态码, category?: 错误类别 }
  */
 export const ErrorCodes = {
     // 通用错误 (1000-1999)
@@ -84,17 +87,17 @@ export const ErrorCodes = {
 
     // 器材相关错误 (8000-8999)
     EQUIPMENT: {
-        NOT_FOUND: { code: 8000, message: 'EQUIPMENT_NOT_FOUND' },
-        ALREADY_EXISTS: { code: 8001, message: 'EQUIPMENT_ALREADY_EXISTS' },
-        CODE_EXISTS: { code: 8002, message: 'EQUIPMENT_CODE_EXISTS' },
-        CREATE_FAILED: { code: 8003, message: 'EQUIPMENT_CREATE_FAILED' },
-        UPDATE_FAILED: { code: 8004, message: 'EQUIPMENT_UPDATE_FAILED' },
-        DELETE_FAILED: { code: 8005, message: 'EQUIPMENT_DELETE_FAILED' },
-        FETCH_FAILED: { code: 8006, message: 'EQUIPMENT_FETCH_FAILED' },
-        LIST_FAILED: { code: 8007, message: 'EQUIPMENT_LIST_FAILED' },
-        COUNT_FAILED: { code: 8008, message: 'EQUIPMENT_COUNT_FAILED' },
-        INVALID_CODE: { code: 8009, message: 'EQUIPMENT_INVALID_CODE' },
-        INACTIVE_EQUIPMENT: { code: 8010, message: 'EQUIPMENT_INACTIVE' },
+        NOT_FOUND: { code: 8000, message: 'EQUIPMENT_NOT_FOUND', httpStatus: HttpStatus.NOT_FOUND, category: ErrorCategory.BUSINESS },
+        ALREADY_EXISTS: { code: 8001, message: 'EQUIPMENT_ALREADY_EXISTS', httpStatus: HttpStatus.CONFLICT, category: ErrorCategory.BUSINESS },
+        CODE_EXISTS: { code: 8002, message: 'EQUIPMENT_CODE_EXISTS', httpStatus: HttpStatus.CONFLICT, category: ErrorCategory.BUSINESS },
+        CREATE_FAILED: { code: 8003, message: 'EQUIPMENT_CREATE_FAILED', httpStatus: HttpStatus.BAD_REQUEST, category: ErrorCategory.BUSINESS },
+        UPDATE_FAILED: { code: 8004, message: 'EQUIPMENT_UPDATE_FAILED', httpStatus: HttpStatus.BAD_REQUEST, category: ErrorCategory.BUSINESS },
+        DELETE_FAILED: { code: 8005, message: 'EQUIPMENT_DELETE_FAILED', httpStatus: HttpStatus.BAD_REQUEST, category: ErrorCategory.BUSINESS },
+        FETCH_FAILED: { code: 8006, message: 'EQUIPMENT_FETCH_FAILED', httpStatus: HttpStatus.INTERNAL_SERVER_ERROR, category: ErrorCategory.SYSTEM },
+        LIST_FAILED: { code: 8007, message: 'EQUIPMENT_LIST_FAILED', httpStatus: HttpStatus.INTERNAL_SERVER_ERROR, category: ErrorCategory.SYSTEM },
+        COUNT_FAILED: { code: 8008, message: 'EQUIPMENT_COUNT_FAILED', httpStatus: HttpStatus.INTERNAL_SERVER_ERROR, category: ErrorCategory.SYSTEM },
+        INVALID_CODE: { code: 8009, message: 'EQUIPMENT_INVALID_CODE', httpStatus: HttpStatus.BAD_REQUEST, category: ErrorCategory.VALIDATION },
+        INACTIVE_EQUIPMENT: { code: 8010, message: 'EQUIPMENT_INACTIVE', httpStatus: HttpStatus.BAD_REQUEST, category: ErrorCategory.BUSINESS },
     },
 
     // 主题周相关错误 (9000-9999)
@@ -174,5 +177,17 @@ export const ErrorCodes = {
         IMAGE_TOO_LARGE: { code: 15005, message: 'AI_RECOGNITION_IMAGE_TOO_LARGE' },
     },
 
-
+    SCENARIO_EQUIPMENT: {
+        NOT_FOUND: { code: 16000, message: 'SCENARIO_EQUIPMENT_NOT_FOUND', httpStatus: HttpStatus.NOT_FOUND, category: ErrorCategory.BUSINESS },
+        ALREADY_EXISTS: { code: 16001, message: 'SCENARIO_EQUIPMENT_ALREADY_EXISTS', httpStatus: HttpStatus.CONFLICT, category: ErrorCategory.BUSINESS },
+        CODE_EXISTS: { code: 16002, message: 'SCENARIO_EQUIPMENT_CODE_EXISTS', httpStatus: HttpStatus.CONFLICT, category: ErrorCategory.BUSINESS },
+        CREATE_FAILED: { code: 16003, message: 'SCENARIO_EQUIPMENT_CREATE_FAILED', httpStatus: HttpStatus.BAD_REQUEST, category: ErrorCategory.BUSINESS },
+        UPDATE_FAILED: { code: 16004, message: 'SCENARIO_EQUIPMENT_UPDATE_FAILED', httpStatus: HttpStatus.BAD_REQUEST, category: ErrorCategory.BUSINESS },
+        DELETE_FAILED: { code: 16005, message: 'SCENARIO_EQUIPMENT_DELETE_FAILED', httpStatus: HttpStatus.BAD_REQUEST, category: ErrorCategory.BUSINESS },
+        FETCH_FAILED: { code: 16006, message: 'SCENARIO_EQUIPMENT_FETCH_FAILED', httpStatus: HttpStatus.INTERNAL_SERVER_ERROR, category: ErrorCategory.SYSTEM },
+        LIST_FAILED: { code: 16007, message: 'SCENARIO_EQUIPMENT_LIST_FAILED', httpStatus: HttpStatus.INTERNAL_SERVER_ERROR, category: ErrorCategory.SYSTEM },
+        COUNT_FAILED: { code: 16008, message: 'SCENARIO_EQUIPMENT_COUNT_FAILED', httpStatus: HttpStatus.INTERNAL_SERVER_ERROR, category: ErrorCategory.SYSTEM },
+        INVALID_CODE: { code: 16009, message: 'SCENARIO_EQUIPMENT_INVALID_CODE', httpStatus: HttpStatus.BAD_REQUEST, category: ErrorCategory.VALIDATION },
+        INACTIVE_SCENARIO_EQUIPMENT: { code: 16010, message: 'SCENARIO_EQUIPMENT_INACTIVE', httpStatus: HttpStatus.BAD_REQUEST, category: ErrorCategory.BUSINESS },
+    },
 };

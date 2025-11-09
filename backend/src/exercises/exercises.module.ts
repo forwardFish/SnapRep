@@ -5,8 +5,10 @@ import { ExercisesController } from './exercises.controller';
 import { ExercisesDao } from './exercises.dao';
 import { WorkoutRecommendationService } from './services/workout-recommendation.service';
 import { ExerciseMatchingService } from './services/exercise-matching.service';
+import { CommonModule } from '../common/common.module';
 
 @Module({
+  imports: [CommonModule], // 添加CommonModule来注入SupabaseApiService
   providers: [
     ExercisesService,
     // ExercisesResolver,  // Commented out - using REST API instead of GraphQL

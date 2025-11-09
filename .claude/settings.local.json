@@ -98,7 +98,12 @@
       "Bash(powershell \"Remove-Item -Recurse -Force frontend\\android\\app\\src\\main\\kotlin\\com\\example\")",
       "Bash(npm run migrate:status:*)",
       "Bash(npm run migrate:dev:*)",
-      "Bash(powershell:*)"
+      "Bash(powershell:*)",
+      "Bash(npm run test:api:*)",
+      "Bash(timeout 15 npm run start:dev:*)",
+      "Bash(npx ts-node:*)",
+      "Bash(timeout 10 npm run start:dev)",
+      "Bash(del test-array-format.js fix-arrays.js)"
     ],
     "deny": [],
     "ask": []

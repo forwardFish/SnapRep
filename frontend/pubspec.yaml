@@ -39,6 +39,7 @@ dependencies:
   go_router: ^13.2.0
   json_annotation: ^4.9.0
   smooth_page_indicator: ^1.2.1
+  flutter_svg: ^2.0.10+1
 
 dependency_overrides:
   # 强制app_links使用与API 34兼容的版本
@@ -67,6 +68,10 @@ flutter:
   # included with your application, so that you can use the icons in
   # the material Icons class.
   uses-material-design: true
+
+  # Assets configuration
+  assets:
+    - assets/images/
 
   # To add assets to your application, add an assets section, like this:
   # assets:

@@ -10,13 +10,19 @@ export class SupabaseApiService {
   private readonly logger = new Logger(SupabaseApiService.name);
   private readonly supabaseUrl: string;
   private readonly anonKey: string;
+  private readonly serviceKey: string;
 
   constructor(private readonly configService: ConfigService) {
     this.supabaseUrl = this.configService.get<string>('SUPABASE_URL');
     this.anonKey = this.configService.get<string>('SUPABASE_ANON_KEY');
+    this.serviceKey = this.configService.get<string>('SUPABASE_SERVICE_KEY');
 
     if (!this.supabaseUrl || !this.anonKey) {
       throw new Error('SUPABASE_URL and SUPABASE_ANON_KEY are required');
+    }
+
+    if (!this.serviceKey) {
+      this.logger.warn('SUPABASE_SERVICE_KEY not found, write operations may fail due to RLS policies');
     }
   }
 
@@ -125,11 +131,13 @@ export class SupabaseApiService {
     this.logger.debug(`Making Supabase POST request: ${url}`);
 
     try {
+      const authKey = this.serviceKey || this.anonKey; // 优先使用service key进行写操作
+
       const response = await fetch(url, {
         method: 'POST',
         headers: {
-          'apikey': this.anonKey,
-          'Authorization': `Bearer ${this.anonKey}`,
+          'apikey': authKey,
+          'Authorization': `Bearer ${authKey}`,
           'Content-Type': 'application/json',
           'Prefer': 'return=representation',
         },
@@ -137,7 +145,15 @@ export class SupabaseApiService {
       });
 
       if (!response.ok) {
-        throw new Error(`Supabase API error: ${response.status} ${response.statusText}`);
+        let errorDetails = '';
+        try {
+          const errorBody = await response.text();
+          errorDetails = `: ${errorBody}`;
+          this.logger.error(`Supabase POST API error details: ${errorBody}`);
+        } catch (e) {
+          // Ignore error body parsing errors
+        }
+        throw new Error(`Supabase API error: ${response.status} ${response.statusText}${errorDetails}`);
       }
 
       const result = await response.json();
@@ -161,11 +177,13 @@ export class SupabaseApiService {
     this.logger.debug(`Making Supabase PATCH request: ${url}`);
 
     try {
+      const authKey = this.serviceKey || this.anonKey; // 优先使用service key进行写操作
+
       const response = await fetch(url, {
         method: 'PATCH',
         headers: {
-          'apikey': this.anonKey,
-          'Authorization': `Bearer ${this.anonKey}`,
+          'apikey': authKey,
+          'Authorization': `Bearer ${authKey}`,
           'Content-Type': 'application/json',
           'Prefer': 'return=representation',
         },
@@ -196,11 +214,13 @@ export class SupabaseApiService {
     this.logger.debug(`Making Supabase DELETE request: ${url}`);
 
     try {
+      const authKey = this.serviceKey || this.anonKey; // 优先使用service key进行写操作
+
       const response = await fetch(url, {
         method: 'DELETE',
         headers: {
-          'apikey': this.anonKey,
-          'Authorization': `Bearer ${this.anonKey}`,
+          'apikey': authKey,
+          'Authorization': `Bearer ${authKey}`,
           'Content-Type': 'application/json',
         },
       });

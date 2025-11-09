@@ -24,6 +24,7 @@ import {
 import { ResponseError } from '../exception/response-error';
 import { ErrorCodes } from '../exception/error-codes';
 import { ConfigService } from '@nestjs/config';
+import { SupabaseApiService } from '../common/services/supabase-api.service';
 
 @ApiTags('scenarios')
 @Controller('rest/v1/scenarios')
@@ -33,33 +34,19 @@ export class ScenariosController {
   constructor(
     private readonly scenariosService: ScenariosService,
     private readonly configService: ConfigService,
+    private readonly supabaseApi: SupabaseApiService, // 注入SupabaseApiService
   ) {}
 
   /**
-   * 临时修复：直接使用Supabase HTTP API
-   * 绕过Prisma数据库连接问题
+   * 使用SupabaseApiService获取场景列表
+   * 替换原来的直接fetch调用
    */
   private async getScenariosDirect(): Promise<any> {
-    const supabaseUrl = this.configService.get<string>('SUPABASE_URL');
-    const anonKey = this.configService.get<string>('SUPABASE_ANON_KEY');
-
     try {
-      const response = await fetch(
-        `${supabaseUrl}/rest/v1/scenarios?is_active=eq.true&order=created_at`,
-        {
-          headers: {
-            'apikey': anonKey,
-            'Authorization': `Bearer ${anonKey}`,
-            'Content-Type': 'application/json',
-          },
-        },
+      const scenarios = await this.supabaseApi.get('scenarios',
+        { is_active: true },
+        { orderBy: 'created_at.asc' }
       );
-
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-
-      const scenarios = await response.json();
 
       return {
         data: scenarios.map((scenario: any) => ({
@@ -83,7 +70,7 @@ export class ScenariosController {
         },
       };
     } catch (error) {
-      this.logger.error('Direct Supabase API call failed:', error);
+      this.logger.error('SupabaseApiService call failed:', error);
       throw new InternalServerErrorException('Failed to fetch scenarios');
     }
   }
@@ -111,7 +98,7 @@ export class ScenariosController {
     @Query() queryDto: GetScenariosQueryDto,
   ): Promise<GetScenariosResponseDto> {
     try {
-      this.logger.log('Using direct Supabase API due to database connection issue');
+      this.logger.log('Using SupabaseApiService due to database connection issue');
       return await this.getScenariosDirect();
     } catch (error) {
       this.handleError(error, 'findAll', { queryDto });
@@ -146,7 +133,25 @@ export class ScenariosController {
   })
   async findOne(@Param('id') id: string): Promise<ScenarioResponseDto> {
     try {
-      return await this.scenariosService.findOne(id);
+      this.logger.log(`获取场景详情: id=${id}`);
+      this.logger.log('Using SupabaseApiService due to database connection issue');
+
+      const scenario = await this.supabaseApi.getById('scenarios', id);
+      if (!scenario) {
+        throw new NotFoundException(`Scenario with ID ${id} not found`);
+      }
+
+      return {
+        id: scenario.id,
+        code: scenario.code,
+        name: scenario.name,
+        noiseTolerance: scenario.noise_tolerance,
+        spaceRequirement: scenario.space_requirement,
+        iconUrl: scenario.icon_url,
+        isActive: scenario.is_active,
+        createdAt: scenario.created_at,
+        updatedAt: scenario.updated_at,
+      };
     } catch (error) {
       this.handleError(error, 'findOne', { scenarioId: id });
     }
@@ -180,7 +185,25 @@ export class ScenariosController {
   })
   async findByCode(@Param('code') code: string): Promise<ScenarioResponseDto> {
     try {
-      return await this.scenariosService.findByCode(code);
+      this.logger.log(`根据代码获取场景: code=${code}`);
+      this.logger.log('Using SupabaseApiService due to database connection issue');
+
+      const scenario = await this.supabaseApi.getByField('scenarios', 'code', code);
+      if (!scenario) {
+        throw new NotFoundException(`Scenario with code ${code} not found`);
+      }
+
+      return {
+        id: scenario.id,
+        code: scenario.code,
+        name: scenario.name,
+        noiseTolerance: scenario.noise_tolerance,
+        spaceRequirement: scenario.space_requirement,
+        iconUrl: scenario.icon_url,
+        isActive: scenario.is_active,
+        createdAt: scenario.created_at,
+        updatedAt: scenario.updated_at,
+      };
     } catch (error) {
       this.handleError(error, 'findByCode', { scenarioCode: code });
     }
@@ -214,7 +237,13 @@ export class ScenariosController {
   })
   async getActiveCount(): Promise<{ count: number }> {
     try {
-      const count = await this.scenariosService.getActiveCount();
+      this.logger.log('Using SupabaseApiService to get active scenarios count');
+      const scenarios = await this.supabaseApi.get('scenarios',
+        { is_active: true },
+        { orderBy: 'created_at.asc' }
+      );
+      const count = scenarios.length;
+      this.logger.log(`Found ${count} active scenarios`);
       return { count };
     } catch (error) {
       this.handleError(error, 'getActiveCount');
@@ -238,10 +267,10 @@ export class ScenariosController {
       // 根据错误代码映射到HTTP状态码
       switch (error.code) {
         case ErrorCodes.SCENARIO.NOT_FOUND.code:
-          throw new NotFoundException(error.getUserMessage());
+          throw error; // 直接抛出 ResponseError
         case ErrorCodes.SCENARIO.INVALID_CODE.code:
         case ErrorCodes.COMMON.VALIDATION_ERROR.code:
-          throw new BadRequestException(error.getUserMessage());
+          throw error; // 直接抛出 ResponseError
         case ErrorCodes.SCENARIO.FETCH_FAILED.code:
         case ErrorCodes.SCENARIO.LIST_FAILED.code:
         case ErrorCodes.SCENARIO.COUNT_FAILED.code:

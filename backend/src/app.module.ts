@@ -10,6 +10,7 @@ import { ConfigModule } from '@nestjs/config';
 // import { PostsModule } from './posts/posts.module';
 import { ScenariosModule } from './scenarios/scenarios.module';
 import { EquipmentModule } from './equipment/equipment.module';
+import { ScenarioEquipmentModule } from './scenario-equipment/scenario-equipment.module';
 import { ExercisesModule } from './exercises/exercises.module';
 import { WorkoutSessionsModule } from './workout-sessions/workout-sessions.module';
 import { CardsModule } from './cards/cards.module';
@@ -36,6 +37,7 @@ import { UsersModule } from './users/users.module';
     // PostsModule,
     ScenariosModule,
     EquipmentModule,
+    ScenarioEquipmentModule,
     ExercisesModule,
     WorkoutSessionsModule,
     CardsModule,

@@ -73,6 +73,7 @@ model Scenario {
 
   // 数据库关系
   exerciseScenarios  ExerciseScenario[]     // 关联的动作列表 (一个场景可以有多个动作)
+  scenarioEquipment  ScenarioEquipment[]    // 关联的器材列表 (一个场景可以有多种器材)
   workoutSessions    WorkoutSession[]       // 在此场景进行的训练会话
 
   @@index([code])        // 索引：加速通过 code 查询
@@ -128,6 +129,7 @@ model Equipment {
 
   // 数据库关系
   exerciseEquipment ExerciseEquipment[]    // 关联的动作列表 (一个器材可以用于多个动作)
+  scenarioEquipment ScenarioEquipment[]    // 关联的场景列表 (一个器材可以在多个场景中使用)
   equipmentFrequencies EquipmentFrequency[] // 器材使用频次统计记录 (一对多关系)
 
   @@index([code])          // 索引：通过 code 快速查询
@@ -275,7 +277,54 @@ model ExerciseEquipment {
   @@index([equipmentId])                           // 索引：从器材查找动作时优化性能
   @@map("exercise_equipment")                      // 数据库表名
 }
+
+// 场景-器材关联表 (多对多关系，表示各场景可用的器材)
+model ScenarioEquipment {
+  scenarioId String   @map("scenario_id")          // 场景ID (外键，关联到Scenario表)
+  scenario   Scenario @relation(fields: [scenarioId], references: [id], onDelete: Cascade)
+
+  equipmentId String    @map("equipment_id")       // 器材ID (外键，关联到Equipment表)
+  equipment   Equipment @relation(fields: [equipmentId], references: [id], onDelete: Cascade)
+
+  isCommon Boolean @default(true) @map("is_common") // 是否常见 (true=该场景常见器材, false=偶见器材)
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)  // 关联创建时间
+
+  @@id([scenarioId, equipmentId])                  // 复合主键 (防止重复关联)
+  @@index([equipmentId])                           // 索引：从器材查找场景时优化性能
+  @@index([scenarioId, isCommon])                  // 索引：查询场景常见器材时优化性能
+  @@map("scenario_equipment")                      // 数据库表名
+}
 ```
+
+**设计说明**：
+
+#### ExerciseScenario - 动作场景关联
+- **作用**：定义哪些动作可以在哪些场景中执行
+- **应用**：推荐引擎根据用户当前场景筛选合适的动作
+- **例子**：`wall_chest_opener` 动作可以在 `office`、`home`、`gym` 场景中进行
+
+#### ExerciseEquipment - 动作器材关联
+- **作用**：定义动作需要或可以使用的器材
+- **isRequired字段**：区分必需器材和可选器材
+  - `true`: 必需器材，没有此器材就无法完成动作
+  - `false`: 可选器材，可以辅助但非必须
+- **例子**：`chair_squat` 动作必需 `chair` 器材 (`isRequired=true`)
+
+#### ScenarioEquipment - 场景器材关联 ⭐ 新增
+- **作用**：定义各个场景中通常可获得的器材
+- **应用场景**：
+  - 用户选择场景后，自动显示该场景常见的器材选项
+  - 智能推荐：优先推荐场景常见器材的动作
+  - 器材稀有度计算：场景罕见器材可能有更高稀有度
+- **isCommon字段**：标识器材在该场景中的常见程度
+  - `true`: 常见器材，在该场景中容易找到
+  - `false`: 偶见器材，在该场景中不太常见但可能存在
+- **实际应用示例**：
+  - 办公室场景 (`office`)：椅子 (常见)、墙 (常见)、水瓶 (常见)、瑜伽垫 (偶见)
+  - 家庭场景 (`home`)：椅子 (常见)、沙发 (常见)、楼梯 (偶见)、哑铃 (偶见)
+  - 健身房场景 (`gym`)：哑铃 (常见)、杠铃 (常见)、椅子 (偶见)
+  - 公园场景 (`park`)：长椅 (常见)、树木 (常见)、台阶 (偶见)
 
 ---
 
@@ -846,25 +895,26 @@ const scenarioName = t(`scenarios.${scenario.code}`)
 | 版本 | 表数量 | 说明 |
 |------|--------|------|
 | v1.0 | 14张表 | 包含 CardSeries, UserStats, EquipmentFrequency 等 |
-| **v2.0** | **16张表** | 移除非 MVP 必需表，简化设计，增加分析功能表 |
+| **v2.0** | **17张表** | 移除非 MVP 必需表，简化设计，增加分析功能表和场景器材关联表 |
 
-**MVP + 预留功能的 16 张表**:
+**MVP + 预留功能的 17 张表**:
 1. `scenarios` - 场景表
 2. `equipment` - 器材表
 3. `exercises` - 动作表
 4. `exercise_scenarios` - 动作-场景关联表
 5. `exercise_equipment` - 动作-器材关联表
-6. `users` - 用户表 (增加偏好设置、通知设置、隐私设置)
-7. `workout_sessions` - 训练会话表 (增加跟练模式、环境数据)
-8. `session_exercises` - 会话动作关联表 (增加详细跟练数据)
-9. `share_cards` - 分享成果卡表 (增加稀有度系统) ⭐ 新增
-10. `daily_trainings` - 每日训练记录表 ⭐ 新增
-11. `equipment_frequencies` - 器材使用频次统计表 ⭐ 新增 (稀有度计算)
-12. `user_preferences` - 用户偏好学习记录表 ⭐ 新增 (个性化推荐)
-13. `theme_weeks` - 主题周活动表 ⭐ 新增 (主题周管理)
-14. `theme_week_participations` - 主题周参与记录表 ⭐ 新增 (用户参与追踪)
-15. `user_analytics` - 用户行为分析表 ⭐ 新增 (KPI指标和行为漏斗)
-16. `user_daily_metrics` - 用户每日指标表 ⭐ 新增 (趋势分析)
+6. `scenario_equipment` - 场景-器材关联表 ⭐ 新增
+7. `users` - 用户表 (增加偏好设置、通知设置、隐私设置)
+8. `workout_sessions` - 训练会话表 (增加跟练模式、环境数据)
+9. `session_exercises` - 会话动作关联表 (增加详细跟练数据)
+10. `share_cards` - 分享成果卡表 (增加稀有度系统) ⭐ 新增
+11. `daily_trainings` - 每日训练记录表 ⭐ 新增
+12. `equipment_frequencies` - 器材使用频次统计表 ⭐ 新增 (稀有度计算)
+13. `user_preferences` - 用户偏好学习记录表 ⭐ 新增 (个性化推荐)
+14. `theme_weeks` - 主题周活动表 ⭐ 新增 (主题周管理)
+15. `theme_week_participations` - 主题周参与记录表 ⭐ 新增 (用户参与追踪)
+16. `user_analytics` - 用户行为分析表 ⭐ 新增 (KPI指标和行为漏斗)
+17. `user_daily_metrics` - 用户每日指标表 ⭐ 新增 (趋势分析)
 
 ### 13. UserAnalytics 表 - 用户行为分析表 ⭐ 新增 (支持KPI指标和行为漏斗)
 

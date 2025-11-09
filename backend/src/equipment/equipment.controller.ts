@@ -10,7 +10,6 @@ import {
   HttpStatus,
   Logger,
   BadRequestException,
-  NotFoundException,
   InternalServerErrorException,
   ConflictException,
   ValidationPipe,
@@ -172,7 +171,9 @@ export class EquipmentController {
       const item = await this.supabaseApi.getById('equipment', id);
 
       if (!item) {
-        throw new NotFoundException(`Equipment with ID ${id} not found`);
+        throw new ResponseError(ErrorCodes.EQUIPMENT.NOT_FOUND, undefined, {
+          equipmentId: id,
+        });
       }
 
       return {
@@ -227,7 +228,9 @@ export class EquipmentController {
       const item = await this.supabaseApi.getByField('equipment', 'code', code);
 
       if (!item) {
-        throw new NotFoundException(`Equipment with code ${code} not found`);
+        throw new ResponseError(ErrorCodes.EQUIPMENT.NOT_FOUND, undefined, {
+          equipmentCode: code,
+        });
       }
 
       return {
@@ -455,14 +458,20 @@ export class EquipmentController {
         throw new ConflictException(`Equipment with code ${createDto.code} already exists`);
       }
 
+      // 生成CUID ID
+      const cuidId = `cuid_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
+
       // 创建器材数据
       const createData = {
+        id: cuidId,
         code: createDto.code,
         name: createDto.name,
-        description: createDto.description || null,
+        // description: createDto.description || null, // 数据库中没有这个字段，先注释掉
         category: createDto.category || null,
         recognizable: false, // 默认值，DTO中没有此字段
-        icon_url: null, // 默认值，DTO中没有此字段
+        recognition_labels: [], // Supabase中的字段名是snake_case
+        recognition_confidence: 0.85, // 默认置信度
+        icon_url: createDto.imageUrl || 'https://example.com/default-icon.jpg', // 使用imageUrl作为iconUrl或默认值
         image_url: createDto.imageUrl || null,
         display_order: createDto.displayOrder || 0,
         is_active: createDto.isActive !== undefined ? createDto.isActive : true,
@@ -476,7 +485,7 @@ export class EquipmentController {
         id: newItem.id,
         code: newItem.code,
         name: newItem.name,
-        description: newItem.description,
+        // description: newItem.description, // 数据库中没有这个字段
         category: newItem.category,
         recognizable: newItem.recognizable || false,
         iconUrl: newItem.icon_url,
@@ -532,7 +541,56 @@ export class EquipmentController {
   ): Promise<EquipmentDto> {
     try {
       this.logger.log(`更新器材: id=${id}, data=${JSON.stringify(updateDto)}`);
-      return await this.equipmentService.update(id, updateDto);
+      this.logger.log('Using direct Supabase API due to database connection issue');
+
+      // 检查器材是否存在
+      const existing = await this.supabaseApi.getById('equipment', id);
+      if (!existing) {
+        throw new ResponseError(ErrorCodes.EQUIPMENT.NOT_FOUND, undefined, {
+          equipmentId: id,
+        });
+      }
+
+      // 如果要更新code，检查是否与其他记录冲突
+      if (updateDto.code && updateDto.code !== existing.code) {
+        const codeConflict = await this.supabaseApi.getByField('equipment', 'code', updateDto.code);
+        if (codeConflict) {
+          throw new ConflictException(`Equipment with code ${updateDto.code} already exists`);
+        }
+      }
+
+      // 创建更新数据
+      const updateData: Record<string, any> = {
+        updated_at: new Date().toISOString(),
+      };
+
+      if (updateDto.code) updateData.code = updateDto.code;
+      if (updateDto.name) updateData.name = updateDto.name;
+      // if (updateDto.description !== undefined) updateData.description = updateDto.description; // 数据库中没有此字段
+      if (updateDto.category !== undefined) updateData.category = updateDto.category;
+      if (updateDto.imageUrl !== undefined) {
+        updateData.image_url = updateDto.imageUrl;
+        updateData.icon_url = updateDto.imageUrl; // 同时更新icon_url
+      }
+      if (updateDto.displayOrder !== undefined) updateData.display_order = updateDto.displayOrder;
+      if (updateDto.isActive !== undefined) updateData.is_active = updateDto.isActive;
+
+      const updatedItem = await this.supabaseApi.patch('equipment', id, updateData);
+
+      return {
+        id: updatedItem.id,
+        code: updatedItem.code,
+        name: updatedItem.name,
+        // description: updatedItem.description, // 数据库中没有此字段
+        category: updatedItem.category,
+        recognizable: updatedItem.recognizable || false,
+        iconUrl: updatedItem.icon_url,
+        imageUrl: updatedItem.image_url,
+        displayOrder: updatedItem.display_order || 0,
+        isActive: updatedItem.is_active,
+        createdAt: updatedItem.created_at,
+        updatedAt: updatedItem.updated_at,
+      };
     } catch (error) {
       this.handleError(error, 'update', { equipmentId: id, updateDto });
     }
@@ -567,7 +625,34 @@ export class EquipmentController {
   async remove(@Param('id') id: string): Promise<EquipmentDto> {
     try {
       this.logger.log(`删除器材: id=${id}`);
-      return await this.equipmentService.remove(id);
+      this.logger.log('Using direct Supabase API due to database connection issue');
+
+      // 检查器材是否存在
+      const existing = await this.supabaseApi.getById('equipment', id);
+      if (!existing) {
+        throw new ResponseError(ErrorCodes.EQUIPMENT.NOT_FOUND, undefined, {
+          equipmentId: id,
+        });
+      }
+
+      // 执行硬删除
+      await this.supabaseApi.delete('equipment', id);
+
+      // 返回被删除的器材信息
+      return {
+        id: existing.id,
+        code: existing.code,
+        name: existing.name,
+        // description: existing.description, // 数据库中没有此字段
+        category: existing.category,
+        recognizable: existing.recognizable || false,
+        iconUrl: existing.icon_url,
+        imageUrl: existing.image_url,
+        displayOrder: existing.display_order || 0,
+        isActive: existing.is_active,
+        createdAt: existing.created_at,
+        updatedAt: existing.updated_at,
+      };
     } catch (error) {
       this.handleError(error, 'remove', { equipmentId: id });
     }
@@ -602,7 +687,38 @@ export class EquipmentController {
   async softRemove(@Param('id') id: string): Promise<EquipmentDto> {
     try {
       this.logger.log(`软删除器材: id=${id}`);
-      return await this.equipmentService.softRemove(id);
+      this.logger.log('Using direct Supabase API due to database connection issue');
+
+      // 检查器材是否存在
+      const existing = await this.supabaseApi.getById('equipment', id);
+      if (!existing) {
+        throw new ResponseError(ErrorCodes.EQUIPMENT.NOT_FOUND, undefined, {
+          equipmentId: id,
+        });
+      }
+
+      // 执行软删除 - 设置 is_active = false
+      const updateData = {
+        is_active: false,
+        updated_at: new Date().toISOString(),
+      };
+
+      const updatedItem = await this.supabaseApi.patch('equipment', id, updateData);
+
+      return {
+        id: updatedItem.id,
+        code: updatedItem.code,
+        name: updatedItem.name,
+        // description: updatedItem.description, // 数据库中没有此字段
+        category: updatedItem.category,
+        recognizable: updatedItem.recognizable || false,
+        iconUrl: updatedItem.icon_url,
+        imageUrl: updatedItem.image_url,
+        displayOrder: updatedItem.display_order || 0,
+        isActive: updatedItem.is_active,
+        createdAt: updatedItem.created_at,
+        updatedAt: updatedItem.updated_at,
+      };
     } catch (error) {
       this.handleError(error, 'softRemove', { equipmentId: id });
     }
@@ -653,7 +769,41 @@ export class EquipmentController {
   ): Promise<{ count: number; message: string }> {
     try {
       this.logger.log(`批量更新器材状态: ${JSON.stringify(batchDto)}`);
-      return await this.equipmentService.batchUpdateStatus(batchDto);
+      this.logger.log('Using direct Supabase API due to database connection issue');
+
+      if (!batchDto.ids || batchDto.ids.length === 0) {
+        throw new BadRequestException('Equipment IDs are required');
+      }
+
+      let successCount = 0;
+      const updateData = {
+        is_active: batchDto.isActive,
+        updated_at: new Date().toISOString(),
+      };
+
+      // 批量更新每个器材的状态
+      for (const id of batchDto.ids) {
+        try {
+          // 检查器材是否存在
+          const existing = await this.supabaseApi.getById('equipment', id);
+          if (existing) {
+            await this.supabaseApi.patch('equipment', id, updateData);
+            successCount++;
+          } else {
+            this.logger.warn(`Equipment with ID ${id} not found`);
+          }
+        } catch (error) {
+          this.logger.error(`Failed to update equipment ${id}: ${error.message}`);
+        }
+      }
+
+      const message = `Successfully updated ${successCount} out of ${batchDto.ids.length} equipment items`;
+      this.logger.log(message);
+
+      return {
+        count: successCount,
+        message,
+      };
     } catch (error) {
       this.handleError(error, 'batchUpdateStatus', { batchDto });
     }
@@ -674,17 +824,17 @@ export class EquipmentController {
     if (error instanceof ResponseError) {
       switch (error.code) {
         case ErrorCodes.EQUIPMENT.NOT_FOUND.code:
-          throw new NotFoundException(error.getUserMessage());
+          throw error; // 直接抛出 ResponseError 而不是转换为 NotFoundException
 
         case ErrorCodes.EQUIPMENT.CODE_EXISTS.code:
-          throw new ConflictException(error.getUserMessage());
+          throw error; // 直接抛出 ResponseError
 
         case ErrorCodes.EQUIPMENT.INVALID_CODE.code:
         case ErrorCodes.COMMON.VALIDATION_ERROR.code:
-          throw new BadRequestException(error.getUserMessage());
+          throw error; // 直接抛出 ResponseError
 
         case ErrorCodes.EQUIPMENT.INACTIVE_EQUIPMENT.code:
-          throw new BadRequestException(error.getUserMessage());
+          throw error; // 直接抛出 ResponseError
 
         case ErrorCodes.EQUIPMENT.CREATE_FAILED.code:
         case ErrorCodes.EQUIPMENT.UPDATE_FAILED.code:

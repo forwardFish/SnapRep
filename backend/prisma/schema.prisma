@@ -144,6 +144,7 @@ model Scenario {
 
   // 关系
   exerciseScenarios ExerciseScenario[]
+  scenarioEquipment ScenarioEquipment[] // 场景可用器材关联
   workoutSessions   WorkoutSession[]
 
   @@index([code])
@@ -178,6 +179,7 @@ model Equipment {
 
   // 关系
   exerciseEquipment ExerciseEquipment[]
+  scenarioEquipment ScenarioEquipment[] // 器材可用场景关联
   rarityTable       RarityTable[] // v3.0: 重命名自 equipmentFrequencies
 
   @@index([code])
@@ -266,6 +268,24 @@ model ExerciseEquipment {
   @@id([exerciseId, equipmentId])
   @@index([equipmentId])
   @@map("exercise_equipment")
+}
+
+// 场景-器材关联表 (多对多关系，表示各场景可用的器材)
+model ScenarioEquipment {
+  scenarioId String   @map("scenario_id")          // 场景ID (外键，关联到Scenario表)
+  scenario   Scenario @relation(fields: [scenarioId], references: [id], onDelete: Cascade)
+
+  equipmentId String    @map("equipment_id")       // 器材ID (外键，关联到Equipment表)
+  equipment   Equipment @relation(fields: [equipmentId], references: [id], onDelete: Cascade)
+
+  isCommon Boolean @default(true) @map("is_common") // 是否常见 (true=该场景常见器材, false=偶见器材)
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)  // 关联创建时间
+
+  @@id([scenarioId, equipmentId])                  // 复合主键 (防止重复关联)
+  @@index([equipmentId])                           // 索引：从器材查找场景时优化性能
+  @@index([scenarioId, isCommon])                  // 索引：查询场景常见器材时优化性能
+  @@map("scenario_equipment")                      // 数据库表名
 }
 
 // =============================================================================
