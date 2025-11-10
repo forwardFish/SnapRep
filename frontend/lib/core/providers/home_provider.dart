@@ -96,21 +96,37 @@ class HomeProvider extends ChangeNotifier {
 
   /// Load current theme week
   Future<void> loadCurrentThemeWeek() async {
+    print('🔄 Starting to load current theme week...');
     _isLoadingThemeWeek = true;
     _themeWeekError = null;
     notifyListeners();
 
     try {
+      print('📡 Calling API service to get current theme week...');
       _currentThemeWeek = await _apiService.getCurrentThemeWeek();
       _themeWeekError = null;
+
+      if (_currentThemeWeek != null) {
+        print('✅ Successfully loaded theme week: ${_currentThemeWeek!.title}');
+      } else {
+        print('ℹ️ No current theme week found from API');
+      }
     } catch (e) {
       // Fallback to default data when API fails
-      debugPrint('⚠️  API failed, using default theme week: $e');
+      print('⚠️ API failed, using default theme week: $e');
       _currentThemeWeek = _defaultDataService.getDefaultThemeWeek();
+
+      if (_currentThemeWeek != null) {
+        print('🔄 Using default theme week: ${_currentThemeWeek!.title}');
+      } else {
+        print('❌ Even default theme week is null!');
+      }
+
       // Don't set error when we have fallback data
       _themeWeekError = null;
     } finally {
       _isLoadingThemeWeek = false;
+      print('🏁 Theme week loading completed. IsLoading: $_isLoadingThemeWeek');
       notifyListeners();
     }
   }

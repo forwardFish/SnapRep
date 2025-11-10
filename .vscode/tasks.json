@@ -257,6 +257,44 @@
         "showReuseMessage": true,
         "clear": false
       }
+    },
+    {
+      "label": "Flutter: Run Windows Debug",
+      "type": "shell",
+      "command": "flutter",
+      "args": ["run", "-d", "windows", "--debug"],
+      "options": {
+        "cwd": "${workspaceFolder}/frontend"
+      },
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "new",
+        "showReuseMessage": true,
+        "clear": false
+      },
+      "isBackground": true,
+      "dependsOn": "Frontend: Get Dependencies"
+    },
+    {
+      "label": "Flutter: Build Windows",
+      "type": "shell",
+      "command": "flutter",
+      "args": ["build", "windows"],
+      "options": {
+        "cwd": "${workspaceFolder}/frontend"
+      },
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "new",
+        "showReuseMessage": true,
+        "clear": false
+      }
     }
   ]
 }

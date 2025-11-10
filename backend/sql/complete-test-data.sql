@@ -341,28 +341,28 @@ INSERT INTO users (
 )
 VALUES
   -- 管理员用户
-  ('550e8400-e29b-41d4-a716-446655440001', 'admin@snaprep.com', '$2b$10$YourHashedPasswordHere', 'SnapRep管理员', 'https://cdn.snaprep.com/avatars/admin.jpg',
+  ('550e8400-e29b-41d4-a716-446655440001', 'admin@snaprep.com', '$2b$10$f11efScj3/YKYZQuXxW9BuPrb6g/uvmHPKqSOok5RS7QYv2PDVk9m', 'SnapRep管理员', 'https://cdn.snaprep.com/avatars/admin.jpg',
    0, 0, 0, 0,
    ARRAY[]::"IntentType"[], NULL, NULL, ARRAY[]::text[],
    true, true, NOW(), NOW()),
 
   -- 测试用户 (邮箱用户)
-  ('550e8400-e29b-41d4-a716-446655440002', 'test@snaprep.com', '$2b$10$YourHashedPasswordHere', '测试用户', 'https://cdn.snaprep.com/avatars/test.jpg',
+  ('550e8400-e29b-41d4-a716-446655440002', 'test@snaprep.com', '$2b$10$f11efScj3/YKYZQuXxW9BuPrb6g/uvmHPKqSOok5RS7QYv2PDVk9m', '测试用户', 'https://cdn.snaprep.com/avatars/test.jpg',
    15, 1800, 7, 12,
    ARRAY['STRETCH'::"IntentType", 'MODERATE'::"IntentType"], 'GREEN'::"Difficulty", 60, ARRAY[]::text[],
    true, true, NOW(), NOW()),
 
-  ('550e8400-e29b-41d4-a716-446655440003', 'alice@example.com', '$2b$10$YourHashedPasswordHere', 'Alice', 'https://cdn.snaprep.com/avatars/alice.jpg',
+  ('550e8400-e29b-41d4-a716-446655440003', 'alice@example.com', '$2b$10$f11efScj3/YKYZQuXxW9BuPrb6g/uvmHPKqSOok5RS7QYv2PDVk9m', 'Alice', 'https://cdn.snaprep.com/avatars/alice.jpg',
    8, 960, 3, 8,
    ARRAY['RELAX'::"IntentType", 'STRETCH'::"IntentType"], 'GREEN'::"Difficulty", 45, ARRAY[]::text[],
    true, false, NOW(), NOW()),
 
-  ('550e8400-e29b-41d4-a716-446655440004', 'bob@example.com', '$2b$10$YourHashedPasswordHere', 'Bob', 'https://cdn.snaprep.com/avatars/bob.jpg',
+  ('550e8400-e29b-41d4-a716-446655440004', 'bob@example.com', '$2b$10$f11efScj3/YKYZQuXxW9BuPrb6g/uvmHPKqSOok5RS7QYv2PDVk9m', 'Bob', 'https://cdn.snaprep.com/avatars/bob.jpg',
    12, 1440, 5, 9,
    ARRAY['STRENGTH'::"IntentType", 'MODERATE'::"IntentType"], 'BLUE'::"Difficulty", 90, ARRAY['tree']::text[],
    false, true, NOW(), NOW()),
 
-  ('550e8400-e29b-41d4-a716-446655440005', 'charlie@example.com', '$2b$10$YourHashedPasswordHere', 'Charlie', NULL,
+  ('550e8400-e29b-41d4-a716-446655440005', 'charlie@example.com', '$2b$10$f11efScj3/YKYZQuXxW9BuPrb6g/uvmHPKqSOok5RS7QYv2PDVk9m', 'Charlie', NULL,
    3, 360, 1, 3,
    ARRAY['MODERATE'::"IntentType"], 'GREEN'::"Difficulty", 60, ARRAY[]::text[],
    true, true, NOW(), NOW()),
@@ -379,19 +379,19 @@ VALUES
    false, false, NOW(), NOW()),
 
   -- 高级用户
-  ('550e8400-e29b-41d4-a716-446655440008', 'premium@example.com', '$2b$10$YourHashedPasswordHere', '高级用户', 'https://cdn.snaprep.com/avatars/premium.jpg',
+  ('550e8400-e29b-41d4-a716-446655440008', 'premium@example.com', '$2b$10$f11efScj3/YKYZQuXxW9BuPrb6g/uvmHPKqSOok5RS7QYv2PDVk9m', '高级用户', 'https://cdn.snaprep.com/avatars/premium.jpg',
    45, 5400, 21, 30,
    ARRAY['STRENGTH'::"IntentType", 'MODERATE'::"IntentType"], 'BLUE'::"Difficulty", 120, ARRAY[]::text[],
    true, true, NOW(), NOW()),
 
   -- 新用户
-  ('550e8400-e29b-41d4-a716-446655440009', 'newbie@example.com', '$2b$10$YourHashedPasswordHere', '新手', NULL,
+  ('550e8400-e29b-41d4-a716-446655440009', 'newbie@example.com', '$2b$10$f11efScj3/YKYZQuXxW9BuPrb6g/uvmHPKqSOok5RS7QYv2PDVk9m', '新手', NULL,
    0, 0, 0, 0,
    ARRAY[]::"IntentType"[], NULL, NULL, ARRAY[]::text[],
    true, true, NOW(), NOW()),
 
   -- 复刻测试用户
-  ('550e8400-e29b-41d4-a716-446655440010', 'copytest@example.com', '$2b$10$YourHashedPasswordHere', '复刻测试', NULL,
+  ('550e8400-e29b-41d4-a716-446655440010', 'copytest@example.com', '$2b$10$f11efScj3/YKYZQuXxW9BuPrb6g/uvmHPKqSOok5RS7QYv2PDVk9m', '复刻测试', NULL,
    10, 1200, 4, 6,
    ARRAY['STRETCH'::"IntentType", 'STRENGTH'::"IntentType"], 'BLUE'::"Difficulty", 75, ARRAY[]::text[],
    true, false, NOW(), NOW())

@@ -74,21 +74,38 @@ class ApiService {
   /// GET /api/v1/theme-weeks/current
   Future<ThemeWeek?> getCurrentThemeWeek() async {
     try {
+      final url = '${AppConstants.nestJsApiUrl}/theme-weeks/current';
+      print('🌐 Making API call to: $url');
+      print('📋 Headers: $_headers');
+
       final response = await http.get(
-        Uri.parse('${AppConstants.nestJsApiUrl}/theme-weeks/current'),
+        Uri.parse(url),
         headers: _headers,
       );
 
+      print('📊 Response status: ${response.statusCode}');
+      print('📄 Response body: ${response.body}');
+
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
+        print('✅ Parsed response data: $data');
+
         if (data['current'] != null) {
-          return ThemeWeek.fromJson(data['current']);
+          final themeWeek = ThemeWeek.fromJson(data['current']);
+          print('🎉 Successfully created ThemeWeek object: ${themeWeek.title}');
+          return themeWeek;
+        } else {
+          print('ℹ️ No current theme week found');
+          return null;
         }
-        return null;
       } else {
+        print('❌ API call failed with status: ${response.statusCode}');
+        print('❌ Error response: ${response.body}');
         throw Exception('Failed to load theme week: ${response.statusCode}');
       }
     } catch (e) {
+      print('💥 Exception in getCurrentThemeWeek: $e');
+      print('📍 Stack trace: ${StackTrace.current}');
       throw Exception('Failed to load current theme week: $e');
     }
   }

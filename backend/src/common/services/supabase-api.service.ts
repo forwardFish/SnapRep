@@ -70,16 +70,29 @@ export class SupabaseApiService {
     this.logger.debug(`Making Supabase API request: ${url}`);
 
     try {
+      // 优先使用 service key 来绕过 RLS 策略
+      const authKey = this.serviceKey || this.anonKey;
+
       const response = await fetch(url, {
         headers: {
-          'apikey': this.anonKey,
-          'Authorization': `Bearer ${this.anonKey}`,
+          'apikey': authKey,
+          'Authorization': `Bearer ${authKey}`,
           'Content-Type': 'application/json',
         },
       });
 
       if (!response.ok) {
-        throw new Error(`Supabase API error: ${response.status} ${response.statusText}`);
+        // 安全地读取错误响应
+        let errorMessage = `Supabase API error: ${response.status} ${response.statusText}`;
+        try {
+          const errorBody = await response.text(); // 使用 text() 避免 JSON 解析错误
+          if (errorBody) {
+            errorMessage += ` - ${errorBody}`;
+          }
+        } catch (readError) {
+          this.logger.warn('Failed to read error response body:', readError.message);
+        }
+        throw new Error(errorMessage);
       }
 
       const data = await response.json();
@@ -257,10 +270,13 @@ export class SupabaseApiService {
     this.logger.debug(`Making Supabase COUNT request: ${url}`);
 
     try {
+      // 优先使用 service key 来绕过 RLS 策略
+      const authKey = this.serviceKey || this.anonKey;
+
       const response = await fetch(url, {
         headers: {
-          'apikey': this.anonKey,
-          'Authorization': `Bearer ${this.anonKey}`,
+          'apikey': authKey,
+          'Authorization': `Bearer ${authKey}`,
           'Content-Type': 'application/json',
           'Prefer': 'count=exact',
         },

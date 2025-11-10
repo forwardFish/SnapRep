@@ -1,5 +1,5 @@
 import { GraphQLModule } from '@nestjs/graphql';
-import { Logger, Module } from '@nestjs/common';
+import { forwardRef, Logger, Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 // import { PrismaModule, loggingMiddleware } from 'nestjs-prisma';
 // import { AppController } from './app.controller';
@@ -14,6 +14,8 @@ import { ScenarioEquipmentModule } from './scenario-equipment/scenario-equipment
 import { ExercisesModule } from './exercises/exercises.module';
 import { WorkoutSessionsModule } from './workout-sessions/workout-sessions.module';
 import { CardsModule } from './cards/cards.module';
+import { AnalyticsModule } from './analytics/analytics.module';
+import { ThemeWeeksModule } from './theme-weeks/theme-weeks.module';
 import config from './common/configs/config';
 import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
 import { GqlConfigService } from './gql-config.service';
@@ -32,7 +34,7 @@ import { UsersModule } from './users/users.module';
       useClass: GqlConfigService,
     }),
 
-    AuthModule,
+    forwardRef(() => AuthModule),
     UsersModule,
     // PostsModule,
     ScenariosModule,
@@ -41,6 +43,8 @@ import { UsersModule } from './users/users.module';
     ExercisesModule,
     WorkoutSessionsModule,
     CardsModule,
+    AnalyticsModule, // 新增 Analytics 模块
+    ThemeWeeksModule, // 新增 ThemeWeeks 模块
     // TEMPORARY: Comment out PrismaModule until client generation issue is resolved
     PrismaModule.forRoot({
       isGlobal: true,
@@ -53,7 +57,7 @@ import { UsersModule } from './users/users.module';
         ],
       },
     }),
-    
+
   ],
   controllers: [],
   providers: [],

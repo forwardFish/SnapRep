@@ -42,6 +42,14 @@ export const ErrorCodes = {
         USER_INFO_FETCH_FAILED: { code: 3007, message: 'AUTH_USER_INFO_FETCH_FAILED' },
         EMAIL_SEND_FAILED: { code: 3008, message: 'AUTH_EMAIL_SEND_FAILED' },
         PASSWORD_RESET_FAILED: { code: 3009, message: 'AUTH_PASSWORD_RESET_FAILED' },
+        INVALID_CREDENTIALS: { code: 3010, message: 'AUTH_INVALID_CREDENTIALS' },
+        OTP_VERIFICATION_FAILED: { code: 3011, message: 'AUTH_OTP_VERIFICATION_FAILED' },
+        USER_DATA_PROCESSING_FAILED: { code: 3012, message: 'AUTH_USER_DATA_PROCESSING_FAILED' },
+        SUPABASE_API_ERROR: { code: 3013, message: 'AUTH_SUPABASE_API_ERROR' },
+        SUPABASE_LOGIN_FAILED: { code: 3014, message: 'AUTH_LOGIN_FAILED' },
+        SUPABASE_SEND_OTP_FAILED: { code: 3015, message: 'SUPABASE_SEND_OTP_FAILED' },
+        GET_USER_INFO_FAILED: { code: 3016, message: 'GET_USER_INFO_FAILED' },
+        LOGOUT_FAILED: { code: 3017, message: 'LOGOUT_FAILED' },
     },
 
     // AI服务相关错误 (4000-4999)

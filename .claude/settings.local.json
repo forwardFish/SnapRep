@@ -103,7 +103,11 @@
       "Bash(timeout 15 npm run start:dev:*)",
       "Bash(npx ts-node:*)",
       "Bash(timeout 10 npm run start:dev)",
-      "Bash(del test-array-format.js fix-arrays.js)"
+      "Bash(del test-array-format.js fix-arrays.js)",
+      "Bash(del \"d:\\lyh\\AI\\SnapRep\\backend\\test-scenario-equipment.js\" \"d:\\lyh\\AI\\SnapRep\\backend\\test-simple.js\")",
+      "Bash(DATABASE_URL=\"postgresql://postgres:Snaprep%40123@db.tvjcmleckqovnieuexgu.supabase.co:5432/postgres?sslmode=require\" npx prisma db execute:*)",
+      "Bash(DIRECT_URL=\"postgresql://postgres:Snaprep%40123@db.tvjcmleckqovnieuexgu.supabase.co:5432/postgres?sslmode=require\" npx prisma db execute:*)",
+      "Bash(timeout 10s tail:*)"
     ],
     "deny": [],
     "ask": []
