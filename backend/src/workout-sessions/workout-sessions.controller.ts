@@ -22,7 +22,7 @@ import {
   ApiBody
 } from '@nestjs/swagger';
 import { WorkoutSessionsService } from './workout-sessions.service';
-import { GqlAuthGuard } from '../auth/gql-auth.guard';
+import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import {
   CreateWorkoutSessionDto,
   UpdateWorkoutSessionDto,
@@ -31,6 +31,7 @@ import {
   UserStatsQueryDto
 } from './dto/workout-session.dto';
 import { QuickRecommendationDto } from '../exercises/dto/exercise-recommendation.dto';
+import { logger } from '../common/logger/logger';
 
 /**
  * WorkoutSessions REST API 控制器
@@ -38,10 +39,10 @@ import { QuickRecommendationDto } from '../exercises/dto/exercise-recommendation
  */
 @ApiTags('Workout Sessions')
 @Controller('api/v1')
-@UseGuards(GqlAuthGuard)
-@ApiBearerAuth()
+@UseGuards(JwtAuthGuard)
+@ApiBearerAuth('JWT-auth')
 export class WorkoutSessionsController {
-  private readonly logger = new Logger(WorkoutSessionsController.name);
+  // private readonly logger = new Logger(WorkoutSessionsController.name);
 
   constructor(private readonly workoutSessionsService: WorkoutSessionsService) {}
 
@@ -95,7 +96,7 @@ export class WorkoutSessionsController {
   async createWorkoutSession(
     @Body(ValidationPipe) createDto: CreateWorkoutSessionDto
   ) {
-    this.logger.debug(`创建训练会话请求: userId=${createDto.userId}`);
+    logger.debug(`创建训练会话请求: userId=${createDto.userId}`);
 
     try {
       const session = await this.workoutSessionsService.createSession(createDto);
@@ -106,7 +107,7 @@ export class WorkoutSessionsController {
         message: 'Workout session created successfully'
       };
     } catch (error) {
-      this.logger.error(`创建训练会话失败: ${error.message}`);
+      logger.error(`创建训练会话失败: ${error.message}`);
       throw error;
     }
   }
@@ -137,7 +138,7 @@ export class WorkoutSessionsController {
   async createSessionFromRecommendation(
     @Body(ValidationPipe) recommendationDto: QuickRecommendationDto
   ) {
-    this.logger.debug(`从推荐创建会话: userId=${recommendationDto.userId}`);
+    logger.debug(`从推荐创建会话: userId=${recommendationDto.userId}`);
 
     if (!recommendationDto.userId) {
       throw new BadRequestException('userId is required for creating session from recommendation');
@@ -155,7 +156,7 @@ export class WorkoutSessionsController {
         message: 'Session created from recommendation successfully'
       };
     } catch (error) {
-      this.logger.error(`从推荐创建会话失败: ${error.message}`);
+      logger.error(`从推荐创建会话失败: ${error.message}`);
       throw error;
     }
   }
@@ -186,7 +187,7 @@ export class WorkoutSessionsController {
     @Param('id') id: string,
     @Query('includeExercises') includeExercises: boolean = true
   ) {
-    this.logger.debug(`获取训练会话详情: sessionId=${id}`);
+    logger.debug(`获取训练会话详情: sessionId=${id}`);
 
     try {
       const session = await this.workoutSessionsService.findById(id, includeExercises);
@@ -196,7 +197,7 @@ export class WorkoutSessionsController {
         data: session
       };
     } catch (error) {
-      this.logger.error(`获取训练会话详情失败: ${error.message}`);
+      logger.error(`获取训练会话详情失败: ${error.message}`);
       throw error;
     }
   }
@@ -232,7 +233,7 @@ export class WorkoutSessionsController {
     @Param('id') id: string,
     @Body(ValidationPipe) updateDto: UpdateWorkoutSessionDto
   ) {
-    this.logger.debug(`更新训练会话: sessionId=${id}, status=${updateDto.status}`);
+    logger.debug(`更新训练会话: sessionId=${id}, status=${updateDto.status}`);
 
     try {
       const session = await this.workoutSessionsService.updateSession(id, updateDto);
@@ -243,7 +244,7 @@ export class WorkoutSessionsController {
         message: 'Workout session updated successfully'
       };
     } catch (error) {
-      this.logger.error(`更新训练会话失败: ${error.message}`);
+      logger.error(`更新训练会话失败: ${error.message}`);
       throw error;
     }
   }
@@ -284,7 +285,7 @@ export class WorkoutSessionsController {
       feedback?: string;
     }
   ) {
-    this.logger.debug(`完成训练会话: sessionId=${id}`);
+    logger.debug(`完成训练会话: sessionId=${id}`);
 
     try {
       const session = await this.workoutSessionsService.completeSession(
@@ -300,7 +301,7 @@ export class WorkoutSessionsController {
         message: 'Workout session completed successfully'
       };
     } catch (error) {
-      this.logger.error(`完成训练会话失败: ${error.message}`);
+      logger.error(`完成训练会话失败: ${error.message}`);
       throw error;
     }
   }
@@ -335,7 +336,7 @@ export class WorkoutSessionsController {
     @Param('id') id: string,
     @Body() abandonData: { reason?: string }
   ) {
-    this.logger.debug(`放弃训练会话: sessionId=${id}`);
+    logger.debug(`放弃训练会话: sessionId=${id}`);
 
     try {
       const session = await this.workoutSessionsService.abandonSession(id, abandonData.reason);
@@ -346,7 +347,7 @@ export class WorkoutSessionsController {
         message: 'Workout session abandoned'
       };
     } catch (error) {
-      this.logger.error(`放弃训练会话失败: ${error.message}`);
+      logger.error(`放弃训练会话失败: ${error.message}`);
       throw error;
     }
   }
@@ -373,7 +374,7 @@ export class WorkoutSessionsController {
     @Param('userId', ParseUUIDPipe) userId: string,
     @Query(ValidationPipe) query: SessionQueryDto
   ) {
-    this.logger.debug(`获取用户会话列表: userId=${userId}`);
+    logger.debug(`获取用户会话列表: userId=${userId}`);
 
     try {
       const sessions = await this.workoutSessionsService.findUserSessions(userId, query);
@@ -387,7 +388,7 @@ export class WorkoutSessionsController {
         }
       };
     } catch (error) {
-      this.logger.error(`获取用户会话列表失败: ${error.message}`);
+      logger.error(`获取用户会话列表失败: ${error.message}`);
       throw error;
     }
   }
@@ -413,7 +414,7 @@ export class WorkoutSessionsController {
     @Param('exerciseId') exerciseId: string,
     @Body(ValidationPipe) updateDto: UpdateSessionExerciseDto
   ) {
-    this.logger.debug(`更新会话动作: sessionId=${sessionId}, exerciseId=${exerciseId}`);
+    logger.debug(`更新会话动作: sessionId=${sessionId}, exerciseId=${exerciseId}`);
 
     try {
       const updatedExercise = await this.workoutSessionsService.updateSessionExercise(
@@ -428,7 +429,7 @@ export class WorkoutSessionsController {
         message: 'Session exercise updated successfully'
       };
     } catch (error) {
-      this.logger.error(`更新会话动作失败: ${error.message}`);
+      logger.error(`更新会话动作失败: ${error.message}`);
       throw error;
     }
   }
@@ -467,7 +468,7 @@ export class WorkoutSessionsController {
     @Param('userId', ParseUUIDPipe) userId: string,
     @Query(ValidationPipe) query: UserStatsQueryDto
   ) {
-    this.logger.debug(`获取用户训练统计: userId=${userId}, days=${query.days}`);
+    logger.debug(`获取用户训练统计: userId=${userId}, days=${query.days}`);
 
     try {
       const stats = await this.workoutSessionsService.getUserStats(userId, query);
@@ -477,7 +478,7 @@ export class WorkoutSessionsController {
         data: stats
       };
     } catch (error) {
-      this.logger.error(`获取用户训练统计失败: ${error.message}`);
+      logger.error(`获取用户训练统计失败: ${error.message}`);
       throw error;
     }
   }
@@ -504,7 +505,7 @@ export class WorkoutSessionsController {
         data: health
       };
     } catch (error) {
-      this.logger.error(`健康检查失败: ${error.message}`);
+      logger.error(`健康检查失败: ${error.message}`);
       throw error;
     }
   }

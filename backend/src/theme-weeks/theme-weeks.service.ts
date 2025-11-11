@@ -1,4 +1,4 @@
-import { Injectable, Logger, NotFoundException, ConflictException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException ,ConflictException} from '@nestjs/common';
 import { ThemeWeeksDao } from './theme-weeks.dao';
 import {
   CurrentThemeWeekDto,
@@ -6,13 +6,14 @@ import {
   JoinThemeWeekResponseDto,
   ThemeWeekParticipationDto
 } from './dto/theme-week.dto';
+import { logger } from '../common/logger/logger';
 
 @Injectable()
 export class ThemeWeeksService {
-  private readonly logger = new Logger(ThemeWeeksService.name);
+  // private readonly logger = new Logger(ThemeWeeksService.name);
 
   constructor(private readonly themeWeeksDao: ThemeWeeksDao) {
-    this.logger.log('ThemeWeeksService initialized');
+    logger.info('ThemeWeeksService initialized');
   }
 
   /**
@@ -95,7 +96,7 @@ export class ThemeWeeksService {
         })),
       };
     } catch (error) {
-      this.logger.error('Failed to get current theme week', error);
+      logger.error('Failed to get current theme week', error);
       throw error;
     }
   }
@@ -179,7 +180,7 @@ export class ThemeWeeksService {
         message: `Successfully joined ${themeWeek.title} challenge!`,
       };
     } catch (error) {
-      this.logger.error(`Failed to join theme week ${themeWeekId}`, error);
+      logger.error(`Failed to join theme week ${themeWeekId}`, error);
 
       if (error instanceof NotFoundException || error instanceof ConflictException) {
         throw error;
@@ -207,7 +208,7 @@ export class ThemeWeeksService {
 
       return updatedParticipation;
     } catch (error) {
-      this.logger.error(`Failed to update user progress for theme week ${themeWeekId}`, error);
+      logger.error(`Failed to update user progress for theme week ${themeWeekId}`, error);
       throw error;
     }
   }

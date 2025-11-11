@@ -11,6 +11,7 @@ import {
   CollectionStatsDto,
   CardShareStatsDto
 } from './dto/cards.dto';
+import { logger } from '../common/logger/logger';
 
 /**
  * Cards 业务逻辑服务类
@@ -18,7 +19,7 @@ import {
  */
 @Injectable()
 export class CardsService {
-  private readonly logger = new Logger(CardsService.name);
+  // private readonly logger = new Logger(CardsService.name);
 
   constructor(
     private readonly cardsDao: CardsDao,
@@ -33,15 +34,15 @@ export class CardsService {
    */
   async generateCard(generateDto: GenerateCardDto) {
     try {
-      this.logger.debug(`生成分享卡片: sessionId=${generateDto.sessionId}`);
+      logger.debug(`生成分享卡片: sessionId=${generateDto.sessionId}`);
 
       const card = await this.cardGeneratorService.generateCard(generateDto);
 
-      this.logger.log(`分享卡片生成成功: cardId=${card.id}, rarity=${card.rarity}`);
+      logger.info(`分享卡片生成成功: cardId=${card.id}, rarity=${card.rarity}`);
       return card;
 
     } catch (error) {
-      this.logger.error(`生成分享卡片失败: ${error.message}`, error.stack);
+      logger.error(`生成分享卡片失败: ${error.message}`, error.stack);
       throw error;
     }
   }
@@ -63,7 +64,7 @@ export class CardsService {
 
       return card;
     } catch (error) {
-      this.logger.error(`获取卡片详情失败: id=${id}, error=${error.message}`);
+      logger.error(`获取卡片详情失败: id=${id}, error=${error.message}`);
       throw error;
     }
   }
@@ -78,7 +79,7 @@ export class CardsService {
       const card = await this.cardsDao.findCardBySessionId(sessionId);
       return card;
     } catch (error) {
-      this.logger.error(`根据会话ID获取卡片失败: sessionId=${sessionId}, error=${error.message}`);
+      logger.error(`根据会话ID获取卡片失败: sessionId=${sessionId}, error=${error.message}`);
       throw error;
     }
   }
@@ -104,7 +105,7 @@ export class CardsService {
 
       return await this.cardsDao.findUserCards(userId, filters);
     } catch (error) {
-      this.logger.error(`获取用户卡片列表失败: userId=${userId}, error=${error.message}`);
+      logger.error(`获取用户卡片列表失败: userId=${userId}, error=${error.message}`);
       throw error;
     }
   }
@@ -122,11 +123,11 @@ export class CardsService {
 
       const updatedCard = await this.cardsDao.updateCard(id, updateDto);
 
-      this.logger.log(`分享卡片更新成功: cardId=${id}`);
+      logger.info(`分享卡片更新成功: cardId=${id}`);
       return updatedCard;
 
     } catch (error) {
-      this.logger.error(`更新分享卡片失败: id=${id}, error=${error.message}`);
+      logger.error(`更新分享卡片失败: id=${id}, error=${error.message}`);
       throw error;
     }
   }
@@ -140,11 +141,11 @@ export class CardsService {
     try {
       const card = await this.cardsDao.incrementShareCount(shareStatsDto.cardId, shareStatsDto.platform);
 
-      this.logger.log(`记录卡片分享: cardId=${shareStatsDto.cardId}, platform=${shareStatsDto.platform}`);
+      logger.info(`记录卡片分享: cardId=${shareStatsDto.cardId}, platform=${shareStatsDto.platform}`);
       return card;
 
     } catch (error) {
-      this.logger.error(`记录卡片分享失败: ${error.message}`);
+      logger.error(`记录卡片分享失败: ${error.message}`);
       throw error;
     }
   }
@@ -159,7 +160,7 @@ export class CardsService {
     try {
       return await this.cardsDao.findPublicCards(limit, offset);
     } catch (error) {
-      this.logger.error(`获取公开卡片失败: error=${error.message}`);
+      logger.error(`获取公开卡片失败: error=${error.message}`);
       throw error;
     }
   }
@@ -171,7 +172,7 @@ export class CardsService {
    */
   async calculateRarity(calculateDto: CalculateRarityDto) {
     try {
-      this.logger.debug(`计算稀有度: equipmentCode=${calculateDto.equipmentCode}`);
+      logger.debug(`计算稀有度: equipmentCode=${calculateDto.equipmentCode}`);
 
       const rarity = await this.rarityCalculatorService.calculateRarity(
         calculateDto.equipmentCode,
@@ -182,7 +183,7 @@ export class CardsService {
       return rarity;
 
     } catch (error) {
-      this.logger.error(`计算稀有度失败: ${error.message}`);
+      logger.error(`计算稀有度失败: ${error.message}`);
       throw error;
     }
   }
@@ -194,7 +195,7 @@ export class CardsService {
    */
   async calculateBatchRarity(batchDto: BatchRarityDto) {
     try {
-      this.logger.debug(`批量计算稀有度: count=${batchDto.equipmentCodes.length}`);
+      logger.debug(`批量计算稀有度: count=${batchDto.equipmentCodes.length}`);
 
       const rarities = await this.rarityCalculatorService.calculateBatchRarity(
         batchDto.equipmentCodes,
@@ -204,7 +205,7 @@ export class CardsService {
       return rarities;
 
     } catch (error) {
-      this.logger.error(`批量计算稀有度失败: ${error.message}`);
+      logger.error(`批量计算稀有度失败: ${error.message}`);
       throw error;
     }
   }
@@ -218,7 +219,7 @@ export class CardsService {
     try {
       return await this.rarityCalculatorService.getCurrentWeekRarityRanking(limit);
     } catch (error) {
-      this.logger.error(`获取稀有度排行榜失败: ${error.message}`);
+      logger.error(`获取稀有度排行榜失败: ${error.message}`);
       throw error;
     }
   }
@@ -233,7 +234,7 @@ export class CardsService {
     try {
       return await this.rarityCalculatorService.getRarityTrend(equipmentCode, weeks);
     } catch (error) {
-      this.logger.error(`获取稀有度趋势失败: ${error.message}`);
+      logger.error(`获取稀有度趋势失败: ${error.message}`);
       throw error;
     }
   }
@@ -263,7 +264,7 @@ export class CardsService {
       };
 
     } catch (error) {
-      this.logger.error(`获取用户收藏统计失败: userId=${userId}, error=${error.message}`);
+      logger.error(`获取用户收藏统计失败: userId=${userId}, error=${error.message}`);
       throw error;
     }
   }
@@ -282,7 +283,7 @@ export class CardsService {
         timestamp: new Date().toISOString()
       };
     } catch (error) {
-      this.logger.error(`健康检查失败: ${error.message}`);
+      logger.error(`健康检查失败: ${error.message}`);
       return {
         status: 'unhealthy',
         error: error.message,

@@ -11,6 +11,7 @@ import {
 } from './dto/workout-session.dto';
 import { QuickRecommendationDto } from '../exercises/dto/exercise-recommendation.dto';
 import { SessionStatus, IntentType, Difficulty } from '../common/types/prisma-enums';
+import { logger } from '../common/logger/logger';
 
 /**
  * WorkoutSessions 业务逻辑服务类
@@ -18,7 +19,7 @@ import { SessionStatus, IntentType, Difficulty } from '../common/types/prisma-en
  */
 @Injectable()
 export class WorkoutSessionsService {
-  private readonly logger = new Logger(WorkoutSessionsService.name);
+  // private readonly logger = new Logger(WorkoutSessionsService.name);
 
   constructor(
     private readonly workoutSessionsDao: WorkoutSessionsDao,
@@ -33,7 +34,7 @@ export class WorkoutSessionsService {
    */
   async createSession(createDto: CreateWorkoutSessionDto) {
     try {
-      this.logger.debug(`创建训练会话: userId=${createDto.userId}, intent=${createDto.intentType}`);
+      logger.debug(`创建训练会话: userId=${createDto.userId}, intent=${createDto.intentType}`);
 
       // 验证用户是否有未完成的会话
       const activeSessionsCount = await this.workoutSessionsDao.getActiveSessionsCount();
@@ -52,11 +53,11 @@ export class WorkoutSessionsService {
       // 创建会话
       const session = await this.workoutSessionsDao.createSessionWithExercises(createDto);
 
-      this.logger.log(`训练会话创建成功: sessionId=${session.id}, exerciseCount=${createDto.exercises.length}`);
+      logger.info(`训练会话创建成功: sessionId=${session.id}, exerciseCount=${createDto.exercises.length}`);
       return session;
 
     } catch (error) {
-      this.logger.error(`创建训练会话失败: ${error.message}`, error.stack);
+      logger.error(`创建训练会话失败: ${error.message}`, error.stack);
       throw error;
     }
   }
@@ -69,7 +70,7 @@ export class WorkoutSessionsService {
    */
   async createSessionFromRecommendation(userId: string, recommendationDto: QuickRecommendationDto) {
     try {
-      this.logger.debug(`从推荐创建会话: userId=${userId}`);
+      logger.debug(`从推荐创建会话: userId=${userId}`);
 
       // 获取推荐
       const recommendation = await this.workoutRecommendationService.generateQuickRecommendation({
@@ -110,7 +111,7 @@ export class WorkoutSessionsService {
       return sessionWithRecommendation;
 
     } catch (error) {
-      this.logger.error(`从推荐创建会话失败: ${error.message}`, error.stack);
+      logger.error(`从推荐创建会话失败: ${error.message}`, error.stack);
       throw error;
     }
   }
@@ -129,7 +130,7 @@ export class WorkoutSessionsService {
       }
       return session;
     } catch (error) {
-      this.logger.error(`获取训练会话失败: id=${id}, error=${error.message}`);
+      logger.error(`获取训练会话失败: id=${id}, error=${error.message}`);
       throw error;
     }
   }
@@ -152,7 +153,7 @@ export class WorkoutSessionsService {
 
       return await this.workoutSessionsDao.findUserSessions(userId, filters);
     } catch (error) {
-      this.logger.error(`获取用户会话列表失败: userId=${userId}, error=${error.message}`);
+      logger.error(`获取用户会话列表失败: userId=${userId}, error=${error.message}`);
       throw error;
     }
   }
@@ -184,11 +185,11 @@ export class WorkoutSessionsService {
 
       const updatedSession = await this.workoutSessionsDao.updateSession(id, updateDto);
 
-      this.logger.log(`训练会话更新成功: sessionId=${id}, status=${updateDto.status}`);
+      logger.info(`训练会话更新成功: sessionId=${id}, status=${updateDto.status}`);
       return updatedSession;
 
     } catch (error) {
-      this.logger.error(`更新训练会话失败: id=${id}, error=${error.message}`);
+      logger.error(`更新训练会话失败: id=${id}, error=${error.message}`);
       throw error;
     }
   }
@@ -220,12 +221,12 @@ export class WorkoutSessionsService {
       const completedSession = await this.updateSession(id, updateData);
 
       // 记录完成事件（用于分析和统计）
-      this.logger.log(`训练会话完成: sessionId=${id}, actualDuration=${actualDuration}, rating=${rating}`);
+      logger.info(`训练会话完成: sessionId=${id}, actualDuration=${actualDuration}, rating=${rating}`);
 
       return completedSession;
 
     } catch (error) {
-      this.logger.error(`完成训练会话失败: id=${id}, error=${error.message}`);
+      logger.error(`完成训练会话失败: id=${id}, error=${error.message}`);
       throw error;
     }
   }
@@ -253,11 +254,11 @@ export class WorkoutSessionsService {
         updateDto
       );
 
-      this.logger.debug(`会话动作更新成功: sessionId=${sessionId}, exerciseId=${exerciseId}`);
+      logger.debug(`会话动作更新成功: sessionId=${sessionId}, exerciseId=${exerciseId}`);
       return updatedExercise;
 
     } catch (error) {
-      this.logger.error(`更新会话动作失败: sessionId=${sessionId}, exerciseId=${exerciseId}, error=${error.message}`);
+      logger.error(`更新会话动作失败: sessionId=${sessionId}, exerciseId=${exerciseId}, error=${error.message}`);
       throw error;
     }
   }
@@ -285,7 +286,7 @@ export class WorkoutSessionsService {
       };
 
     } catch (error) {
-      this.logger.error(`获取用户统计失败: userId=${userId}, error=${error.message}`);
+      logger.error(`获取用户统计失败: userId=${userId}, error=${error.message}`);
       throw error;
     }
   }
@@ -311,11 +312,11 @@ export class WorkoutSessionsService {
 
       const abandonedSession = await this.updateSession(id, updateData);
 
-      this.logger.log(`训练会话已放弃: sessionId=${id}, reason=${reason}`);
+      logger.info(`训练会话已放弃: sessionId=${id}, reason=${reason}`);
       return abandonedSession;
 
     } catch (error) {
-      this.logger.error(`放弃训练会话失败: id=${id}, error=${error.message}`);
+      logger.error(`放弃训练会话失败: id=${id}, error=${error.message}`);
       throw error;
     }
   }
@@ -336,7 +337,7 @@ export class WorkoutSessionsService {
         timestamp: new Date().toISOString()
       };
     } catch (error) {
-      this.logger.error(`健康检查失败: ${error.message}`);
+      logger.error(`健康检查失败: ${error.message}`);
       return {
         status: 'unhealthy',
         error: error.message,

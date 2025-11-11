@@ -3,6 +3,7 @@ import { PrismaService } from 'nestjs-prisma';
 import { PrismaBaseDao } from '../common/dao/prisma-base.dao';
 import { ResponseError } from '../exception/response-error';
 import { ErrorCodes } from '../exception/error-codes';
+import { logger } from '../common/logger/logger';
 
 /**
  * Scenario DAO 类
@@ -10,11 +11,11 @@ import { ErrorCodes } from '../exception/error-codes';
  */
 @Injectable()
 export class ScenariosDao extends PrismaBaseDao<any> {
-  private readonly logger = new Logger(ScenariosDao.name);
+  // private readonly logger = new Logger(ScenariosDao.name);
 
   constructor(prisma: PrismaService) {
     super(prisma);
-    this.logger.log('ScenariosDao initialized with Prisma');
+    logger.info('ScenariosDao initialized with Prisma');
   }
 
   protected getDelegate() {
@@ -36,7 +37,7 @@ export class ScenariosDao extends PrismaBaseDao<any> {
 
       return await this.findUnique(where);
     } catch (error) {
-      this.logger.error(`根据ID查找场景失败: id=${id}, error=${error.message}`);
+      logger.error(`根据ID查找场景失败: id=${id}, error=${error.message}`);
       throw new ResponseError(ErrorCodes.SCENARIO.FETCH_FAILED, error, { scenarioId: id });
     }
   }
@@ -56,7 +57,7 @@ export class ScenariosDao extends PrismaBaseDao<any> {
 
       return await this.findUnique(where);
     } catch (error) {
-      this.logger.error(`根据代码查找场景失败: code=${code}, error=${error.message}`);
+      logger.error(`根据代码查找场景失败: code=${code}, error=${error.message}`);
       throw new ResponseError(ErrorCodes.SCENARIO.FETCH_FAILED, error, { scenarioCode: code });
     }
   }
@@ -83,7 +84,7 @@ export class ScenariosDao extends PrismaBaseDao<any> {
         { name: 'asc' }
       );
     } catch (error) {
-      this.logger.error(`获取活跃场景列表失败: error=${error.message}`);
+      logger.error(`获取活跃场景列表失败: error=${error.message}`);
       throw new ResponseError(ErrorCodes.SCENARIO.LIST_FAILED, error);
     }
   }
@@ -122,7 +123,7 @@ export class ScenariosDao extends PrismaBaseDao<any> {
         { name: 'asc' }
       );
     } catch (error) {
-      this.logger.error(
+      logger.error(
         `分页获取场景列表失败: page=${page}, pageSize=${pageSize}, error=${error.message}`
       );
       throw new ResponseError(ErrorCodes.SCENARIO.LIST_FAILED, error, { page, pageSize });
@@ -137,7 +138,7 @@ export class ScenariosDao extends PrismaBaseDao<any> {
     try {
       return await this.count({ isActive: true });
     } catch (error) {
-      this.logger.error(`获取活跃场景数量失败: error=${error.message}`);
+      logger.error(`获取活跃场景数量失败: error=${error.message}`);
       throw new ResponseError(ErrorCodes.SCENARIO.COUNT_FAILED, error);
     }
   }
@@ -162,7 +163,7 @@ export class ScenariosDao extends PrismaBaseDao<any> {
 
       return await this.findMany(where, undefined, undefined, { name: 'asc' });
     } catch (error) {
-      this.logger.error(`根据条件查找场景失败: error=${error.message}`);
+      logger.error(`根据条件查找场景失败: error=${error.message}`);
       throw new ResponseError(ErrorCodes.SCENARIO.FETCH_FAILED, error, { noiseTolerance, spaceRequirement });
     }
   }
@@ -182,7 +183,7 @@ export class ScenariosDao extends PrismaBaseDao<any> {
 
       return await this.exists(where);
     } catch (error) {
-      this.logger.error(`检查场景代码是否存在失败: code=${code}, error=${error.message}`);
+      logger.error(`检查场景代码是否存在失败: code=${code}, error=${error.message}`);
       throw new ResponseError(ErrorCodes.SCENARIO.FETCH_FAILED, error, { scenarioCode: code });
     }
   }
@@ -208,7 +209,7 @@ export class ScenariosDao extends PrismaBaseDao<any> {
       if (error instanceof ResponseError) {
         throw error;
       }
-      this.logger.error(`创建场景失败: data=${JSON.stringify(data)}, error=${error.message}`);
+      logger.error(`创建场景失败: data=${JSON.stringify(data)}, error=${error.message}`);
       throw new ResponseError(ErrorCodes.SCENARIO.CREATE_FAILED, error, { data });
     }
   }
@@ -234,7 +235,7 @@ export class ScenariosDao extends PrismaBaseDao<any> {
       if (error instanceof ResponseError) {
         throw error;
       }
-      this.logger.error(`更新场景失败: id=${id}, data=${JSON.stringify(data)}, error=${error.message}`);
+      logger.error(`更新场景失败: id=${id}, data=${JSON.stringify(data)}, error=${error.message}`);
       throw new ResponseError(ErrorCodes.SCENARIO.UPDATE_FAILED, error, { scenarioId: id, data });
     }
   }
@@ -248,7 +249,7 @@ export class ScenariosDao extends PrismaBaseDao<any> {
     try {
       return await this.delete({ id });
     } catch (error) {
-      this.logger.error(`删除场景失败: id=${id}, error=${error.message}`);
+      logger.error(`删除场景失败: id=${id}, error=${error.message}`);
       throw new ResponseError(ErrorCodes.SCENARIO.DELETE_FAILED, error, { scenarioId: id });
     }
   }
@@ -262,7 +263,7 @@ export class ScenariosDao extends PrismaBaseDao<any> {
     try {
       return await this.update({ id }, { isActive: false });
     } catch (error) {
-      this.logger.error(`软删除场景失败: id=${id}, error=${error.message}`);
+      logger.error(`软删除场景失败: id=${id}, error=${error.message}`);
       throw new ResponseError(ErrorCodes.SCENARIO.DELETE_FAILED, error, { scenarioId: id });
     }
   }
@@ -280,7 +281,7 @@ export class ScenariosDao extends PrismaBaseDao<any> {
         { isActive }
       );
     } catch (error) {
-      this.logger.error(`批量更新场景状态失败: ids=${JSON.stringify(ids)}, isActive=${isActive}, error=${error.message}`);
+      logger.error(`批量更新场景状态失败: ids=${JSON.stringify(ids)}, isActive=${isActive}, error=${error.message}`);
       throw new ResponseError(ErrorCodes.SCENARIO.UPDATE_FAILED, error, { ids, isActive });
     }
   }
@@ -305,7 +306,7 @@ export class ScenariosDao extends PrismaBaseDao<any> {
 
       return scenario?.exerciseScenarios?.map((es: any) => es.exercise) || [];
     } catch (error) {
-      this.logger.error(`获取场景相关练习失败: scenarioId=${scenarioId}, error=${error.message}`);
+      logger.error(`获取场景相关练习失败: scenarioId=${scenarioId}, error=${error.message}`);
       throw new ResponseError(ErrorCodes.SCENARIO.FETCH_FAILED, error, { scenarioId });
     }
   }

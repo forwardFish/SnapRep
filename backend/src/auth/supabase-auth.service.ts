@@ -6,10 +6,12 @@ import { RegisterDto, LoginDto, OtpLoginDto, VerifyOtpDto } from './dto/auth.dto
 import { AuthResponseDto, OtpResponseDto, UserResponseDto } from './dto/auth-response.dto';
 import { ResponseError } from '../exception/response-error';
 import { ErrorCodes } from '../exception/error-codes';
+import { logger } from '../common/logger/logger';
+
 
 @Injectable()
 export class SupabaseAuthService {
-  private readonly logger = new Logger(SupabaseAuthService.name);
+  // private readonly logger = new Logger(SupabaseAuthService.name);
   private readonly supabaseUrl: string;
   private readonly supabaseAnonKey: string;
 
@@ -31,7 +33,7 @@ export class SupabaseAuthService {
    */
   async register(registerDto: RegisterDto): Promise<AuthResponseDto> {
     try {
-      this.logger.log(`用户注册: ${registerDto.email}`);
+      logger.info(`用户注册: ${registerDto.email}`);
 
       // 使用 Supabase Auth API 注册
       const authResponse = await this.callSupabaseAuth('/auth/v1/signup', {
@@ -56,7 +58,7 @@ export class SupabaseAuthService {
       // 生成我们自己的 JWT token
       const tokens = this.generateTokens({ userId: user.id });
 
-      this.logger.log(`用户注册成功: ${registerDto.email}`);
+      logger.info(`用户注册成功: ${registerDto.email}`);
 
       return {
         ...tokens,
@@ -69,7 +71,7 @@ export class SupabaseAuthService {
         expiresIn: 3600, // 1小时
       };
     } catch (error) {
-      this.logger.error(`用户注册失败: ${error.message}`, error.stack);
+      logger.error(`用户注册失败: ${error.message}`, error.stack);
       throw new ResponseError(ErrorCodes.AUTH.REGISTRATION_FAILED, error);
     }
   }
@@ -79,7 +81,7 @@ export class SupabaseAuthService {
    */
   async login(loginDto: LoginDto): Promise<AuthResponseDto> {
     try {
-      this.logger.log(`用户登录: ${loginDto.email}`);
+      logger.info(`用户登录: ${loginDto.email}`);
 
       // 使用 Supabase Auth API 登录
       const authResponse = await this.callSupabaseAuth('/auth/v1/token?grant_type=password', {
@@ -101,7 +103,7 @@ export class SupabaseAuthService {
       // 生成我们自己的 JWT token
       const tokens = this.generateTokens({ userId: user.id });
 
-      this.logger.log(`用户登录成功: ${loginDto.email}`);
+      logger.info(`用户登录成功: ${loginDto.email}`);
 
       return {
         ...tokens,
@@ -114,7 +116,7 @@ export class SupabaseAuthService {
         expiresIn: 3600,
       };
     } catch (error) {
-      this.logger.error(`用户登录失败: ${error.message}`, error.stack);
+      logger.error(`用户登录失败: ${error.message}`, error.stack);
       if (error instanceof ResponseError) {
         throw error;
       }
@@ -127,7 +129,7 @@ export class SupabaseAuthService {
    */
   async sendOtp(otpLoginDto: OtpLoginDto): Promise<OtpResponseDto> {
     try {
-      this.logger.log(`发送OTP验证码: ${otpLoginDto.email}`);
+      logger.info(`发送OTP验证码: ${otpLoginDto.email}`);
 
       // 使用 Supabase Auth API 发送 OTP
       const authResponse = await this.callSupabaseAuth('/auth/v1/otp', {
@@ -138,7 +140,7 @@ export class SupabaseAuthService {
         throw new ResponseError(ErrorCodes.AUTH.EMAIL_SEND_FAILED);
       }
 
-      this.logger.log(`OTP验证码发送成功: ${otpLoginDto.email}`);
+      logger.info(`OTP验证码发送成功: ${otpLoginDto.email}`);
 
       return {
         success: true,
@@ -146,7 +148,7 @@ export class SupabaseAuthService {
         email: otpLoginDto.email,
       };
     } catch (error) {
-      this.logger.error(`发送OTP失败: ${error.message}`, error.stack);
+      logger.error(`发送OTP失败: ${error.message}`, error.stack);
       throw new ResponseError(ErrorCodes.AUTH.EMAIL_SEND_FAILED, error);
     }
   }
@@ -156,7 +158,7 @@ export class SupabaseAuthService {
    */
   async verifyOtp(verifyOtpDto: VerifyOtpDto): Promise<AuthResponseDto> {
     try {
-      this.logger.log(`验证OTP: ${verifyOtpDto.email}`);
+      logger.info(`验证OTP: ${verifyOtpDto.email}`);
 
       // 使用 Supabase Auth API 验证 OTP
       const authResponse = await this.callSupabaseAuth('/auth/v1/verify', {
@@ -179,7 +181,7 @@ export class SupabaseAuthService {
       // 生成我们自己的 JWT token
       const tokens = this.generateTokens({ userId: user.id });
 
-      this.logger.log(`OTP验证成功: ${verifyOtpDto.email}`);
+      logger.info(`OTP验证成功: ${verifyOtpDto.email}`);
 
       return {
         ...tokens,
@@ -192,7 +194,7 @@ export class SupabaseAuthService {
         expiresIn: 3600,
       };
     } catch (error) {
-      this.logger.error(`验证OTP失败: ${error.message}`, error.stack);
+      logger.error(`验证OTP失败: ${error.message}`, error.stack);
       if (error instanceof ResponseError) {
         throw error;
       }
@@ -205,7 +207,7 @@ export class SupabaseAuthService {
    */
   async refreshToken(refreshToken: string): Promise<Pick<AuthResponseDto, 'accessToken' | 'refreshToken' | 'expiresIn'>> {
     try {
-      this.logger.log('刷新Token');
+      logger.info('刷新Token');
 
       // 验证 refresh token
       const payload = this.jwtService.verify(refreshToken);
@@ -220,14 +222,14 @@ export class SupabaseAuthService {
       // 生成新的 tokens
       const tokens = this.generateTokens({ userId });
 
-      this.logger.log('Token刷新成功');
+      logger.info('Token刷新成功');
 
       return {
         ...tokens,
         expiresIn: 3600,
       };
     } catch (error) {
-      this.logger.error(`刷新Token失败: ${error.message}`, error.stack);
+      logger.error(`刷新Token失败: ${error.message}`, error.stack);
       throw new ResponseError(ErrorCodes.AUTH.REFRESH_TOKEN_INVALID, error);
     }
   }
@@ -251,7 +253,7 @@ export class SupabaseAuthService {
         updatedAt: user.updated_at,
       };
     } catch (error) {
-      this.logger.error(`获取用户信息失败: ${error.message}`, error.stack);
+      logger.error(`获取用户信息失败: ${error.message}`, error.stack);
       throw new ResponseError(ErrorCodes.AUTH.USER_INFO_FETCH_FAILED, error);
     }
   }
@@ -315,7 +317,7 @@ export class SupabaseAuthService {
         });
       }
     } catch (error) {
-      this.logger.error(`创建或更新用户失败: ${error.message}`, error.stack);
+      logger.error(`创建或更新用户失败: ${error.message}`, error.stack);
       throw new ResponseError(ErrorCodes.AUTH.USER_DATA_PROCESSING_FAILED, error);
     }
   }
@@ -327,7 +329,7 @@ export class SupabaseAuthService {
     try {
       return await this.supabaseApi.getById('users', userId);
     } catch (error) {
-      this.logger.error(`获取用户失败: ${error.message}`, error.stack);
+      logger.error(`获取用户失败: ${error.message}`, error.stack);
       return null;
     }
   }

@@ -3,6 +3,7 @@ import { PrismaService } from 'nestjs-prisma';
 import { PrismaBaseDao } from '../common/dao/prisma-base.dao';
 import { ResponseError } from '../exception/response-error';
 import { ErrorCodes } from '../exception/error-codes';
+import { logger } from '../common/logger/logger';
 
 /**
  * ScenarioEquipment DAO 类
@@ -10,11 +11,11 @@ import { ErrorCodes } from '../exception/error-codes';
  */
 @Injectable()
 export class ScenarioEquipmentDao extends PrismaBaseDao<any> {
-  private readonly logger = new Logger(ScenarioEquipmentDao.name);
+  // private readonly logger = new Logger(ScenarioEquipmentDao.name);
 
   constructor(prisma: PrismaService) {
     super(prisma);
-    this.logger.log('ScenarioEquipmentDao initialized with Prisma');
+    logger.info('ScenarioEquipmentDao initialized with Prisma');
   }
 
   protected getDelegate() {
@@ -36,7 +37,7 @@ export class ScenarioEquipmentDao extends PrismaBaseDao<any> {
         isCommon,
       });
     } catch (error) {
-      this.logger.error(`创建场景-器材关联失败: scenarioId=${scenarioId}, equipmentId=${equipmentId}, error=${error.message}`);
+      logger.error(`创建场景-器材关联失败: scenarioId=${scenarioId}, equipmentId=${equipmentId}, error=${error.message}`);
       throw new ResponseError(ErrorCodes.SCENARIO_EQUIPMENT.CREATE_FAILED, error, { scenarioId, equipmentId });
     }
   }
@@ -56,7 +57,7 @@ export class ScenarioEquipmentDao extends PrismaBaseDao<any> {
         },
       });
     } catch (error) {
-      this.logger.error(`删除场景-器材关联失败: scenarioId=${scenarioId}, equipmentId=${equipmentId}, error=${error.message}`);
+      logger.error(`删除场景-器材关联失败: scenarioId=${scenarioId}, equipmentId=${equipmentId}, error=${error.message}`);
       throw new ResponseError(ErrorCodes.SCENARIO_EQUIPMENT.DELETE_FAILED, error, { scenarioId, equipmentId });
     }
   }
@@ -86,7 +87,7 @@ export class ScenarioEquipmentDao extends PrismaBaseDao<any> {
         isCommon: assoc.isCommon,
       }));
     } catch (error) {
-      this.logger.error(`获取场景器材失败: scenarioId=${scenarioId}, error=${error.message}`);
+      logger.error(`获取场景器材失败: scenarioId=${scenarioId}, error=${error.message}`);
       throw new ResponseError(ErrorCodes.SCENARIO_EQUIPMENT.FETCH_FAILED, error, { scenarioId });
     }
   }
@@ -110,7 +111,7 @@ export class ScenarioEquipmentDao extends PrismaBaseDao<any> {
         isCommon: assoc.isCommon,
       }));
     } catch (error) {
-      this.logger.error(`获取器材场景失败: equipmentId=${equipmentId}, error=${error.message}`);
+      logger.error(`获取器材场景失败: equipmentId=${equipmentId}, error=${error.message}`);
       throw new ResponseError(ErrorCodes.SCENARIO_EQUIPMENT.FETCH_FAILED, error, { equipmentId });
     }
   }
@@ -128,7 +129,7 @@ export class ScenarioEquipmentDao extends PrismaBaseDao<any> {
         equipmentId,
       });
     } catch (error) {
-      this.logger.error(`检查场景-器材关联失败: scenarioId=${scenarioId}, equipmentId=${equipmentId}, error=${error.message}`);
+      logger.error(`检查场景-器材关联失败: scenarioId=${scenarioId}, equipmentId=${equipmentId}, error=${error.message}`);
       throw new ResponseError(ErrorCodes.SCENARIO_EQUIPMENT.FETCH_FAILED, error, { scenarioId, equipmentId });
     }
   }
@@ -150,7 +151,7 @@ export class ScenarioEquipmentDao extends PrismaBaseDao<any> {
 
       return await this.createMany(data);
     } catch (error) {
-      this.logger.error(`批量创建场景-器材关联失败: scenarioId=${scenarioId}, equipmentIds=${JSON.stringify(equipmentIds)}, error=${error.message}`);
+      logger.error(`批量创建场景-器材关联失败: scenarioId=${scenarioId}, equipmentIds=${JSON.stringify(equipmentIds)}, error=${error.message}`);
       throw new ResponseError(ErrorCodes.SCENARIO_EQUIPMENT.CREATE_FAILED, error, { scenarioId, equipmentIds });
     }
   }
@@ -174,7 +175,7 @@ export class ScenarioEquipmentDao extends PrismaBaseDao<any> {
         { isCommon }
       );
     } catch (error) {
-      this.logger.error(`更新场景-器材关联常见性失败: scenarioId=${scenarioId}, equipmentId=${equipmentId}, error=${error.message}`);
+      logger.error(`更新场景-器材关联常见性失败: scenarioId=${scenarioId}, equipmentId=${equipmentId}, error=${error.message}`);
       throw new ResponseError(ErrorCodes.SCENARIO_EQUIPMENT.UPDATE_FAILED, error, { scenarioId, equipmentId, isCommon });
     }
   }

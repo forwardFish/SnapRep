@@ -3,17 +3,18 @@ import { GetScenariosQueryDto } from './dto/get-scenarios-query.dto';
 import { ScenariosDao } from './scenarios.dao';
 import { ResponseError } from '../exception/response-error';
 import { ErrorCodes } from '../exception/error-codes';
+import { logger } from '../common/logger/logger';
 
 @Injectable()
 export class ScenariosService {
-  private readonly logger = new Logger(ScenariosService.name);
+  // private readonly logger = new Logger(ScenariosService.name);
 
   @Inject(forwardRef(() => ScenariosDao))
   public scenariosDao: ScenariosDao;
 
 
   constructor() {
-    this.logger.log('ScenariosService initialized');
+    logger.info('ScenariosService initialized');
   }
 
   /**
@@ -24,11 +25,11 @@ export class ScenariosService {
     try {
       const { page = 1, pageSize = 10 } = queryDto;
 
-      this.logger.log(`Fetching scenarios with pagination: page=${page}, pageSize=${pageSize}`);
+      logger.info(`Fetching scenarios with pagination: page=${page}, pageSize=${pageSize}`);
 
       return await this.scenariosDao.findScenariosWithPagination(page, pageSize);
     } catch (error) {
-      this.logger.error(`Failed to fetch scenarios: ${error.message}`);
+      logger.error(`Failed to fetch scenarios: ${error.message}`);
       throw error;
     }
   }
@@ -38,7 +39,7 @@ export class ScenariosService {
    */
   async findOne(id: string) {
     try {
-      this.logger.log(`Fetching scenario by ID: ${id}`);
+      logger.info(`Fetching scenario by ID: ${id}`);
 
       const scenario = await this.scenariosDao.findById(id);
       if (!scenario) {
@@ -47,7 +48,7 @@ export class ScenariosService {
 
       return scenario;
     } catch (error) {
-      this.logger.error(`Failed to fetch scenario by ID ${id}: ${error.message}`);
+      logger.error(`Failed to fetch scenario by ID ${id}: ${error.message}`);
       throw error;
     }
   }
@@ -57,7 +58,7 @@ export class ScenariosService {
    */
   async findByCode(code: string) {
     try {
-      this.logger.log(`Fetching scenario by code: ${code}`);
+      logger.info(`Fetching scenario by code: ${code}`);
 
       const scenario = await this.scenariosDao.findByCode(code);
       if (!scenario) {
@@ -66,7 +67,7 @@ export class ScenariosService {
 
       return scenario;
     } catch (error) {
-      this.logger.error(`Failed to fetch scenario by code ${code}: ${error.message}`);
+      logger.error(`Failed to fetch scenario by code ${code}: ${error.message}`);
       throw error;
     }
   }
@@ -76,11 +77,11 @@ export class ScenariosService {
    */
   async getActiveCount(): Promise<number> {
     try {
-      this.logger.log('Fetching active scenarios count');
+      logger.info('Fetching active scenarios count');
 
       return await this.scenariosDao.getActiveCount();
     } catch (error) {
-      this.logger.error(`Failed to get active scenarios count: ${error.message}`);
+      logger.error(`Failed to get active scenarios count: ${error.message}`);
       throw error;
     }
   }

@@ -4,6 +4,7 @@ import { PrismaBaseDao } from '../common/dao/prisma-base.dao';
 import { ResponseError } from '../exception/response-error';
 import { ErrorCodes } from '../exception/error-codes';
 import { SessionStatus } from '../common/types/prisma-enums';
+import { logger } from '../common/logger/logger';
 
 /**
  * WorkoutSessions DAO 类
@@ -11,11 +12,11 @@ import { SessionStatus } from '../common/types/prisma-enums';
  */
 @Injectable()
 export class WorkoutSessionsDao extends PrismaBaseDao<any> {
-  private readonly logger = new Logger(WorkoutSessionsDao.name);
+  // private readonly logger = new Logger(WorkoutSessionsDao.name);
 
   constructor(prisma: PrismaService) {
     super(prisma);
-    this.logger.log('WorkoutSessionsDao initialized with Prisma');
+    logger.info('WorkoutSessionsDao initialized with Prisma');
   }
 
   protected getDelegate() {
@@ -62,7 +63,7 @@ export class WorkoutSessionsDao extends PrismaBaseDao<any> {
 
       return session;
     } catch (error) {
-      this.logger.error(`创建训练会话失败: ${error.message}`, error.stack);
+      logger.error(`创建训练会话失败: ${error.message}`, error.stack);
       throw new ResponseError(ErrorCodes.WORKOUT_SESSION.CREATE_FAILED, error, { sessionData });
     }
   }
@@ -96,7 +97,7 @@ export class WorkoutSessionsDao extends PrismaBaseDao<any> {
 
       return await this.findUnique({ id }, include);
     } catch (error) {
-      this.logger.error(`根据ID获取训练会话失败: id=${id}, error=${error.message}`);
+      logger.error(`根据ID获取训练会话失败: id=${id}, error=${error.message}`);
       throw new ResponseError(ErrorCodes.WORKOUT_SESSION.FETCH_FAILED, error, { sessionId: id });
     }
   }
@@ -155,7 +156,7 @@ export class WorkoutSessionsDao extends PrismaBaseDao<any> {
         filters?.offset || 0
       );
     } catch (error) {
-      this.logger.error(`获取用户训练会话失败: userId=${userId}, error=${error.message}`);
+      logger.error(`获取用户训练会话失败: userId=${userId}, error=${error.message}`);
       throw new ResponseError(ErrorCodes.WORKOUT_SESSION.FETCH_FAILED, error, { userId, filters });
     }
   }
@@ -170,7 +171,7 @@ export class WorkoutSessionsDao extends PrismaBaseDao<any> {
     try {
       return await this.update({ id }, updateData);
     } catch (error) {
-      this.logger.error(`更新训练会话失败: id=${id}, error=${error.message}`);
+      logger.error(`更新训练会话失败: id=${id}, error=${error.message}`);
       throw new ResponseError(ErrorCodes.WORKOUT_SESSION.UPDATE_FAILED, error, { sessionId: id, updateData });
     }
   }
@@ -204,7 +205,7 @@ export class WorkoutSessionsDao extends PrismaBaseDao<any> {
         data: updateData
       });
     } catch (error) {
-      this.logger.error(`更新会话动作失败: sessionId=${sessionId}, exerciseId=${exerciseId}, error=${error.message}`);
+      logger.error(`更新会话动作失败: sessionId=${sessionId}, exerciseId=${exerciseId}, error=${error.message}`);
       throw new ResponseError(ErrorCodes.WORKOUT_SESSION.UPDATE_FAILED, error, { sessionId, exerciseId, updateData });
     }
   }
@@ -245,7 +246,7 @@ export class WorkoutSessionsDao extends PrismaBaseDao<any> {
         recentSessions: sessions.slice(0, 10)
       };
     } catch (error) {
-      this.logger.error(`获取用户训练统计失败: userId=${userId}, error=${error.message}`);
+      logger.error(`获取用户训练统计失败: userId=${userId}, error=${error.message}`);
       throw new ResponseError(ErrorCodes.WORKOUT_SESSION.FETCH_FAILED, error, { userId });
     }
   }
@@ -295,7 +296,7 @@ export class WorkoutSessionsDao extends PrismaBaseDao<any> {
 
       return streak;
     } catch (error) {
-      this.logger.error(`计算连击天数失败: userId=${userId}, error=${error.message}`);
+      logger.error(`计算连击天数失败: userId=${userId}, error=${error.message}`);
       return 0;
     }
   }
@@ -310,7 +311,7 @@ export class WorkoutSessionsDao extends PrismaBaseDao<any> {
         status: { in: ['PENDING', 'IN_PROGRESS'] }
       });
     } catch (error) {
-      this.logger.error(`获取活跃会话数量失败: ${error.message}`);
+      logger.error(`获取活跃会话数量失败: ${error.message}`);
       return 0;
     }
   }
@@ -334,7 +335,7 @@ export class WorkoutSessionsDao extends PrismaBaseDao<any> {
         }
       });
     } catch (error) {
-      this.logger.error(`获取今日完成会话数量失败: ${error.message}`);
+      logger.error(`获取今日完成会话数量失败: ${error.message}`);
       return 0;
     }
   }

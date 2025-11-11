@@ -4,6 +4,7 @@ import { PrismaBaseDao } from '../common/dao/prisma-base.dao';
 import { ResponseError } from '../exception/response-error';
 import { ErrorCodes } from '../exception/error-codes';
 import { SupabaseApiService } from '../common/services/supabase-api.service';
+import { logger } from '../common/logger/logger';
 
 /**
  * Exercise DAO 类
@@ -11,14 +12,14 @@ import { SupabaseApiService } from '../common/services/supabase-api.service';
  */
 @Injectable()
 export class ExercisesDao extends PrismaBaseDao<any> {
-  private readonly logger = new Logger(ExercisesDao.name);
+  // private readonly logger = new Logger(ExercisesDao.name);
 
   constructor(
     prisma: PrismaService,
     private readonly supabaseApi: SupabaseApiService, // 注入SupabaseApiService
   ) {
     super(prisma);
-    this.logger.log('ExercisesDao initialized with Prisma and SupabaseApiService');
+    logger.info('ExercisesDao initialized with Prisma and SupabaseApiService');
   }
 
   protected getDelegate() {
@@ -33,7 +34,7 @@ export class ExercisesDao extends PrismaBaseDao<any> {
    */
   async findById(id: string, includeInactive: boolean = false): Promise<any | null> {
     try {
-      this.logger.log('Using SupabaseApiService for findById due to database connection issue');
+      logger.info('Using SupabaseApiService for findById due to database connection issue');
 
       const exercise = await this.supabaseApi.getById('exercises', id);
 
@@ -70,7 +71,7 @@ export class ExercisesDao extends PrismaBaseDao<any> {
         exerciseScenarios: [],
       };
     } catch (error) {
-      this.logger.error(`根据ID查找动作失败: id=${id}, error=${error.message}`);
+      logger.error(`根据ID查找动作失败: id=${id}, error=${error.message}`);
       throw new ResponseError(ErrorCodes.EXERCISE.FETCH_FAILED, error, { exerciseId: id });
     }
   }
@@ -83,7 +84,7 @@ export class ExercisesDao extends PrismaBaseDao<any> {
    */
   async findByCode(code: string, includeInactive: boolean = false): Promise<any | null> {
     try {
-      this.logger.log('Using SupabaseApiService for findByCode due to database connection issue');
+      logger.info('Using SupabaseApiService for findByCode due to database connection issue');
 
       const exercise = await this.supabaseApi.getByField('exercises', 'code', code);
 
@@ -120,7 +121,7 @@ export class ExercisesDao extends PrismaBaseDao<any> {
         exerciseScenarios: [],
       };
     } catch (error) {
-      this.logger.error(`根据代码查找动作失败: code=${code}, error=${error.message}`);
+      logger.error(`根据代码查找动作失败: code=${code}, error=${error.message}`);
       throw new ResponseError(ErrorCodes.EXERCISE.FETCH_FAILED, error, { exerciseCode: code });
     }
   }
@@ -140,7 +141,7 @@ export class ExercisesDao extends PrismaBaseDao<any> {
     limit?: number;
   }): Promise<any[]> {
     try {
-      this.logger.log('Using SupabaseApiService due to database connection issue');
+      logger.info('Using SupabaseApiService due to database connection issue');
 
       const filters: Record<string, any> = {
         is_active: true,
@@ -167,7 +168,7 @@ export class ExercisesDao extends PrismaBaseDao<any> {
         orderBy: 'created_at.desc',
       });
 
-      this.logger.log(`Found ${exercises.length} exercises from Supabase`);
+      logger.info(`Found ${exercises.length} exercises from Supabase`);
 
       // 转换数据格式（将 snake_case 转换为 camelCase）
       return exercises.map((exercise: any) => ({
@@ -193,7 +194,7 @@ export class ExercisesDao extends PrismaBaseDao<any> {
         exerciseScenarios: [],
       }));
     } catch (error) {
-      this.logger.error(`智能筛选动作失败: criteria=${JSON.stringify(criteria)}, error=${error.message}`);
+      logger.error(`智能筛选动作失败: criteria=${JSON.stringify(criteria)}, error=${error.message}`);
       throw new ResponseError(ErrorCodes.EXERCISE.FETCH_FAILED, error, { criteria });
     }
   }
@@ -231,7 +232,7 @@ export class ExercisesDao extends PrismaBaseDao<any> {
 
       return Array.from(exerciseIds);
     } catch (error) {
-      this.logger.error(`获取用户最近训练动作失败: userId=${userId}, error=${error.message}`);
+      logger.error(`获取用户最近训练动作失败: userId=${userId}, error=${error.message}`);
       throw new ResponseError(ErrorCodes.EXERCISE.FETCH_FAILED, error, { userId });
     }
   }
@@ -257,7 +258,7 @@ export class ExercisesDao extends PrismaBaseDao<any> {
         byIntent
       };
     } catch (error) {
-      this.logger.error(`获取动作统计失败: error=${error.message}`);
+      logger.error(`获取动作统计失败: error=${error.message}`);
       throw new ResponseError(ErrorCodes.EXERCISE.FETCH_FAILED, error);
     }
   }
@@ -278,7 +279,7 @@ export class ExercisesDao extends PrismaBaseDao<any> {
         return acc;
       }, {} as Record<string, number>);
     } catch (error) {
-      this.logger.error(`按难度分组获取动作失败: error=${error.message}`);
+      logger.error(`按难度分组获取动作失败: error=${error.message}`);
       throw error;
     }
   }
@@ -299,7 +300,7 @@ export class ExercisesDao extends PrismaBaseDao<any> {
         return acc;
       }, {} as Record<string, number>);
     } catch (error) {
-      this.logger.error(`按意图分组获取动作失败: error=${error.message}`);
+      logger.error(`按意图分组获取动作失败: error=${error.message}`);
       throw error;
     }
   }
@@ -319,7 +320,7 @@ export class ExercisesDao extends PrismaBaseDao<any> {
 
       return await this.exists(where);
     } catch (error) {
-      this.logger.error(`检查动作代码是否存在失败: code=${code}, error=${error.message}`);
+      logger.error(`检查动作代码是否存在失败: code=${code}, error=${error.message}`);
       throw new ResponseError(ErrorCodes.EXERCISE.FETCH_FAILED, error, { exerciseCode: code });
     }
   }

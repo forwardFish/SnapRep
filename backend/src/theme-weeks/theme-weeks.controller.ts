@@ -17,14 +17,16 @@ import {
   JoinThemeWeekDto,
   JoinThemeWeekResponseDto,
 } from './dto/theme-week.dto';
+import { logger } from '../common/logger/logger';
+
 
 @ApiTags('Theme Weeks')
 @Controller('/api/v1/theme-weeks')
 export class ThemeWeeksController {
-  private readonly logger = new Logger(ThemeWeeksController.name);
+  // private readonly logger = new Logger(ThemeWeeksController.name);
 
   constructor(private readonly themeWeeksService: ThemeWeeksService) {
-    this.logger.log('ThemeWeeksController initialized');
+    logger.info('ThemeWeeksController initialized');
   }
 
   @Get('current')
@@ -46,14 +48,14 @@ export class ThemeWeeksController {
     @Query('userId') userId?: string,
   ): Promise<CurrentThemeWeekDto> {
     try {
-      this.logger.debug(`Getting current theme week${userId ? ` for user ${userId}` : ''}`);
+      logger.debug(`Getting current theme week${userId ? ` for user ${userId}` : ''}`);
 
       const result = await this.themeWeeksService.getCurrentThemeWeek(userId);
 
-      this.logger.debug('Current theme week retrieved successfully');
+      logger.debug('Current theme week retrieved successfully');
       return result;
     } catch (error) {
-      this.logger.error('Failed to get current theme week', error);
+      logger.error('Failed to get current theme week', error);
       throw error;
     }
   }
@@ -85,7 +87,7 @@ export class ThemeWeeksController {
     @Body() joinDto: JoinThemeWeekDto,
   ): Promise<JoinThemeWeekResponseDto> {
     try {
-      this.logger.debug(`User ${joinDto.userId} attempting to join theme week ${themeWeekId}`);
+      logger.debug(`User ${joinDto.userId} attempting to join theme week ${themeWeekId}`);
 
       if (!joinDto.userId) {
         throw new BadRequestException('User ID is required');
@@ -94,14 +96,14 @@ export class ThemeWeeksController {
       const result = await this.themeWeeksService.joinThemeWeek(themeWeekId, joinDto);
 
       if (result.success) {
-        this.logger.log(`User ${joinDto.userId} successfully joined theme week ${themeWeekId}`);
+        logger.info(`User ${joinDto.userId} successfully joined theme week ${themeWeekId}`);
       } else {
-        this.logger.warn(`User ${joinDto.userId} failed to join theme week ${themeWeekId}: ${result.error?.code}`);
+        logger.warn(`User ${joinDto.userId} failed to join theme week ${themeWeekId}: ${result.error?.code}`);
       }
 
       return result;
     } catch (error) {
-      this.logger.error(`Failed to join theme week ${themeWeekId}`, error);
+      logger.error(`Failed to join theme week ${themeWeekId}`, error);
       throw error;
     }
   }
@@ -124,7 +126,7 @@ export class ThemeWeeksController {
     @Body() updateDto: { userId: string; exercisesCompleted: number },
   ) {
     try {
-      this.logger.debug(`Updating progress for user ${updateDto.userId} in theme week ${themeWeekId}`);
+      logger.debug(`Updating progress for user ${updateDto.userId} in theme week ${themeWeekId}`);
 
       const result = await this.themeWeeksService.updateUserProgress(
         updateDto.userId,
@@ -132,14 +134,14 @@ export class ThemeWeeksController {
         updateDto.exercisesCompleted,
       );
 
-      this.logger.log(`Progress updated for user ${updateDto.userId}: ${updateDto.exercisesCompleted}/${result.targetExercises}`);
+      logger.info(`Progress updated for user ${updateDto.userId}: ${updateDto.exercisesCompleted}/${result.targetExercises}`);
 
       return {
         success: true,
         data: result,
       };
     } catch (error) {
-      this.logger.error(`Failed to update progress for theme week ${themeWeekId}`, error);
+      logger.error(`Failed to update progress for theme week ${themeWeekId}`, error);
       throw error;
     }
   }

@@ -3,6 +3,7 @@ import { PrismaService } from 'nestjs-prisma';
 import { PrismaBaseDao } from '../common/dao/prisma-base.dao';
 import { ResponseError } from '../exception/response-error';
 import { ErrorCodes } from '../exception/error-codes';
+import { logger } from '../common/logger/logger';
 
 /**
  * Equipment DAO 类
@@ -10,11 +11,11 @@ import { ErrorCodes } from '../exception/error-codes';
  */
 @Injectable()
 export class EquipmentDao extends PrismaBaseDao<any> {
-  private readonly logger = new Logger(EquipmentDao.name);
+  // private readonly logger = new Logger(EquipmentDao.name);
 
   constructor(prisma: PrismaService) {
     super(prisma);
-    this.logger.log('EquipmentDao initialized with Prisma');
+    logger.info('EquipmentDao initialized with Prisma');
   }
 
   protected getDelegate() {
@@ -36,7 +37,7 @@ export class EquipmentDao extends PrismaBaseDao<any> {
 
       return await this.findUnique(where);
     } catch (error) {
-      this.logger.error(`根据ID查找器材失败: id=${id}, error=${error.message}`);
+      logger.error(`根据ID查找器材失败: id=${id}, error=${error.message}`);
       throw new ResponseError(ErrorCodes.EQUIPMENT.FETCH_FAILED, error, { equipmentId: id });
     }
   }
@@ -56,7 +57,7 @@ export class EquipmentDao extends PrismaBaseDao<any> {
 
       return await this.findUnique(where);
     } catch (error) {
-      this.logger.error(`根据代码查找器材失败: code=${code}, error=${error.message}`);
+      logger.error(`根据代码查找器材失败: code=${code}, error=${error.message}`);
       throw new ResponseError(ErrorCodes.EQUIPMENT.FETCH_FAILED, error, { equipmentCode: code });
     }
   }
@@ -80,7 +81,7 @@ export class EquipmentDao extends PrismaBaseDao<any> {
         { displayOrder: 'asc' }
       );
     } catch (error) {
-      this.logger.error(`获取活跃器材列表失败: category=${category}, error=${error.message}`);
+      logger.error(`获取活跃器材列表失败: category=${category}, error=${error.message}`);
       throw new ResponseError(ErrorCodes.EQUIPMENT.LIST_FAILED, error, { category });
     }
   }
@@ -119,7 +120,7 @@ export class EquipmentDao extends PrismaBaseDao<any> {
         { displayOrder: 'asc' }
       );
     } catch (error) {
-      this.logger.error(
+      logger.error(
         `分页获取器材列表失败: page=${page}, pageSize=${pageSize}, category=${category}, error=${error.message}`
       );
       throw new ResponseError(ErrorCodes.EQUIPMENT.LIST_FAILED, error, { page, pageSize, category });
@@ -148,7 +149,7 @@ export class EquipmentDao extends PrismaBaseDao<any> {
         return groups;
       }, {});
     } catch (error) {
-      this.logger.error(`按分类获取器材失败: error=${error.message}`);
+      logger.error(`按分类获取器材失败: error=${error.message}`);
       throw new ResponseError(ErrorCodes.EQUIPMENT.FETCH_FAILED, error);
     }
   }
@@ -178,7 +179,7 @@ export class EquipmentDao extends PrismaBaseDao<any> {
         categories: categoryStats
       };
     } catch (error) {
-      this.logger.error(`获取器材统计失败: error=${error.message}`);
+      logger.error(`获取器材统计失败: error=${error.message}`);
       throw new ResponseError(ErrorCodes.EQUIPMENT.FETCH_FAILED, error);
     }
   }
@@ -198,7 +199,7 @@ export class EquipmentDao extends PrismaBaseDao<any> {
 
       return await this.exists(where);
     } catch (error) {
-      this.logger.error(`检查器材代码是否存在失败: code=${code}, error=${error.message}`);
+      logger.error(`检查器材代码是否存在失败: code=${code}, error=${error.message}`);
       throw new ResponseError(ErrorCodes.EQUIPMENT.FETCH_FAILED, error, { equipmentCode: code });
     }
   }
@@ -224,7 +225,7 @@ export class EquipmentDao extends PrismaBaseDao<any> {
       if (error instanceof ResponseError) {
         throw error;
       }
-      this.logger.error(`创建器材失败: data=${JSON.stringify(data)}, error=${error.message}`);
+      logger.error(`创建器材失败: data=${JSON.stringify(data)}, error=${error.message}`);
       throw new ResponseError(ErrorCodes.EQUIPMENT.CREATE_FAILED, error, { data });
     }
   }
@@ -250,7 +251,7 @@ export class EquipmentDao extends PrismaBaseDao<any> {
       if (error instanceof ResponseError) {
         throw error;
       }
-      this.logger.error(`更新器材失败: id=${id}, data=${JSON.stringify(data)}, error=${error.message}`);
+      logger.error(`更新器材失败: id=${id}, data=${JSON.stringify(data)}, error=${error.message}`);
       throw new ResponseError(ErrorCodes.EQUIPMENT.UPDATE_FAILED, error, { equipmentId: id, data });
     }
   }
@@ -264,7 +265,7 @@ export class EquipmentDao extends PrismaBaseDao<any> {
     try {
       return await this.delete({ id });
     } catch (error) {
-      this.logger.error(`删除器材失败: id=${id}, error=${error.message}`);
+      logger.error(`删除器材失败: id=${id}, error=${error.message}`);
       throw new ResponseError(ErrorCodes.EQUIPMENT.DELETE_FAILED, error, { equipmentId: id });
     }
   }
@@ -278,7 +279,7 @@ export class EquipmentDao extends PrismaBaseDao<any> {
     try {
       return await this.update({ id }, { isActive: false });
     } catch (error) {
-      this.logger.error(`软删除器材失败: id=${id}, error=${error.message}`);
+      logger.error(`软删除器材失败: id=${id}, error=${error.message}`);
       throw new ResponseError(ErrorCodes.EQUIPMENT.DELETE_FAILED, error, { equipmentId: id });
     }
   }
@@ -296,7 +297,7 @@ export class EquipmentDao extends PrismaBaseDao<any> {
         { isActive }
       );
     } catch (error) {
-      this.logger.error(
+      logger.error(
         `批量更新器材状态失败: ids=${JSON.stringify(ids)}, isActive=${isActive}, error=${error.message}`
       );
       throw new ResponseError(ErrorCodes.EQUIPMENT.UPDATE_FAILED, error, { equipmentIds: ids, isActive });
@@ -323,7 +324,7 @@ export class EquipmentDao extends PrismaBaseDao<any> {
 
       return equipment?.exerciseEquipment?.map((ee: any) => ee.exercise) || [];
     } catch (error) {
-      this.logger.error(`获取器材相关练习失败: equipmentId=${equipmentId}, error=${error.message}`);
+      logger.error(`获取器材相关练习失败: equipmentId=${equipmentId}, error=${error.message}`);
       throw new ResponseError(ErrorCodes.EQUIPMENT.FETCH_FAILED, error, { equipmentId });
     }
   }

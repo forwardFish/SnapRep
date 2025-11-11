@@ -1,10 +1,11 @@
 import { Resolver, Query, Args, Int } from '@nestjs/graphql';
 import { ExercisesService } from './exercises.service';
 import { Logger } from '@nestjs/common';
+import { logger } from '../common/logger/logger';
 
 @Resolver('Exercise')
 export class ExercisesResolver {
-  private readonly logger = new Logger(ExercisesResolver.name);
+  // private readonly logger = new Logger(ExercisesResolver.name);
 
   constructor(private readonly exercisesService: ExercisesService) {}
 
@@ -16,7 +17,7 @@ export class ExercisesResolver {
     @Args('difficulty', { nullable: true }) difficulty?: string,
     @Args('primaryMuscle', { nullable: true }) primaryMuscle?: string,
   ) {
-    this.logger.debug(`GraphQL查询练习: page=${page}, pageSize=${pageSize}`);
+    logger.debug(`GraphQL查询练习: page=${page}, pageSize=${pageSize}`);
 
     const filters = {
       intent,
@@ -30,19 +31,19 @@ export class ExercisesResolver {
 
   @Query('exercise')
   async getExercise(@Args('id') id: string) {
-    this.logger.debug(`GraphQL查询单个练习: id=${id}`);
+    logger.debug(`GraphQL查询单个练习: id=${id}`);
     return await this.exercisesService.findById(id);
   }
 
   @Query('exerciseByCode')
   async getExerciseByCode(@Args('code') code: string) {
-    this.logger.debug(`GraphQL根据代码查询练习: code=${code}`);
+    logger.debug(`GraphQL根据代码查询练习: code=${code}`);
     return await this.exercisesService.findByCode(code);
   }
 
   @Query('exerciseStats')
   async getExerciseStats() {
-    this.logger.debug('GraphQL查询练习统计');
+    logger.debug('GraphQL查询练习统计');
     return await this.exercisesService.getStats();
   }
 }

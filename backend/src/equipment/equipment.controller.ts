@@ -14,6 +14,7 @@ import {
   ConflictException,
   ValidationPipe,
   UsePipes,
+  UseFilters,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -36,6 +37,8 @@ import {
   EquipmentDto,
 } from './dto';
 import { SupabaseApiService } from '../common/services/supabase-api.service';
+import { logger } from '../common/logger/logger';
+import { ResponseErrorFilter } from '../exception/response-error.filter';
 
 /**
  * Equipment Controller 类
@@ -43,9 +46,10 @@ import { SupabaseApiService } from '../common/services/supabase-api.service';
  */
 @ApiTags('Equipment')
 @Controller('rest/v1/equipment')
+@UseFilters(ResponseErrorFilter)
 @UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
 export class EquipmentController {
-  private readonly logger = new Logger(EquipmentController.name);
+  // private readonly logger = new Logger(EquipmentController.name);
 
   constructor(
     private readonly equipmentService: EquipmentService,
@@ -101,7 +105,7 @@ export class EquipmentController {
         },
       };
     } catch (error) {
-      this.logger.error('Supabase API call failed:', error);
+      logger.error('Supabase API call failed:', error);
       throw new InternalServerErrorException('Failed to fetch equipment');
     }
   }
@@ -129,8 +133,8 @@ export class EquipmentController {
   })
   async findAll(@Query() queryDto: GetEquipmentQueryDto): Promise<GetEquipmentResponseDto> {
     try {
-      this.logger.log(`获取器材列表: ${JSON.stringify(queryDto)}`);
-      this.logger.log('Using direct Supabase API due to database connection issue');
+      logger.info(`获取器材列表: ${JSON.stringify(queryDto)}`);
+      logger.info('Using direct Supabase API due to database connection issue');
       return await this.getEquipmentDirect(queryDto);
     } catch (error) {
       this.handleError(error, 'findAll', { queryDto });
@@ -165,8 +169,8 @@ export class EquipmentController {
   })
   async findOne(@Param('id') id: string): Promise<EquipmentDto> {
     try {
-      this.logger.log(`获取器材详情: id=${id}`);
-      this.logger.log('Using direct Supabase API due to database connection issue');
+      logger.info(`获取器材详情: id=${id}`);
+      logger.info('Using direct Supabase API due to database connection issue');
 
       const item = await this.supabaseApi.getById('equipment', id);
 
@@ -222,8 +226,8 @@ export class EquipmentController {
   })
   async findByCode(@Param('code') code: string): Promise<EquipmentDto> {
     try {
-      this.logger.log(`根据代码获取器材详情: code=${code}`);
-      this.logger.log('Using direct Supabase API due to database connection issue');
+      logger.info(`根据代码获取器材详情: code=${code}`);
+      logger.info('Using direct Supabase API due to database connection issue');
 
       const item = await this.supabaseApi.getByField('equipment', 'code', code);
 
@@ -270,8 +274,8 @@ export class EquipmentController {
   })
   async findActiveEquipment(@Query('category') category?: string): Promise<EquipmentDto[]> {
     try {
-      this.logger.log(`获取活跃器材列表: category=${category}`);
-      this.logger.log('Using direct Supabase API due to database connection issue');
+      logger.info(`获取活跃器材列表: category=${category}`);
+      logger.info('Using direct Supabase API due to database connection issue');
 
       const filters: Record<string, any> = {
         is_active: true,
@@ -322,8 +326,8 @@ export class EquipmentController {
   })
   async findEquipmentByCategory(): Promise<GetEquipmentByCategoryResponseDto> {
     try {
-      this.logger.log('获取按分类分组的器材');
-      this.logger.log('Using direct Supabase API due to database connection issue');
+      logger.info('获取按分类分组的器材');
+      logger.info('Using direct Supabase API due to database connection issue');
 
       const allEquipment = await this.supabaseApi.get('equipment',
         { is_active: true },
@@ -378,8 +382,8 @@ export class EquipmentController {
   })
   async getEquipmentStats(): Promise<GetEquipmentStatsResponseDto> {
     try {
-      this.logger.log('获取器材统计信息');
-      this.logger.log('Using direct Supabase API due to database connection issue');
+      logger.info('获取器材统计信息');
+      logger.info('Using direct Supabase API due to database connection issue');
 
       // 获取所有器材
       const allEquipment = await this.supabaseApi.get('equipment', {}, {
@@ -449,13 +453,15 @@ export class EquipmentController {
   })
   async create(@Body() createDto: CreateEquipmentDto): Promise<EquipmentDto> {
     try {
-      this.logger.log(`创建器材: ${JSON.stringify(createDto)}`);
-      this.logger.log('Using direct Supabase API due to database connection issue');
+      logger.info(`创建器材: ${JSON.stringify(createDto)}`);
+      logger.info('Using direct Supabase API due to database connection issue');
 
       // 检查代码是否已存在
       const existing = await this.supabaseApi.getByField('equipment', 'code', createDto.code);
       if (existing) {
-        throw new ConflictException(`Equipment with code ${createDto.code} already exists`);
+         throw new ResponseError(ErrorCodes.EQUIPMENT.ALREADY_EXISTS, undefined, {
+          equipmentCode: createDto.code,
+        });
       }
 
       // 生成CUID ID
@@ -540,8 +546,8 @@ export class EquipmentController {
     @Body() updateDto: UpdateEquipmentDto,
   ): Promise<EquipmentDto> {
     try {
-      this.logger.log(`更新器材: id=${id}, data=${JSON.stringify(updateDto)}`);
-      this.logger.log('Using direct Supabase API due to database connection issue');
+      logger.info(`更新器材: id=${id}, data=${JSON.stringify(updateDto)}`);
+      logger.info('Using direct Supabase API due to database connection issue');
 
       // 检查器材是否存在
       const existing = await this.supabaseApi.getById('equipment', id);
@@ -555,7 +561,9 @@ export class EquipmentController {
       if (updateDto.code && updateDto.code !== existing.code) {
         const codeConflict = await this.supabaseApi.getByField('equipment', 'code', updateDto.code);
         if (codeConflict) {
-          throw new ConflictException(`Equipment with code ${updateDto.code} already exists`);
+          throw new ResponseError(ErrorCodes.EQUIPMENT.ALREADY_EXISTS, undefined, {
+            equipmentCode: updateDto.code,
+          });
         }
       }
 
@@ -624,8 +632,8 @@ export class EquipmentController {
   })
   async remove(@Param('id') id: string): Promise<EquipmentDto> {
     try {
-      this.logger.log(`删除器材: id=${id}`);
-      this.logger.log('Using direct Supabase API due to database connection issue');
+      logger.info(`删除器材: id=${id}`);
+      logger.info('Using direct Supabase API due to database connection issue');
 
       // 检查器材是否存在
       const existing = await this.supabaseApi.getById('equipment', id);
@@ -686,8 +694,8 @@ export class EquipmentController {
   })
   async softRemove(@Param('id') id: string): Promise<EquipmentDto> {
     try {
-      this.logger.log(`软删除器材: id=${id}`);
-      this.logger.log('Using direct Supabase API due to database connection issue');
+      logger.info(`软删除器材: id=${id}`);
+      logger.info('Using direct Supabase API due to database connection issue');
 
       // 检查器材是否存在
       const existing = await this.supabaseApi.getById('equipment', id);
@@ -768,8 +776,8 @@ export class EquipmentController {
     @Body() batchDto: BatchUpdateEquipmentStatusDto,
   ): Promise<{ count: number; message: string }> {
     try {
-      this.logger.log(`批量更新器材状态: ${JSON.stringify(batchDto)}`);
-      this.logger.log('Using direct Supabase API due to database connection issue');
+      logger.info(`批量更新器材状态: ${JSON.stringify(batchDto)}`);
+      logger.info('Using direct Supabase API due to database connection issue');
 
       if (!batchDto.ids || batchDto.ids.length === 0) {
         throw new BadRequestException('Equipment IDs are required');
@@ -790,15 +798,15 @@ export class EquipmentController {
             await this.supabaseApi.patch('equipment', id, updateData);
             successCount++;
           } else {
-            this.logger.warn(`Equipment with ID ${id} not found`);
+            logger.warn(`Equipment with ID ${id} not found`);
           }
         } catch (error) {
-          this.logger.error(`Failed to update equipment ${id}: ${error.message}`);
+          logger.error(`Failed to update equipment ${id}: ${error.message}`);
         }
       }
 
       const message = `Successfully updated ${successCount} out of ${batchDto.ids.length} equipment items`;
-      this.logger.log(message);
+      logger.info(message);
 
       return {
         count: successCount,
@@ -816,7 +824,7 @@ export class EquipmentController {
    * @param context 上下文信息
    */
   private handleError(error: any, method: string, context?: any): never {
-    this.logger.error(`Equipment Controller ${method} 失败:`, error.stack || error.message, {
+    logger.error(`Equipment Controller ${method} 失败:`, error.stack || error.message, {
       context,
       error: error.message,
     });
@@ -843,11 +851,12 @@ export class EquipmentController {
         case ErrorCodes.EQUIPMENT.LIST_FAILED.code:
         case ErrorCodes.EQUIPMENT.COUNT_FAILED.code:
         default:
-          this.logger.error(
+          logger.error(
             `未处理的器材错误: code=${error.code}, message=${error.message}`,
             error.stack,
           );
-          throw new InternalServerErrorException('服务器内部错误');
+          throw error; 
+          // throw new InternalServerErrorException('服务器内部错误');
       }
     }
 
@@ -855,7 +864,7 @@ export class EquipmentController {
     if (error.name === 'ValidationError' || error.message?.includes('validation')) {
       throw new BadRequestException('请求参数验证失败');
     }
-
-    throw new InternalServerErrorException('服务器内部错误');
+    throw error; 
+    // throw new InternalServerErrorException('服务器内部错误');
   }
 }

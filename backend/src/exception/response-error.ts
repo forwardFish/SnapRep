@@ -47,6 +47,8 @@ export class ResponseError extends Error {
   // 错误链支持
   public readonly cause?: Error;
 
+
+
   constructor(
     errorCode: ErrorCodeType,
     cause?: Error | string,

@@ -1,5 +1,5 @@
 import { forwardRef, Module } from '@nestjs/common';
-import { JwtModule } from '@nestjs/jwt';
+import { JwtModule, JwtService } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { ConfigService } from '@nestjs/config';
 import { PasswordService } from './password.service';
@@ -12,6 +12,7 @@ import { JwtStrategy } from './jwt.strategy';
 import { SecurityConfig } from '../common/configs/config.interface';
 import { CommonModule } from '../common/common.module';
 import { UsersModule } from '../users/users.module';
+import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 
 @Module({
   imports: [
@@ -38,10 +39,13 @@ import { UsersModule } from '../users/users.module';
     SupabaseAuthService, // 新增的 Supabase 认证服务
     JwtStrategy,
     GqlAuthGuard,
+    JwtAuthGuard,       // 添加JwtAuthGuard
     PasswordService,
   ],
   exports: [
     GqlAuthGuard,
+    JwtAuthGuard,       // 导出JwtAuthGuard
+    JwtModule,          // 重新导出JwtModule而不是JwtService
     SupabaseAuthService, // 导出新的认证服务
   ],
 })

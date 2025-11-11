@@ -1,6 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ExercisesDao } from '../exercises.dao';
 import { QuickRecommendationDto, Difficulty, IntentType, PrimaryMuscle } from '../dto/exercise-recommendation.dto';
+import { logger } from '../../common/logger/logger';
+
 
 interface ExerciseWithScore {
   exercise: any;
@@ -27,7 +29,7 @@ interface UserPreferences {
  */
 @Injectable()
 export class WorkoutRecommendationService {
-  private readonly logger = new Logger(WorkoutRecommendationService.name);
+  // private readonly logger = new Logger(WorkoutRecommendationService.name);
 
   constructor(private readonly exercisesDao: ExercisesDao) {}
 
@@ -37,7 +39,7 @@ export class WorkoutRecommendationService {
    * @returns 推荐结果
    */
   async generateQuickRecommendation(dto: QuickRecommendationDto) {
-    this.logger.debug(`生成快速推荐: ${JSON.stringify(dto)}`);
+    logger.debug(`生成快速推荐: ${JSON.stringify(dto)}`);
 
     try {
       // 1. 获取用户偏好
@@ -81,7 +83,7 @@ export class WorkoutRecommendationService {
       return this.formatRecommendationResponse(selectedExercises, alternatives, dto);
 
     } catch (error) {
-      this.logger.error(`生成快速推荐失败: ${error.message}`, error.stack);
+      logger.error(`生成快速推荐失败: ${error.message}`, error.stack);
       throw error;
     }
   }
@@ -272,7 +274,7 @@ export class WorkoutRecommendationService {
         // ...userSettings
       };
     } catch (error) {
-      this.logger.warn(`获取用户偏好失败: userId=${userId}, error=${error.message}`);
+      logger.warn(`获取用户偏好失败: userId=${userId}, error=${error.message}`);
       return {}; // 返回默认偏好
     }
   }

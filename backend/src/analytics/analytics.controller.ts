@@ -31,6 +31,9 @@ import {
   CohortAnalysisResponseDto,
   PlatformKPIResponseDto,
 } from './dto/analytics-response.dto';
+import { logger } from '../common/logger/logger';
+// import { LoggerService } from './common/logger/logger';
+
 
 /**
  * Analytics Controller 类
@@ -39,13 +42,13 @@ import {
 @ApiTags('Analytics')
 @Controller('api/v1/analytics')
 @UseGuards(JwtAuthGuard)
-@ApiBearerAuth()
+@ApiBearerAuth('JWT-auth')
 @UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
 export class AnalyticsController {
-  private readonly logger = new Logger(AnalyticsController.name);
+  // private readonly logger = new Logger(AnalyticsController.name);
 
   constructor(private readonly supabaseApi: SupabaseApiService) {
-    this.logger.log('AnalyticsController initialized with SupabaseApiService');
+    logger.info("AnalyticsController initialized with SupabaseApiService");
   }
 
   /**
@@ -86,7 +89,7 @@ export class AnalyticsController {
     @Body() updateDto: UpdateUserAnalyticsDto,
   ) {
     try {
-      this.logger.log(`更新用户分析数据: ${userId}`);
+      logger.info('',`更新用户分析数据: ${userId}`);
 
       // 检查用户是否存在
       const user = await this.supabaseApi.getById('users', userId);
@@ -109,13 +112,13 @@ export class AnalyticsController {
 
       await this.supabaseApi.patch('users', userId, updateData);
 
-      this.logger.log(`用户分析数据更新成功: ${userId}`);
+      logger.info(`用户分析数据更新成功: ${userId}`);
       return {
         message: '用户分析数据更新成功',
         userId,
       };
     } catch (error) {
-      this.logger.error(`更新用户分析数据失败: ${userId}`, error.stack);
+      logger.error(`更新用户分析数据失败: ${userId}`, error.stack);
       throw error;
     }
   }
@@ -140,7 +143,7 @@ export class AnalyticsController {
   })
   async getUserFunnel(@Param('id') userId: string): Promise<UserFunnelResponseDto> {
     try {
-      this.logger.log(`获取用户漏斗状态: ${userId}`);
+      logger.info(`获取用户漏斗状态: ${userId}`);
 
       // 获取用户基本信息
       const user = await this.supabaseApi.getById('users', userId);
@@ -182,10 +185,10 @@ export class AnalyticsController {
         daysSinceRegistration,
       };
 
-      this.logger.log(`获取用户漏斗状态成功: ${userId}`);
+      logger.info(`获取用户漏斗状态成功: ${userId}`);
       return result;
     } catch (error) {
-      this.logger.error(`获取用户漏斗状态失败: ${userId}`, error.stack);
+      logger.error(`获取用户漏斗状态失败: ${userId}`, error.stack);
       throw error;
     }
   }
@@ -210,7 +213,7 @@ export class AnalyticsController {
   })
   async getUserMetrics(@Param('id') userId: string): Promise<UserMetricsResponseDto> {
     try {
-      this.logger.log(`获取用户指标概览: ${userId}`);
+      logger.info(`获取用户指标概览: ${userId}`);
 
       // 获取用户基本信息
       const user = await this.supabaseApi.getById('users', userId);
@@ -256,10 +259,10 @@ export class AnalyticsController {
         monthlyWorkouts,
       };
 
-      this.logger.log(`获取用户指标概览成功: ${userId}`);
+      logger.info(`获取用户指标概览成功: ${userId}`);
       return result;
     } catch (error) {
-      this.logger.error(`获取用户指标概览失败: ${userId}`, error.stack);
+      logger.error(`获取用户指标概览失败: ${userId}`, error.stack);
       throw error;
     }
   }
@@ -300,7 +303,7 @@ export class AnalyticsController {
     @Query('endDate') endDate?: string,
   ): Promise<DailyMetricsResponseDto[]> {
     try {
-      this.logger.log(`获取用户每日指标: ${userId}, ${startDate} - ${endDate}`);
+      logger.info(`获取用户每日指标: ${userId}, ${startDate} - ${endDate}`);
 
       // 设置默认日期范围（最近30天）
       const end = endDate ? new Date(endDate) : new Date();
@@ -336,10 +339,10 @@ export class AnalyticsController {
         isStreakDay: training.is_streak_day || false,
       }));
 
-      this.logger.log(`获取用户每日指标成功: ${userId}, 共${result.length}条记录`);
+      logger.info(`获取用户每日指标成功: ${userId}, 共${result.length}条记录`);
       return result;
     } catch (error) {
-      this.logger.error(`获取用户每日指标失败: ${userId}`, error.stack);
+      logger.error(`获取用户每日指标失败: ${userId}`, error.stack);
       throw error;
     }
   }
@@ -365,7 +368,7 @@ export class AnalyticsController {
   })
   async getCohortAnalysis(@Query('period') period = 'month'): Promise<CohortAnalysisResponseDto[]> {
     try {
-      this.logger.log(`获取群组分析: ${period}`);
+      logger.info(`获取群组分析: ${period}`);
 
       // 获取所有用户
       const users = await this.supabaseApi.get('users', {}, {
@@ -410,10 +413,10 @@ export class AnalyticsController {
         });
       }
 
-      this.logger.log(`获取群组分析成功: 共${result.length}个群组`);
+      logger.info(`获取群组分析成功: 共${result.length}个群组`);
       return result.slice(-12); // 返回最近12个月的数据
     } catch (error) {
-      this.logger.error('获取群组分析失败', error.stack);
+      logger.error('获取群组分析失败', error.stack);
       throw error;
     }
   }
@@ -433,7 +436,7 @@ export class AnalyticsController {
   })
   async getPlatformKPIs(): Promise<PlatformKPIResponseDto> {
     try {
-      this.logger.log('获取平台KPI指标');
+      logger.info('获取平台KPI指标');
 
       // 并行获取各种数据
       const [users, sessions, scenarios, equipment] = await Promise.all([
@@ -499,10 +502,10 @@ export class AnalyticsController {
         popularScenarios: scenarioStats,
       };
 
-      this.logger.log('获取平台KPI指标成功');
+      logger.info('获取平台KPI指标成功');
       return result;
     } catch (error) {
-      this.logger.error('获取平台KPI指标失败', error.stack);
+      logger.error('获取平台KPI指标失败', error.stack);
       throw error;
     }
   }
@@ -533,7 +536,7 @@ export class AnalyticsController {
   })
   async batchUpdateDailyMetrics(@Body() metricsData: BatchUpdateDailyMetricsDto[]) {
     try {
-      this.logger.log(`批量更新每日指标: ${metricsData.length}条记录`);
+      logger.info(`批量更新每日指标: ${metricsData.length}条记录`);
 
       let updated = 0;
       let failed = 0;
@@ -572,12 +575,12 @@ export class AnalyticsController {
 
           updated++;
         } catch (error) {
-          this.logger.error(`更新每日指标失败: ${metrics.userId} ${metrics.trainingDate}`, error.message);
+          logger.error(`更新每日指标失败: ${metrics.userId} ${metrics.trainingDate}`, error.message);
           failed++;
         }
       }
 
-      this.logger.log(`批量更新每日指标完成: 成功${updated}, 失败${failed}`);
+      logger.info(`批量更新每日指标完成: 成功${updated}, 失败${failed}`);
 
       return {
         message: '批量更新完成',
@@ -585,7 +588,7 @@ export class AnalyticsController {
         failed,
       };
     } catch (error) {
-      this.logger.error('批量更新每日指标失败', error.stack);
+      logger.error('批量更新每日指标失败', error.stack);
       throw error;
     }
   }

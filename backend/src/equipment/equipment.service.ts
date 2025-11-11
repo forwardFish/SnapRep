@@ -12,6 +12,7 @@ import {
   BatchUpdateEquipmentStatusDto,
   EquipmentDto,
 } from './dto';
+import { logger } from '../common/logger/logger';
 
 /**
  * Equipment Service 类
@@ -19,10 +20,10 @@ import {
  */
 @Injectable()
 export class EquipmentService {
-  private readonly logger = new Logger(EquipmentService.name);
+  // private readonly logger = new Logger(EquipmentService.name);
 
   constructor(private readonly equipmentDao: EquipmentDao) {
-    this.logger.log('EquipmentService initialized');
+    logger.info('EquipmentService initialized');
   }
 
   /**
@@ -47,7 +48,7 @@ export class EquipmentService {
       if (error instanceof ResponseError) {
         throw error;
       }
-      this.logger.error(`获取器材列表失败: ${error.message}`, error.stack);
+      logger.error(`获取器材列表失败: ${error.message}`, error.stack);
       throw new ResponseError(ErrorCodes.EQUIPMENT.LIST_FAILED, error, { queryDto });
     }
   }
@@ -72,7 +73,7 @@ export class EquipmentService {
       if (error instanceof ResponseError) {
         throw error;
       }
-      this.logger.error(`获取器材详情失败: id=${id}, error=${error.message}`, error.stack);
+      logger.error(`获取器材详情失败: id=${id}, error=${error.message}`, error.stack);
       throw new ResponseError(ErrorCodes.EQUIPMENT.FETCH_FAILED, error, { equipmentId: id });
     }
   }
@@ -97,7 +98,7 @@ export class EquipmentService {
       if (error instanceof ResponseError) {
         throw error;
       }
-      this.logger.error(`根据代码获取器材详情失败: code=${code}, error=${error.message}`, error.stack);
+      logger.error(`根据代码获取器材详情失败: code=${code}, error=${error.message}`, error.stack);
       throw new ResponseError(ErrorCodes.EQUIPMENT.FETCH_FAILED, error, { equipmentCode: code });
     }
   }
@@ -115,7 +116,7 @@ export class EquipmentService {
       if (error instanceof ResponseError) {
         throw error;
       }
-      this.logger.error(`获取活跃器材列表失败: category=${category}, error=${error.message}`, error.stack);
+      logger.error(`获取活跃器材列表失败: category=${category}, error=${error.message}`, error.stack);
       throw new ResponseError(ErrorCodes.EQUIPMENT.LIST_FAILED, error, { category });
     }
   }
@@ -138,7 +139,7 @@ export class EquipmentService {
       if (error instanceof ResponseError) {
         throw error;
       }
-      this.logger.error(`按分类获取器材失败: error=${error.message}`, error.stack);
+      logger.error(`按分类获取器材失败: error=${error.message}`, error.stack);
       throw new ResponseError(ErrorCodes.EQUIPMENT.FETCH_FAILED, error);
     }
   }
@@ -155,7 +156,7 @@ export class EquipmentService {
       if (error instanceof ResponseError) {
         throw error;
       }
-      this.logger.error(`获取器材统计失败: error=${error.message}`, error.stack);
+      logger.error(`获取器材统计失败: error=${error.message}`, error.stack);
       throw new ResponseError(ErrorCodes.EQUIPMENT.FETCH_FAILED, error);
     }
   }
@@ -179,13 +180,13 @@ export class EquipmentService {
         isActive: createDto.isActive ?? true,
       });
 
-      this.logger.log(`器材创建成功: code=${equipment.code}, id=${equipment.id}`);
+      logger.info(`器材创建成功: code=${equipment.code}, id=${equipment.id}`);
       return this.mapToEquipmentDto(equipment);
     } catch (error) {
       if (error instanceof ResponseError) {
         throw error;
       }
-      this.logger.error(`创建器材失败: data=${JSON.stringify(createDto)}, error=${error.message}`, error.stack);
+      logger.error(`创建器材失败: data=${JSON.stringify(createDto)}, error=${error.message}`, error.stack);
       throw new ResponseError(ErrorCodes.EQUIPMENT.CREATE_FAILED, error, { createDto });
     }
   }
@@ -208,13 +209,13 @@ export class EquipmentService {
 
       const equipment = await this.equipmentDao.updateEquipment(id, updateDto);
 
-      this.logger.log(`器材更新成功: id=${id}, code=${equipment.code}`);
+      logger.info(`器材更新成功: id=${id}, code=${equipment.code}`);
       return this.mapToEquipmentDto(equipment);
     } catch (error) {
       if (error instanceof ResponseError) {
         throw error;
       }
-      this.logger.error(`更新器材失败: id=${id}, data=${JSON.stringify(updateDto)}, error=${error.message}`, error.stack);
+      logger.error(`更新器材失败: id=${id}, data=${JSON.stringify(updateDto)}, error=${error.message}`, error.stack);
       throw new ResponseError(ErrorCodes.EQUIPMENT.UPDATE_FAILED, error, { equipmentId: id, updateDto });
     }
   }
@@ -236,13 +237,13 @@ export class EquipmentService {
 
       const equipment = await this.equipmentDao.deleteEquipment(id);
 
-      this.logger.log(`器材删除成功: id=${id}, code=${equipment.code}`);
+      logger.info(`器材删除成功: id=${id}, code=${equipment.code}`);
       return this.mapToEquipmentDto(equipment);
     } catch (error) {
       if (error instanceof ResponseError) {
         throw error;
       }
-      this.logger.error(`删除器材失败: id=${id}, error=${error.message}`, error.stack);
+      logger.error(`删除器材失败: id=${id}, error=${error.message}`, error.stack);
       throw new ResponseError(ErrorCodes.EQUIPMENT.DELETE_FAILED, error, { equipmentId: id });
     }
   }
@@ -264,13 +265,13 @@ export class EquipmentService {
 
       const equipment = await this.equipmentDao.softDeleteEquipment(id);
 
-      this.logger.log(`器材软删除成功: id=${id}, code=${equipment.code}`);
+      logger.info(`器材软删除成功: id=${id}, code=${equipment.code}`);
       return this.mapToEquipmentDto(equipment);
     } catch (error) {
       if (error instanceof ResponseError) {
         throw error;
       }
-      this.logger.error(`软删除器材失败: id=${id}, error=${error.message}`, error.stack);
+      logger.error(`软删除器材失败: id=${id}, error=${error.message}`, error.stack);
       throw new ResponseError(ErrorCodes.EQUIPMENT.DELETE_FAILED, error, { equipmentId: id });
     }
   }
@@ -299,7 +300,7 @@ export class EquipmentService {
       const result = await this.equipmentDao.batchUpdateStatus(ids, isActive);
 
       const message = `成功${isActive ? '激活' : '禁用'}了 ${result.count} 个器材`;
-      this.logger.log(`批量更新器材状态成功: ${message}`);
+      logger.info(`批量更新器材状态成功: ${message}`);
 
       return {
         count: result.count,
@@ -309,7 +310,7 @@ export class EquipmentService {
       if (error instanceof ResponseError) {
         throw error;
       }
-      this.logger.error(`批量更新器材状态失败: data=${JSON.stringify(batchDto)}, error=${error.message}`, error.stack);
+      logger.error(`批量更新器材状态失败: data=${JSON.stringify(batchDto)}, error=${error.message}`, error.stack);
       throw new ResponseError(ErrorCodes.EQUIPMENT.UPDATE_FAILED, error, { batchDto });
     }
   }
@@ -328,7 +329,7 @@ export class EquipmentService {
       }
       return excludeId ? existing.id === excludeId : false;
     } catch (error) {
-      this.logger.error(`验证器材代码唯一性失败: code=${code}, error=${error.message}`, error.stack);
+      logger.error(`验证器材代码唯一性失败: code=${code}, error=${error.message}`, error.stack);
       throw new ResponseError(ErrorCodes.EQUIPMENT.FETCH_FAILED, error, { equipmentCode: code });
     }
   }

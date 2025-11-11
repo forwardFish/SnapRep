@@ -25,11 +25,12 @@ import { ResponseError } from '../exception/response-error';
 import { ErrorCodes } from '../exception/error-codes';
 import { ConfigService } from '@nestjs/config';
 import { SupabaseApiService } from '../common/services/supabase-api.service';
+import { logger } from '../common/logger/logger';
 
 @ApiTags('scenarios')
 @Controller('rest/v1/scenarios')
 export class ScenariosController {
-  private readonly logger = new Logger(ScenariosController.name);
+  // private readonly logger = new Logger(ScenariosController.name);
 
   constructor(
     private readonly scenariosService: ScenariosService,
@@ -70,7 +71,7 @@ export class ScenariosController {
         },
       };
     } catch (error) {
-      this.logger.error('SupabaseApiService call failed:', error);
+      logger.error('SupabaseApiService call failed:', error);
       throw new InternalServerErrorException('Failed to fetch scenarios');
     }
   }
@@ -98,7 +99,7 @@ export class ScenariosController {
     @Query() queryDto: GetScenariosQueryDto,
   ): Promise<GetScenariosResponseDto> {
     try {
-      this.logger.log('Using SupabaseApiService due to database connection issue');
+      logger.info('Using SupabaseApiService due to database connection issue');
       return await this.getScenariosDirect();
     } catch (error) {
       this.handleError(error, 'findAll', { queryDto });
@@ -133,8 +134,8 @@ export class ScenariosController {
   })
   async findOne(@Param('id') id: string): Promise<ScenarioResponseDto> {
     try {
-      this.logger.log(`获取场景详情: id=${id}`);
-      this.logger.log('Using SupabaseApiService due to database connection issue');
+      logger.info(`获取场景详情: id=${id}`);
+      logger.info('Using SupabaseApiService due to database connection issue');
 
       const scenario = await this.supabaseApi.getById('scenarios', id);
       if (!scenario) {
@@ -185,8 +186,8 @@ export class ScenariosController {
   })
   async findByCode(@Param('code') code: string): Promise<ScenarioResponseDto> {
     try {
-      this.logger.log(`根据代码获取场景: code=${code}`);
-      this.logger.log('Using SupabaseApiService due to database connection issue');
+      logger.info(`根据代码获取场景: code=${code}`);
+      logger.info('Using SupabaseApiService due to database connection issue');
 
       const scenario = await this.supabaseApi.getByField('scenarios', 'code', code);
       if (!scenario) {
@@ -237,13 +238,13 @@ export class ScenariosController {
   })
   async getActiveCount(): Promise<{ count: number }> {
     try {
-      this.logger.log('Using SupabaseApiService to get active scenarios count');
+      logger.info('Using SupabaseApiService to get active scenarios count');
       const scenarios = await this.supabaseApi.get('scenarios',
         { is_active: true },
         { orderBy: 'created_at.asc' }
       );
       const count = scenarios.length;
-      this.logger.log(`Found ${count} active scenarios`);
+      logger.info(`Found ${count} active scenarios`);
       return { count };
     } catch (error) {
       this.handleError(error, 'getActiveCount');
@@ -257,7 +258,7 @@ export class ScenariosController {
    * @param context 上下文信息
    */
   private handleError(error: any, method: string, context?: any): never {
-    this.logger.error(`${method} failed`, {
+    logger.error(`${method} failed`, {
       error: error.message,
       context,
       stack: error.stack,

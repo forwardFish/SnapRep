@@ -33,6 +33,8 @@ import {
 } from './dto/auth-response.dto';
 import { ResponseError } from '../exception/response-error';
 import { ErrorCodes } from '../exception/error-codes';
+import { logger } from '../common/logger/logger';
+
 
 /**
  * Auth Controller 类
@@ -43,10 +45,10 @@ import { ErrorCodes } from '../exception/error-codes';
 @Controller('rest/v1/auth')
 @UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
 export class AuthController {
-  private readonly logger = new Logger(AuthController.name);
+  // private readonly logger = new Logger(AuthController.name);
 
   constructor(private readonly supabaseAuthService: SupabaseAuthService) {
-    this.logger.log('AuthController initialized with SupabaseAuthService');
+    logger.info('AuthController initialized with SupabaseAuthService');
   }
 
   /**
@@ -73,12 +75,12 @@ export class AuthController {
   })
   async register(@Body() registerDto: RegisterDto): Promise<AuthResponseDto> {
     try {
-      this.logger.log(`用户注册请求: ${registerDto.email}`);
+      logger.info(`用户注册请求: ${registerDto.email}`);
       const result = await this.supabaseAuthService.register(registerDto);
-      this.logger.log(`用户注册成功: ${registerDto.email}`);
+      logger.info(`用户注册成功: ${registerDto.email}`);
       return result;
     } catch (error) {
-      this.logger.error(`用户注册失败: ${registerDto.email}`, error.stack);
+      logger.error(`用户注册失败: ${registerDto.email}`, error.stack);
       throw error;
     }
   }
@@ -111,12 +113,12 @@ export class AuthController {
   })
   async login(@Body() loginDto: LoginDto): Promise<AuthResponseDto> {
     try {
-      this.logger.log(`用户登录请求: ${loginDto.email}`);
+      logger.info(`用户登录请求: ${loginDto.email}`);
       const result = await this.supabaseAuthService.login(loginDto);
-      this.logger.log(`用户登录成功: ${loginDto.email}`);
+      logger.info(`用户登录成功: ${loginDto.email}`);
       return result;
     } catch (error) {
-      this.logger.error(`用户登录失败: ${loginDto.email}`, error.stack);
+      logger.error(`用户登录失败: ${loginDto.email}`, error.stack);
       throw new ResponseError(ErrorCodes.AUTH.SUPABASE_LOGIN_FAILED, error, { email: loginDto.email });
     }
   }
@@ -145,12 +147,12 @@ export class AuthController {
   })
   async sendOtp(@Body() otpLoginDto: OtpLoginDto): Promise<OtpResponseDto> {
     try {
-      this.logger.log(`发送OTP请求: ${otpLoginDto.email}`);
+      logger.info(`发送OTP请求: ${otpLoginDto.email}`);
       const result = await this.supabaseAuthService.sendOtp(otpLoginDto);
-      this.logger.log(`OTP发送成功: ${otpLoginDto.email}`);
+      logger.info(`OTP发送成功: ${otpLoginDto.email}`);
       return result;
     } catch (error) {
-      this.logger.error(`发送OTP失败: ${otpLoginDto.email}`, error.stack);
+      logger.error(`发送OTP失败: ${otpLoginDto.email}`, error.stack);
       throw new ResponseError(ErrorCodes.AUTH.SUPABASE_SEND_OTP_FAILED, error, { email: otpLoginDto.email });
 
     }
@@ -184,12 +186,12 @@ export class AuthController {
   })
   async verifyOtp(@Body() verifyOtpDto: VerifyOtpDto): Promise<AuthResponseDto> {
     try {
-      this.logger.log(`验证OTP请求: ${verifyOtpDto.email}`);
+      logger.info(`验证OTP请求: ${verifyOtpDto.email}`);
       const result = await this.supabaseAuthService.verifyOtp(verifyOtpDto);
-      this.logger.log(`OTP验证成功: ${verifyOtpDto.email}`);
+      logger.info(`OTP验证成功: ${verifyOtpDto.email}`);
       return result;
     } catch (error) {
-      this.logger.error(`验证OTP失败: ${verifyOtpDto.email}`, error.stack);
+      logger.error(`验证OTP失败: ${verifyOtpDto.email}`, error.stack);
       throw new ResponseError(ErrorCodes.AUTH.OTP_VERIFICATION_FAILED, error, { email: verifyOtpDto.email });
     }
   }
@@ -237,12 +239,12 @@ export class AuthController {
   })
   async refreshToken(@Body() refreshTokenDto: RefreshTokenDto) {
     try {
-      this.logger.log('Token刷新请求');
+      logger.info('Token刷新请求');
       const result = await this.supabaseAuthService.refreshToken(refreshTokenDto.refreshToken);
-      this.logger.log('Token刷新成功');
+      logger.info('Token刷新成功');
       return result;
     } catch (error) {
-      this.logger.error('Token刷新失败', error.stack);
+      logger.error('Token刷新失败', error.stack);
       throw new ResponseError(ErrorCodes.AUTH.REFRESH_TOKEN_INVALID, error, { token: refreshTokenDto.refreshToken });
     }
   }
@@ -252,7 +254,7 @@ export class AuthController {
    */
   @Get('me')
   @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth()
+  @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: '获取当前用户信息',
     description: '获取当前登录用户的详细信息',
@@ -273,12 +275,12 @@ export class AuthController {
   async getCurrentUser(@Request() req): Promise<UserResponseDto> {
     try {
       const userId = req.user.userId;
-      this.logger.log(`获取用户信息请求: ${userId}`);
+      logger.info(`获取用户信息请求: ${userId}`);
       const result = await this.supabaseAuthService.getCurrentUser(userId);
-      this.logger.log(`获取用户信息成功: ${userId}`);
+      logger.info(`获取用户信息成功: ${userId}`);
       return result;
     } catch (error) {
-      this.logger.error(`获取用户信息失败: ${req.user?.userId}`, error.stack);
+      logger.error(`获取用户信息失败: ${req.user?.userId}`, error.stack);
       throw new ResponseError(ErrorCodes.AUTH.GET_USER_INFO_FAILED, error, { userId: req.user?.userId });
     }
   }
@@ -288,7 +290,7 @@ export class AuthController {
    */
   @Post('logout')
   @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth()
+  @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: '用户登出',
     description: '用户登出（主要由客户端删除 Token 实现）',
@@ -313,17 +315,17 @@ export class AuthController {
   async logout(@Request() req) {
     try {
       const userId = req.user.userId;
-      this.logger.log(`用户登出请求: ${userId}`);
+      logger.info(`用户登出请求: ${userId}`);
 
       // JWT 是无状态的，服务端不需要特殊处理
       // 客户端应该删除存储的 token
 
-      this.logger.log(`用户登出成功: ${userId}`);
+      logger.info(`用户登出成功: ${userId}`);
       return {
         message: '登出成功',
       };
     } catch (error) {
-      this.logger.error(`用户登出失败: ${req.user?.userId}`, error.stack);
+      logger.error(`用户登出失败: ${req.user?.userId}`, error.stack);
       throw new ResponseError(ErrorCodes.AUTH.LOGOUT_FAILED, error, { userId: req.user?.userId });
     }
   }

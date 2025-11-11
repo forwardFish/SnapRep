@@ -10,6 +10,7 @@ import {
   EquipmentWithAssociationDto,
   ScenarioWithAssociationDto,
 } from './dto';
+import { logger } from '../common/logger/logger';
 
 /**
  * ScenarioEquipment Service 类
@@ -17,10 +18,10 @@ import {
  */
 @Injectable()
 export class ScenarioEquipmentService {
-  private readonly logger = new Logger(ScenarioEquipmentService.name);
+  // private readonly logger = new Logger(ScenarioEquipmentService.name);
 
   constructor(private readonly scenarioEquipmentDao: ScenarioEquipmentDao) {
-    this.logger.log('ScenarioEquipmentService initialized');
+    logger.info('ScenarioEquipmentService initialized');
   }
 
   /**
@@ -50,13 +51,13 @@ export class ScenarioEquipmentService {
         createDto.isCommon
       );
 
-      this.logger.log(`场景-器材关联创建成功: ${createDto.scenarioId} - ${createDto.equipmentId}`);
+      logger.info(`场景-器材关联创建成功: ${createDto.scenarioId} - ${createDto.equipmentId}`);
       return this.mapToResponseDto(association);
     } catch (error) {
       if (error instanceof ResponseError) {
         throw error;
       }
-      this.logger.error(`创建场景-器材关联失败: ${error.message}`, error.stack);
+      logger.error(`创建场景-器材关联失败: ${error.message}`, error.stack);
       throw new ResponseError(ErrorCodes.SCENARIO_EQUIPMENT.CREATE_FAILED, error, {
         scenarioId: createDto.scenarioId,
         equipmentId: createDto.equipmentId,
@@ -78,13 +79,13 @@ export class ScenarioEquipmentService {
         batchCreateDto.isCommon
       );
 
-      this.logger.log(`批量创建场景-器材关联成功: ${batchCreateDto.scenarioId}, 数量: ${batchCreateDto.equipmentIds.length}`);
+      logger.info(`批量创建场景-器材关联成功: ${batchCreateDto.scenarioId}, 数量: ${batchCreateDto.equipmentIds.length}`);
       return result;
     } catch (error) {
       if (error instanceof ResponseError) {
         throw error;
       }
-      this.logger.error(`批量创建场景-器材关联失败: ${error.message}`, error.stack);
+      logger.error(`批量创建场景-器材关联失败: ${error.message}`, error.stack);
       throw new ResponseError(ErrorCodes.SCENARIO_EQUIPMENT.CREATE_FAILED, error, {
         scenarioId: batchCreateDto.scenarioId,
         equipmentIds: batchCreateDto.equipmentIds.join(','),
@@ -122,13 +123,13 @@ export class ScenarioEquipmentService {
         updateDto.isCommon
       );
 
-      this.logger.log(`场景-器材关联更新成功: ${scenarioId} - ${equipmentId}`);
+      logger.info(`场景-器材关联更新成功: ${scenarioId} - ${equipmentId}`);
       return this.mapToResponseDto(association);
     } catch (error) {
       if (error instanceof ResponseError) {
         throw error;
       }
-      this.logger.error(`更新场景-器材关联失败: ${error.message}`, error.stack);
+      logger.error(`更新场景-器材关联失败: ${error.message}`, error.stack);
       throw new ResponseError(ErrorCodes.SCENARIO_EQUIPMENT.UPDATE_FAILED, error, { scenarioId, equipmentId });
     }
   }
@@ -153,13 +154,13 @@ export class ScenarioEquipmentService {
 
       const association = await this.scenarioEquipmentDao.deleteAssociation(scenarioId, equipmentId);
 
-      this.logger.log(`场景-器材关联删除成功: ${scenarioId} - ${equipmentId}`);
+      logger.info(`场景-器材关联删除成功: ${scenarioId} - ${equipmentId}`);
       return this.mapToResponseDto(association);
     } catch (error) {
       if (error instanceof ResponseError) {
         throw error;
       }
-      this.logger.error(`删除场景-器材关联失败: ${error.message}`, error.stack);
+      logger.error(`删除场景-器材关联失败: ${error.message}`, error.stack);
       throw new ResponseError(ErrorCodes.SCENARIO_EQUIPMENT.DELETE_FAILED, error, { scenarioId, equipmentId });
     }
   }
@@ -178,7 +179,7 @@ export class ScenarioEquipmentService {
       if (error instanceof ResponseError) {
         throw error;
       }
-      this.logger.error(`获取场景器材失败: ${error.message}`, error.stack);
+      logger.error(`获取场景器材失败: ${error.message}`, error.stack);
       throw new ResponseError(ErrorCodes.SCENARIO_EQUIPMENT.FETCH_FAILED, error, { scenarioId });
     }
   }
@@ -196,7 +197,7 @@ export class ScenarioEquipmentService {
       if (error instanceof ResponseError) {
         throw error;
       }
-      this.logger.error(`获取器材场景失败: ${error.message}`, error.stack);
+      logger.error(`获取器材场景失败: ${error.message}`, error.stack);
       throw new ResponseError(ErrorCodes.SCENARIO_EQUIPMENT.FETCH_FAILED, error, { equipmentId });
     }
   }
@@ -211,7 +212,7 @@ export class ScenarioEquipmentService {
     try {
       return await this.scenarioEquipmentDao.associationExists(scenarioId, equipmentId);
     } catch (error) {
-      this.logger.error(`检查场景-器材关联失败: ${error.message}`, error.stack);
+      logger.error(`检查场景-器材关联失败: ${error.message}`, error.stack);
       throw new ResponseError(ErrorCodes.SCENARIO_EQUIPMENT.FETCH_FAILED, error, { scenarioId, equipmentId });
     }
   }

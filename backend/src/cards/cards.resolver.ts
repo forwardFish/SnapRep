@@ -8,6 +8,7 @@ import {
   CardsQueryDto,
   CollectionStatsDto
 } from './dto/cards.dto';
+import { logger } from '../common/logger/logger';
 
 /**
  * Cards GraphQL 解析器
@@ -16,7 +17,7 @@ import {
 @Resolver('ShareCard')
 @UseGuards(GqlAuthGuard)
 export class CardsResolver {
-  private readonly logger = new Logger(CardsResolver.name);
+  // private readonly logger = new Logger(CardsResolver.name);
 
   constructor(private readonly cardsService: CardsService) {}
 
@@ -25,13 +26,13 @@ export class CardsResolver {
    */
   @Mutation('generateShareCard')
   async generateShareCard(@Args('input') generateDto: GenerateCardDto) {
-    this.logger.debug(`GraphQL生成分享卡片: sessionId=${generateDto.sessionId}`);
+    logger.debug(`GraphQL生成分享卡片: sessionId=${generateDto.sessionId}`);
 
     try {
       const card = await this.cardsService.generateCard(generateDto);
       return card;
     } catch (error) {
-      this.logger.error(`GraphQL生成分享卡片失败: ${error.message}`);
+      logger.error(`GraphQL生成分享卡片失败: ${error.message}`);
       throw error;
     }
   }
@@ -41,12 +42,12 @@ export class CardsResolver {
    */
   @Query('shareCard')
   async getShareCard(@Args('id') id: string) {
-    this.logger.debug(`GraphQL获取卡片详情: cardId=${id}`);
+    logger.debug(`GraphQL获取卡片详情: cardId=${id}`);
 
     try {
       return await this.cardsService.findCardById(id);
     } catch (error) {
-      this.logger.error(`GraphQL获取卡片详情失败: ${error.message}`);
+      logger.error(`GraphQL获取卡片详情失败: ${error.message}`);
       throw error;
     }
   }
@@ -56,12 +57,12 @@ export class CardsResolver {
    */
   @Query('shareCardBySession')
   async getShareCardBySession(@Args('sessionId') sessionId: string) {
-    this.logger.debug(`GraphQL根据会话ID获取卡片: sessionId=${sessionId}`);
+    logger.debug(`GraphQL根据会话ID获取卡片: sessionId=${sessionId}`);
 
     try {
       return await this.cardsService.findCardBySessionId(sessionId);
     } catch (error) {
-      this.logger.error(`GraphQL根据会话ID获取卡片失败: ${error.message}`);
+      logger.error(`GraphQL根据会话ID获取卡片失败: ${error.message}`);
       throw error;
     }
   }
@@ -81,7 +82,7 @@ export class CardsResolver {
     @Args('limit', { type: () => Int, defaultValue: 20 }) limit: number = 20,
     @Args('offset', { type: () => Int, defaultValue: 0 }) offset: number = 0
   ) {
-    this.logger.debug(`GraphQL获取用户卡片列表: userId=${userId}`);
+    logger.debug(`GraphQL获取用户卡片列表: userId=${userId}`);
 
     try {
       const query: CardsQueryDto = {
@@ -97,7 +98,7 @@ export class CardsResolver {
 
       return await this.cardsService.findUserCards(userId, query);
     } catch (error) {
-      this.logger.error(`GraphQL获取用户卡片列表失败: ${error.message}`);
+      logger.error(`GraphQL获取用户卡片列表失败: ${error.message}`);
       throw error;
     }
   }
@@ -110,12 +111,12 @@ export class CardsResolver {
     @Args('limit', { type: () => Int, defaultValue: 20 }) limit: number = 20,
     @Args('offset', { type: () => Int, defaultValue: 0 }) offset: number = 0
   ) {
-    this.logger.debug(`GraphQL获取公开卡片: limit=${limit}, offset=${offset}`);
+    logger.debug(`GraphQL获取公开卡片: limit=${limit}, offset=${offset}`);
 
     try {
       return await this.cardsService.findPublicCards(limit, offset);
     } catch (error) {
-      this.logger.error(`GraphQL获取公开卡片失败: ${error.message}`);
+      logger.error(`GraphQL获取公开卡片失败: ${error.message}`);
       throw error;
     }
   }
@@ -128,13 +129,13 @@ export class CardsResolver {
     @Args('id') id: string,
     @Args('input') updateDto: UpdateCardDto
   ) {
-    this.logger.debug(`GraphQL更新卡片: cardId=${id}`);
+    logger.debug(`GraphQL更新卡片: cardId=${id}`);
 
     try {
       const card = await this.cardsService.updateCard(id, updateDto);
       return card;
     } catch (error) {
-      this.logger.error(`GraphQL更新卡片失败: ${error.message}`);
+      logger.error(`GraphQL更新卡片失败: ${error.message}`);
       throw error;
     }
   }
@@ -148,7 +149,7 @@ export class CardsResolver {
     @Args('platform', { nullable: true }) platform?: string,
     @Args('source', { nullable: true }) source?: string
   ) {
-    this.logger.debug(`GraphQL记录卡片分享: cardId=${id}, platform=${platform}`);
+    logger.debug(`GraphQL记录卡片分享: cardId=${id}, platform=${platform}`);
 
     try {
       const shareStatsDto = {
@@ -160,7 +161,7 @@ export class CardsResolver {
       const card = await this.cardsService.recordCardShare(shareStatsDto);
       return card;
     } catch (error) {
-      this.logger.error(`GraphQL记录卡片分享失败: ${error.message}`);
+      logger.error(`GraphQL记录卡片分享失败: ${error.message}`);
       throw error;
     }
   }
@@ -174,7 +175,7 @@ export class CardsResolver {
     @Args('region', { nullable: true }) region?: string,
     @Args('forceRecalculate', { nullable: true }) forceRecalculate?: boolean
   ) {
-    this.logger.debug(`GraphQL计算稀有度: equipmentCode=${code}`);
+    logger.debug(`GraphQL计算稀有度: equipmentCode=${code}`);
 
     try {
       const calculateDto = {
@@ -185,7 +186,7 @@ export class CardsResolver {
 
       return await this.cardsService.calculateRarity(calculateDto);
     } catch (error) {
-      this.logger.error(`GraphQL计算稀有度失败: ${error.message}`);
+      logger.error(`GraphQL计算稀有度失败: ${error.message}`);
       throw error;
     }
   }
@@ -198,7 +199,7 @@ export class CardsResolver {
     @Args('codes', { type: () => [String] }) codes: string[],
     @Args('region', { nullable: true }) region?: string
   ) {
-    this.logger.debug(`GraphQL批量计算稀有度: count=${codes.length}`);
+    logger.debug(`GraphQL批量计算稀有度: count=${codes.length}`);
 
     try {
       const batchDto = {
@@ -208,7 +209,7 @@ export class CardsResolver {
 
       return await this.cardsService.calculateBatchRarity(batchDto);
     } catch (error) {
-      this.logger.error(`GraphQL批量计算稀有度失败: ${error.message}`);
+      logger.error(`GraphQL批量计算稀有度失败: ${error.message}`);
       throw error;
     }
   }
@@ -220,12 +221,12 @@ export class CardsResolver {
   async getRarityRanking(
     @Args('limit', { type: () => Int, defaultValue: 10 }) limit: number = 10
   ) {
-    this.logger.debug(`GraphQL获取稀有度排行榜: limit=${limit}`);
+    logger.debug(`GraphQL获取稀有度排行榜: limit=${limit}`);
 
     try {
       return await this.cardsService.getRarityRanking(limit);
     } catch (error) {
-      this.logger.error(`GraphQL获取稀有度排行榜失败: ${error.message}`);
+      logger.error(`GraphQL获取稀有度排行榜失败: ${error.message}`);
       throw error;
     }
   }
@@ -238,12 +239,12 @@ export class CardsResolver {
     @Args('code') code: string,
     @Args('weeks', { type: () => Int, defaultValue: 8 }) weeks: number = 8
   ) {
-    this.logger.debug(`GraphQL获取稀有度趋势: equipmentCode=${code}, weeks=${weeks}`);
+    logger.debug(`GraphQL获取稀有度趋势: equipmentCode=${code}, weeks=${weeks}`);
 
     try {
       return await this.cardsService.getRarityTrend(code, weeks);
     } catch (error) {
-      this.logger.error(`GraphQL获取稀有度趋势失败: ${error.message}`);
+      logger.error(`GraphQL获取稀有度趋势失败: ${error.message}`);
       throw error;
     }
   }
@@ -257,7 +258,7 @@ export class CardsResolver {
     @Args('dimension', { defaultValue: 'rarity' }) dimension: string = 'rarity',
     @Args('days', { type: () => Int, defaultValue: 365 }) days: number = 365
   ) {
-    this.logger.debug(`GraphQL获取用户收藏统计: userId=${userId}, dimension=${dimension}`);
+    logger.debug(`GraphQL获取用户收藏统计: userId=${userId}, dimension=${dimension}`);
 
     try {
       const statsDto: CollectionStatsDto = {
@@ -267,7 +268,7 @@ export class CardsResolver {
 
       return await this.cardsService.getUserCollectionStats(userId, statsDto);
     } catch (error) {
-      this.logger.error(`GraphQL获取用户收藏统计失败: ${error.message}`);
+      logger.error(`GraphQL获取用户收藏统计失败: ${error.message}`);
       throw error;
     }
   }
@@ -277,12 +278,12 @@ export class CardsResolver {
    */
   @Query('cardsHealth')
   async healthCheck() {
-    this.logger.debug('GraphQL卡片服务健康检查');
+    logger.debug('GraphQL卡片服务健康检查');
 
     try {
       return await this.cardsService.healthCheck();
     } catch (error) {
-      this.logger.error(`GraphQL健康检查失败: ${error.message}`);
+      logger.error(`GraphQL健康检查失败: ${error.message}`);
       throw error;
     }
   }

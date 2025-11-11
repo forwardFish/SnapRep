@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { CardsDao } from '../cards.dao';
 import { PrismaService } from 'nestjs-prisma';
 import { RarityLevel, DataSource } from '../../common/types/prisma-enums';
+import { logger } from '../../common/logger/logger';
 
 /**
  * 稀有度计算服务
@@ -9,7 +10,7 @@ import { RarityLevel, DataSource } from '../../common/types/prisma-enums';
  */
 @Injectable()
 export class RarityCalculatorService {
-  private readonly logger = new Logger(RarityCalculatorService.name);
+  // private readonly logger = new Logger(RarityCalculatorService.name);
 
   constructor(
     private readonly cardsDao: CardsDao,
@@ -31,7 +32,7 @@ export class RarityCalculatorService {
       if (!forceRecalculate) {
         const existingRecord = await this.cardsDao.findRarityRecord(equipmentCode, weekStart);
         if (existingRecord && existingRecord.dataSource === DataSource.WEEKLY_TABLE) {
-          this.logger.debug(`使用缓存的稀有度数据: ${equipmentCode}, rarity=${existingRecord.rarityLevel}`);
+          logger.debug(`使用缓存的稀有度数据: ${equipmentCode}, rarity=${existingRecord.rarityLevel}`);
           return existingRecord;
         }
       }
@@ -60,11 +61,11 @@ export class RarityCalculatorService {
         region
       });
 
-      this.logger.log(`稀有度计算完成: ${equipmentCode}, score=${rarityScore}, level=${rarityLevel}`);
+      logger.info(`稀有度计算完成: ${equipmentCode}, score=${rarityScore}, level=${rarityLevel}`);
       return rarityRecord;
 
     } catch (error) {
-      this.logger.error(`稀有度计算失败: equipmentCode=${equipmentCode}, error=${error.message}`, error.stack);
+      logger.error(`稀有度计算失败: equipmentCode=${equipmentCode}, error=${error.message}`, error.stack);
 
       // 如果计算失败，尝试返回估算值
       return await this.getEstimatedRarity(equipmentCode, region);
@@ -94,11 +95,11 @@ export class RarityCalculatorService {
       // 合并结果
       const allRecords = [...existingRecords, ...newRecords.filter(Boolean)];
 
-      this.logger.log(`批量稀有度计算完成: 总计${allRecords.length}个器材`);
+      logger.info(`批量稀有度计算完成: 总计${allRecords.length}个器材`);
       return allRecords;
 
     } catch (error) {
-      this.logger.error(`批量稀有度计算失败: ${error.message}`, error.stack);
+      logger.error(`批量稀有度计算失败: ${error.message}`, error.stack);
       throw error;
     }
   }
@@ -131,7 +132,7 @@ export class RarityCalculatorService {
 
       return rankings;
     } catch (error) {
-      this.logger.error(`获取稀有度排行榜失败: ${error.message}`);
+      logger.error(`获取稀有度排行榜失败: ${error.message}`);
       throw error;
     }
   }
@@ -208,12 +209,12 @@ export class RarityCalculatorService {
       // 稀有度分数 = 1 - 使用频率 (使用越少越稀有)
       const rarityScore = Math.max(0, Math.min(1, 1 - usageFrequency));
 
-      this.logger.debug(`稀有度计算详情: ${equipmentCode}, usage=${usageCount}, total=${totalSessions}, frequency=${usageFrequency.toFixed(4)}, score=${rarityScore.toFixed(4)}`);
+      logger.debug(`稀有度计算详情: ${equipmentCode}, usage=${usageCount}, total=${totalSessions}, frequency=${usageFrequency.toFixed(4)}, score=${rarityScore.toFixed(4)}`);
 
       return rarityScore;
 
     } catch (error) {
-      this.logger.error(`稀有度分数计算失败: ${error.message}`);
+      logger.error(`稀有度分数计算失败: ${error.message}`);
 
       // 使用预设的估算值
       return this.getEstimatedRarityScore(equipmentCode);
@@ -267,11 +268,11 @@ export class RarityCalculatorService {
         region
       });
 
-      this.logger.warn(`使用估算稀有度: ${equipmentCode}, score=${estimatedScore}, level=${rarityLevel}`);
+      logger.warn(`使用估算稀有度: ${equipmentCode}, score=${estimatedScore}, level=${rarityLevel}`);
       return rarityRecord;
 
     } catch (error) {
-      this.logger.error(`获取估算稀有度失败: ${error.message}`);
+      logger.error(`获取估算稀有度失败: ${error.message}`);
       throw error;
     }
   }
@@ -336,7 +337,7 @@ export class RarityCalculatorService {
 
       return trends.reverse(); // 按时间正序排列
     } catch (error) {
-      this.logger.error(`获取稀有度趋势失败: ${error.message}`);
+      logger.error(`获取稀有度趋势失败: ${error.message}`);
       throw error;
     }
   }
@@ -384,12 +385,12 @@ export class RarityCalculatorService {
       // 根据使用频率确定星级 (使用越少星级越高)
       const stars = this.determinePersonalStars(personalUsageFrequency);
 
-      this.logger.debug(`个人星级计算: userId=${userId}, equipment=${equipmentCode}, usage=${usageCount}, total=${totalSessions}, frequency=${personalUsageFrequency.toFixed(4)}, stars=${stars}`);
+      logger.debug(`个人星级计算: userId=${userId}, equipment=${equipmentCode}, usage=${usageCount}, total=${totalSessions}, frequency=${personalUsageFrequency.toFixed(4)}, stars=${stars}`);
 
       return stars;
 
     } catch (error) {
-      this.logger.error(`个人星级计算失败: userId=${userId}, equipment=${equipmentCode}, error=${error.message}`);
+      logger.error(`个人星级计算失败: userId=${userId}, equipment=${equipmentCode}, error=${error.message}`);
       return 1; // 默认1星
     }
   }
@@ -430,11 +431,11 @@ export class RarityCalculatorService {
         results[equipmentCode] = stars;
       });
 
-      this.logger.log(`批量个人星级计算完成: userId=${userId}, 计算了${equipmentCodes.length}个器材`);
+      logger.info(`批量个人星级计算完成: userId=${userId}, 计算了${equipmentCodes.length}个器材`);
       return results;
 
     } catch (error) {
-      this.logger.error(`批量个人星级计算失败: userId=${userId}, error=${error.message}`);
+      logger.error(`批量个人星级计算失败: userId=${userId}, error=${error.message}`);
       // 返回默认值
       const defaultResults: Record<string, number> = {};
       equipmentCodes.forEach(code => {

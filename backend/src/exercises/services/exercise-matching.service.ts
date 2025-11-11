@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ExercisesDao } from '../exercises.dao';
 import { ReplaceExerciseDto, AlternativesQueryDto } from '../dto/exercise-recommendation.dto';
+import { logger } from '../../common/logger/logger';
 
 /**
  * 动作匹配服务
@@ -8,7 +9,7 @@ import { ReplaceExerciseDto, AlternativesQueryDto } from '../dto/exercise-recomm
  */
 @Injectable()
 export class ExerciseMatchingService {
-  private readonly logger = new Logger(ExerciseMatchingService.name);
+  // private readonly logger = new Logger(ExerciseMatchingService.name);
 
   constructor(private readonly exercisesDao: ExercisesDao) {}
 
@@ -18,7 +19,7 @@ export class ExerciseMatchingService {
    * @returns 替换结果
    */
   async replaceExercise(dto: ReplaceExerciseDto) {
-    this.logger.debug(`替换动作: ${JSON.stringify(dto)}`);
+    logger.debug(`替换动作: ${JSON.stringify(dto)}`);
 
     try {
       // 1. 获取当前动作信息
@@ -47,7 +48,7 @@ export class ExerciseMatchingService {
       };
 
     } catch (error) {
-      this.logger.error(`替换动作失败: ${error.message}`, error.stack);
+      logger.error(`替换动作失败: ${error.message}`, error.stack);
       throw error;
     }
   }
@@ -58,7 +59,7 @@ export class ExerciseMatchingService {
    * @returns 候选列表
    */
   async getAlternatives(dto: AlternativesQueryDto) {
-    this.logger.debug(`获取替换候选: ${JSON.stringify(dto)}`);
+    logger.debug(`获取替换候选: ${JSON.stringify(dto)}`);
 
     try {
       // 构建筛选条件
@@ -81,7 +82,7 @@ export class ExerciseMatchingService {
       };
 
     } catch (error) {
-      this.logger.error(`获取替换候选失败: ${error.message}`, error.stack);
+      logger.error(`获取替换候选失败: ${error.message}`, error.stack);
       throw error;
     }
   }

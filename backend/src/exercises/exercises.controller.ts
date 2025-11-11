@@ -3,11 +3,12 @@ import { ApiTags, ApiOperation, ApiResponse, ApiBody, ApiParam } from '@nestjs/s
 import { WorkoutRecommendationService } from './services/workout-recommendation.service';
 import { ExerciseMatchingService } from './services/exercise-matching.service';
 import { QuickRecommendationDto, ReplaceExerciseDto, AlternativesQueryDto } from './dto/exercise-recommendation.dto';
+import { logger } from '../common/logger/logger';
 
 @ApiTags('Exercise Recommendations')
 @Controller('api/v1/recommendations')
 export class ExercisesController {
-  private readonly logger = new Logger(ExercisesController.name);
+  // private readonly logger = new Logger(ExercisesController.name);
 
   constructor(
     private readonly workoutRecommendationService: WorkoutRecommendationService,
@@ -70,19 +71,19 @@ export class ExercisesController {
   @ApiResponse({ status: 500, description: '服务器内部错误' })
   async quickRecommendation(@Body() dto: QuickRecommendationDto) {
     console.log('🚨 QUICK RECOMMENDATION CALLED:', JSON.stringify(dto));
-    this.logger.log(`快速推荐请求: ${JSON.stringify(dto)}`);
+    logger.info(`快速推荐请求: ${JSON.stringify(dto)}`);
 
     try {
       console.log('🚨 CALLING WORKOUT RECOMMENDATION SERVICE...');
       const result = await this.workoutRecommendationService.generateQuickRecommendation(dto);
 
       console.log('🚨 WORKOUT RECOMMENDATION SUCCESS:', result.exercises.length, 'exercises');
-      this.logger.log(`快速推荐成功: 生成${result.exercises.length}个动作`);
+      logger.info(`快速推荐成功: 生成${result.exercises.length}个动作`);
       return result;
     } catch (error) {
       console.log('🚨 WORKOUT RECOMMENDATION ERROR:', error.message);
       console.log('🚨 ERROR STACK:', error.stack);
-      this.logger.error(`快速推荐失败: ${error.message}`, error.stack);
+      logger.error(`快速推荐失败: ${error.message}`, error.stack);
       throw error;
     }
   }
@@ -115,15 +116,15 @@ export class ExercisesController {
     }
   })
   async replaceExercise(@Body() dto: ReplaceExerciseDto) {
-    this.logger.log(`替换动作请求: sessionId=${dto.sessionId}, position=${dto.exercisePosition}`);
+    logger.info(`替换动作请求: sessionId=${dto.sessionId}, position=${dto.exercisePosition}`);
 
     try {
       const result = await this.exerciseMatchingService.replaceExercise(dto);
 
-      this.logger.log(`动作替换成功: ${result.newExercise.name}`);
+      logger.info(`动作替换成功: ${result.newExercise.name}`);
       return result;
     } catch (error) {
-      this.logger.error(`动作替换失败: ${error.message}`, error.stack);
+      logger.error(`动作替换失败: ${error.message}`, error.stack);
       throw error;
     }
   }
@@ -166,15 +167,15 @@ export class ExercisesController {
     }
   })
   async getAlternatives(@Query() query: AlternativesQueryDto) {
-    this.logger.log(`获取替换候选请求: sessionId=${query.sessionId}`);
+    logger.info(`获取替换候选请求: sessionId=${query.sessionId}`);
 
     try {
       const result = await this.exerciseMatchingService.getAlternatives(query);
 
-      this.logger.log(`获取候选成功: ${result.alternatives.length}个候选`);
+      logger.info(`获取候选成功: ${result.alternatives.length}个候选`);
       return result;
     } catch (error) {
-      this.logger.error(`获取候选失败: ${error.message}`, error.stack);
+      logger.error(`获取候选失败: ${error.message}`, error.stack);
       throw error;
     }
   }

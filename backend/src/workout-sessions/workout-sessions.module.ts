@@ -4,9 +4,15 @@ import { WorkoutSessionsService } from './workout-sessions.service';
 import { WorkoutSessionsController } from './workout-sessions.controller';
 import { WorkoutSessionsDao } from './workout-sessions.dao';
 import { ExercisesModule } from '../exercises/exercises.module';
+import { AuthModule } from '../auth/auth.module';
+import { UsersModule } from '../users/users.module';
 
 @Module({
-  imports: [ExercisesModule],
+  imports: [
+    ExercisesModule,
+    AuthModule,  // 为JwtAuthGuard提供支持
+    UsersModule, // 为JwtAuthGuard提供UsersService
+  ],
   providers: [
     WorkoutSessionsService,
     // WorkoutSessionsResolver,  // Commented out - using REST API instead of GraphQL

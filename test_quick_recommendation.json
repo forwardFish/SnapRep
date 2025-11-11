@@ -1,7 +1,0 @@
-{
-  "intent": "STRETCH",
-  "selectedEquipment": ["chair", "table"],
-  "scenarioCode": "office",
-  "targetMuscle": "CORE",
-  "duration": 60
-}

@@ -4,6 +4,7 @@ import { PrismaBaseDao } from '../common/dao/prisma-base.dao';
 import { ResponseError } from '../exception/response-error';
 import { ErrorCodes } from '../exception/error-codes';
 import { RarityLevel, DataSource } from '../common/types/prisma-enums';
+import { logger } from '../common/logger/logger';
 
 /**
  * Cards DAO 类
@@ -11,11 +12,11 @@ import { RarityLevel, DataSource } from '../common/types/prisma-enums';
  */
 @Injectable()
 export class CardsDao extends PrismaBaseDao<any> {
-  private readonly logger = new Logger(CardsDao.name);
+  // private readonly logger = new Logger(CardsDao.name);
 
   constructor(prisma: PrismaService) {
     super(prisma);
-    this.logger.log('CardsDao initialized with Prisma');
+    logger.info('CardsDao initialized with Prisma');
   }
 
   protected getDelegate() {
@@ -70,7 +71,7 @@ export class CardsDao extends PrismaBaseDao<any> {
 
       return card;
     } catch (error) {
-      this.logger.error(`创建分享卡片失败: ${error.message}`, error.stack);
+      logger.error(`创建分享卡片失败: ${error.message}`, error.stack);
       throw new ResponseError(ErrorCodes.SHARE_CARD.CREATE_FAILED, error);
     }
   }
@@ -113,7 +114,7 @@ export class CardsDao extends PrismaBaseDao<any> {
         }
       });
     } catch (error) {
-      this.logger.error(`根据会话ID查找卡片失败: sessionId=${sessionId}, error=${error.message}`);
+      logger.error(`根据会话ID查找卡片失败: sessionId=${sessionId}, error=${error.message}`);
       throw new ResponseError(ErrorCodes.SHARE_CARD.FETCH_FAILED, error, { sessionId });
     }
   }
@@ -164,7 +165,7 @@ export class CardsDao extends PrismaBaseDao<any> {
         }
       );
     } catch (error) {
-      this.logger.error(`根据ID获取卡片详情失败: id=${id}, error=${error.message}`);
+      logger.error(`根据ID获取卡片详情失败: id=${id}, error=${error.message}`);
       throw new ResponseError(ErrorCodes.SHARE_CARD.FETCH_FAILED, error, { cardId: id });
     }
   }
@@ -245,7 +246,7 @@ export class CardsDao extends PrismaBaseDao<any> {
         filters?.offset || 0
       );
     } catch (error) {
-      this.logger.error(`获取用户卡片列表失败: userId=${userId}, error=${error.message}`);
+      logger.error(`获取用户卡片列表失败: userId=${userId}, error=${error.message}`);
       throw new ResponseError(ErrorCodes.SHARE_CARD.FETCH_FAILED, error, { userId, filters });
     }
   }
@@ -260,7 +261,7 @@ export class CardsDao extends PrismaBaseDao<any> {
     try {
       return await this.update({ id }, updateData);
     } catch (error) {
-      this.logger.error(`更新分享卡片失败: id=${id}, error=${error.message}`);
+      logger.error(`更新分享卡片失败: id=${id}, error=${error.message}`);
       throw new ResponseError(ErrorCodes.SHARE_CARD.UPDATE_FAILED, error, { cardId: id, updateData });
     }
   }
@@ -280,7 +281,7 @@ export class CardsDao extends PrismaBaseDao<any> {
         }
       });
     } catch (error) {
-      this.logger.error(`增加分享计数失败: id=${id}, error=${error.message}`);
+      logger.error(`增加分享计数失败: id=${id}, error=${error.message}`);
       throw new ResponseError(ErrorCodes.SHARE_CARD.UPDATE_FAILED, error, { cardId: id });
     }
   }
@@ -299,7 +300,7 @@ export class CardsDao extends PrismaBaseDao<any> {
         }
       });
     } catch (error) {
-      this.logger.error(`增加查看计数失败: id=${id}, error=${error.message}`);
+      logger.error(`增加查看计数失败: id=${id}, error=${error.message}`);
       throw new ResponseError(ErrorCodes.SHARE_CARD.UPDATE_FAILED, error, { cardId: id });
     }
   }
@@ -346,7 +347,7 @@ export class CardsDao extends PrismaBaseDao<any> {
         offset
       );
     } catch (error) {
-      this.logger.error(`获取公开卡片失败: error=${error.message}`);
+      logger.error(`获取公开卡片失败: error=${error.message}`);
       throw new ResponseError(ErrorCodes.SHARE_CARD.FETCH_FAILED, error);
     }
   }
@@ -381,7 +382,7 @@ export class CardsDao extends PrismaBaseDao<any> {
         }
       });
     } catch (error) {
-      this.logger.error(`获取稀有度记录失败: equipmentCode=${equipmentCode}, error=${error.message}`);
+      logger.error(`获取稀有度记录失败: equipmentCode=${equipmentCode}, error=${error.message}`);
       throw new ResponseError(ErrorCodes.RARITY.FETCH_FAILED, error, { equipmentCode });
     }
   }
@@ -429,7 +430,7 @@ export class CardsDao extends PrismaBaseDao<any> {
         }
       });
     } catch (error) {
-      this.logger.error(`创建或更新稀有度记录失败: ${error.message}`, error.stack);
+      logger.error(`创建或更新稀有度记录失败: ${error.message}`, error.stack);
       throw new ResponseError(ErrorCodes.RARITY.UPSERT_FAILED, error, { rarityData });
     }
   }
@@ -463,7 +464,7 @@ export class CardsDao extends PrismaBaseDao<any> {
         orderBy: { rarityScore: 'asc' }
       });
     } catch (error) {
-      this.logger.error(`批量获取稀有度记录失败: ${error.message}`);
+      logger.error(`批量获取稀有度记录失败: ${error.message}`);
       throw new ResponseError(ErrorCodes.RARITY.FETCH_FAILED, error, { equipmentCodes });
     }
   }
@@ -531,7 +532,7 @@ export class CardsDao extends PrismaBaseDao<any> {
         return monthlyStats;
       }
     } catch (error) {
-      this.logger.error(`获取用户收藏统计失败: userId=${userId}, error=${error.message}`);
+      logger.error(`获取用户收藏统计失败: userId=${userId}, error=${error.message}`);
       throw new ResponseError(ErrorCodes.SHARE_CARD.FETCH_FAILED, error, { userId, dimension });
     }
   }

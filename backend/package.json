@@ -81,7 +81,9 @@
     "reflect-metadata": "0.1.13",
     "rxjs": "7.8.1",
     "uuid": "^13.0.0",
-    "which": "^5.0.0"
+    "which": "^5.0.0",
+    "winston": "^3.8.2",
+    "winston-daily-rotate-file": "^5.0.0"
   },
   "devDependencies": {
     "@nestjs/cli": "10.1.10",
@@ -110,7 +112,8 @@
     "ts-loader": "9.4.4",
     "ts-node": "10.9.1",
     "tsconfig-paths": "4.2.0",
-    "typescript": "^5.1.6"
+    "typescript": "^5.1.6",
+    "nest-winston": "^1.10.2"
   },
   "jest": {
     "moduleFileExtensions": [

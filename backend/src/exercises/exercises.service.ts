@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ExercisesDao } from './exercises.dao';
 import { WorkoutRecommendationService } from './services/workout-recommendation.service';
 import { ExerciseMatchingService } from './services/exercise-matching.service';
+import { logger } from '../common/logger/logger';
 
 /**
  * Exercises 服务类
@@ -9,7 +10,7 @@ import { ExerciseMatchingService } from './services/exercise-matching.service';
  */
 @Injectable()
 export class ExercisesService {
-  private readonly logger = new Logger(ExercisesService.name);
+  // private readonly logger = new Logger(ExercisesService.name);
 
   constructor(
     private readonly exercisesDao: ExercisesDao,
@@ -23,7 +24,7 @@ export class ExercisesService {
    * @returns 动作详情
    */
   async findById(id: string) {
-    this.logger.debug(`查找动作: id=${id}`);
+    logger.debug(`查找动作: id=${id}`);
     return await this.exercisesDao.findById(id);
   }
 
@@ -33,7 +34,7 @@ export class ExercisesService {
    * @returns 动作详情
    */
   async findByCode(code: string) {
-    this.logger.debug(`查找动作: code=${code}`);
+    logger.debug(`查找动作: code=${code}`);
     return await this.exercisesDao.findByCode(code);
   }
 
@@ -43,7 +44,7 @@ export class ExercisesService {
    * @returns 匹配的动作列表
    */
   async findBySmartCriteria(criteria: any) {
-    this.logger.debug(`智能筛选动作: ${JSON.stringify(criteria)}`);
+    logger.debug(`智能筛选动作: ${JSON.stringify(criteria)}`);
     return await this.exercisesDao.findBySmartCriteria(criteria);
   }
 
@@ -52,7 +53,7 @@ export class ExercisesService {
    * @returns 统计数据
    */
   async getStats() {
-    this.logger.debug('获取动作统计信息');
+    logger.debug('获取动作统计信息');
     return await this.exercisesDao.getExerciseStats();
   }
 
@@ -73,7 +74,7 @@ export class ExercisesService {
       isActive?: boolean;
     }
   ) {
-    this.logger.debug(`分页获取动作: page=${page}, pageSize=${pageSize}, filters=${JSON.stringify(filters)}`);
+    logger.debug(`分页获取动作: page=${page}, pageSize=${pageSize}, filters=${JSON.stringify(filters)}`);
 
     const where: any = {};
 
@@ -115,7 +116,7 @@ export class ExercisesService {
    * @returns 推荐结果
    */
   async getQuickRecommendation(dto: any) {
-    this.logger.debug(`获取快速推荐: ${JSON.stringify(dto)}`);
+    logger.debug(`获取快速推荐: ${JSON.stringify(dto)}`);
     return await this.workoutRecommendationService.generateQuickRecommendation(dto);
   }
 
@@ -125,7 +126,7 @@ export class ExercisesService {
    * @returns 替换结果
    */
   async replaceExercise(dto: any) {
-    this.logger.debug(`替换动作: ${JSON.stringify(dto)}`);
+    logger.debug(`替换动作: ${JSON.stringify(dto)}`);
     return await this.exerciseMatchingService.replaceExercise(dto);
   }
 
@@ -135,7 +136,7 @@ export class ExercisesService {
    * @returns 候选列表
    */
   async getAlternatives(dto: any) {
-    this.logger.debug(`获取替换候选: ${JSON.stringify(dto)}`);
+    logger.debug(`获取替换候选: ${JSON.stringify(dto)}`);
     return await this.exerciseMatchingService.getAlternatives(dto);
   }
 
@@ -152,7 +153,7 @@ export class ExercisesService {
         timestamp: new Date().toISOString()
       };
     } catch (error) {
-      this.logger.error(`健康检查失败: ${error.message}`);
+      logger.error(`健康检查失败: ${error.message}`);
       return {
         status: 'unhealthy',
         error: error.message,

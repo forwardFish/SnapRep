@@ -1,12 +1,13 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from 'nestjs-prisma';
+import { logger } from '../common/logger/logger';
 
 @Injectable()
 export class ThemeWeeksDao {
-  private readonly logger = new Logger(ThemeWeeksDao.name);
+  // private readonly logger = new Logger(ThemeWeeksDao.name);
 
   constructor(private readonly prisma: PrismaService) {
-    this.logger.log('ThemeWeeksDao initialized with Prisma');
+    logger.info('ThemeWeeksDao initialized with Prisma');
   }
 
   /**
@@ -15,7 +16,31 @@ export class ThemeWeeksDao {
   async getCurrentThemeWeek() {
     const now = new Date();
 
-    return await this.prisma.themeWeek.findFirst({
+    logger.info(`🔍 Querying for current theme week at ${now.toISOString()}`);
+
+    // 首先查看所有主题周的数据
+    const allThemeWeeks = await this.prisma.themeWeek.findMany({
+      select: {
+        id: true,
+        title: true,
+        code: true,
+        status: true,
+        isVisible: true,
+        startDate: true,
+        endDate: true,
+      },
+      orderBy: {
+        startDate: 'desc',
+      },
+    });
+
+    logger.info(`📊 Found ${allThemeWeeks.length} total theme weeks in database:`);
+    allThemeWeeks.forEach(week => {
+      const isInDateRange = week.startDate <= now && week.endDate >= now;
+      logger.info(`- ${week.code}: status=${week.status}, visible=${week.isVisible}, start=${week.startDate.toISOString()}, end=${week.endDate.toISOString()}, inRange=${isInDateRange}`);
+    });
+
+    const result = await this.prisma.themeWeek.findFirst({
       where: {
         status: 'ACTIVE',
         isVisible: true,
@@ -26,6 +51,14 @@ export class ThemeWeeksDao {
         startDate: 'desc',
       },
     });
+
+    if (result) {
+      logger.info(`✅ Found current theme week: ${result.code} (${result.title})`);
+    } else {
+      logger.warn('❌ No current theme week found matching criteria');
+    }
+
+    return result;
   }
 
   /**

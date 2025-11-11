@@ -4,6 +4,7 @@ import { RarityCalculatorService } from './rarity-calculator.service';
 import { WorkoutSessionsService } from '../../workout-sessions/workout-sessions.service';
 import { GenerateCardDto } from '../dto/cards.dto';
 import { RarityLevel } from '../../common/types/prisma-enums';
+import { logger } from '../../common/logger/logger';
 
 /**
  * 卡片生成服务
@@ -11,7 +12,7 @@ import { RarityLevel } from '../../common/types/prisma-enums';
  */
 @Injectable()
 export class CardGeneratorService {
-  private readonly logger = new Logger(CardGeneratorService.name);
+  // private readonly logger = new Logger(CardGeneratorService.name);
 
   constructor(
     private readonly cardsDao: CardsDao,
@@ -26,13 +27,13 @@ export class CardGeneratorService {
    */
   async generateCard(generateDto: GenerateCardDto) {
     try {
-      this.logger.debug(`开始生成分享卡片: sessionId=${generateDto.sessionId}`);
+      logger.debug(`开始生成分享卡片: sessionId=${generateDto.sessionId}`);
 
       // 检查是否已存在卡片
       if (!generateDto.forceRegenerate) {
         const existingCard = await this.cardsDao.findCardBySessionId(generateDto.sessionId);
         if (existingCard) {
-          this.logger.debug(`使用现有卡片: cardId=${existingCard.id}`);
+          logger.debug(`使用现有卡片: cardId=${existingCard.id}`);
           return existingCard;
         }
       }
@@ -75,11 +76,11 @@ export class CardGeneratorService {
 
       const card = await this.cardsDao.createCard(cardRecord);
 
-      this.logger.log(`分享卡片生成成功: cardId=${card.id}, rarity=${rarityInfo.level}, score=${rarityInfo.score}`);
+      logger.info(`分享卡片生成成功: cardId=${card.id}, rarity=${rarityInfo.level}, score=${rarityInfo.score}`);
       return card;
 
     } catch (error) {
-      this.logger.error(`生成分享卡片失败: ${error.message}`, error.stack);
+      logger.error(`生成分享卡片失败: ${error.message}`, error.stack);
       throw error;
     }
   }
@@ -125,7 +126,7 @@ export class CardGeneratorService {
         primaryEquipment = 'none';
       }
 
-      this.logger.debug(`器材分析完成: primary=${primaryEquipment}, all=[${equipmentList.join(', ')}]`);
+      logger.debug(`器材分析完成: primary=${primaryEquipment}, all=[${equipmentList.join(', ')}]`);
 
       return {
         primaryEquipment,
@@ -135,7 +136,7 @@ export class CardGeneratorService {
       };
 
     } catch (error) {
-      this.logger.error(`器材分析失败: ${error.message}`);
+      logger.error(`器材分析失败: ${error.message}`);
       return {
         primaryEquipment: 'none',
         equipmentList: ['none'],
@@ -168,7 +169,7 @@ export class CardGeneratorService {
       // 重新确定稀有度等级
       const adjustedLevel = this.determineRarityLevel(adjustedScore);
 
-      this.logger.debug(`稀有度计算: ${equipmentAnalysis.primaryEquipment}, original=${primaryRarity.rarityScore}, adjusted=${adjustedScore}, level=${adjustedLevel}`);
+      logger.debug(`稀有度计算: ${equipmentAnalysis.primaryEquipment}, original=${primaryRarity.rarityScore}, adjusted=${adjustedScore}, level=${adjustedLevel}`);
 
       return {
         level: adjustedLevel,
@@ -180,7 +181,7 @@ export class CardGeneratorService {
       };
 
     } catch (error) {
-      this.logger.error(`稀有度计算失败: ${error.message}`);
+      logger.error(`稀有度计算失败: ${error.message}`);
       // 返回默认稀有度
       return {
         level: 'COMMON' as RarityLevel,
@@ -254,7 +255,7 @@ export class CardGeneratorService {
       return cardData;
 
     } catch (error) {
-      this.logger.error(`构建卡片数据失败: ${error.message}`);
+      logger.error(`构建卡片数据失败: ${error.message}`);
       throw error;
     }
   }
@@ -275,7 +276,7 @@ export class CardGeneratorService {
       const filename = `card_${cardData.generatedAt.replace(/[^0-9]/g, '')}_${timestamp}.jpg`;
       const cardImageUrl = `/generated/cards/${template}/${filename}`;
 
-      this.logger.debug(`卡片图片生成: ${cardImageUrl}`);
+      logger.debug(`卡片图片生成: ${cardImageUrl}`);
 
       // TODO: 实际的图片生成逻辑
       // await this.renderCardTemplate(cardData, template, cardImageUrl);
@@ -283,7 +284,7 @@ export class CardGeneratorService {
       return cardImageUrl;
 
     } catch (error) {
-      this.logger.error(`卡片图片生成失败: ${error.message}`);
+      logger.error(`卡片图片生成失败: ${error.message}`);
       // 返回默认卡片图片
       return `/generated/cards/default/placeholder.jpg`;
     }
@@ -328,7 +329,7 @@ export class CardGeneratorService {
       };
 
     } catch (error) {
-      this.logger.error(`强度计算失败: ${error.message}`);
+      logger.error(`强度计算失败: ${error.message}`);
       return { level: 'MEDIUM', score: 100, totalPoints: 2, avgDuration: 60 };
     }
   }
@@ -358,7 +359,7 @@ export class CardGeneratorService {
       };
 
     } catch (error) {
-      this.logger.error(`肌群分析失败: ${error.message}`);
+      logger.error(`肌群分析失败: ${error.message}`);
       return { primary: 'FULL_BODY', distribution: {}, diversity: 1, isBalanced: false };
     }
   }

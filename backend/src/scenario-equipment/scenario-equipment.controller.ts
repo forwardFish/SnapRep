@@ -34,6 +34,7 @@ import {
   ScenarioWithAssociationDto,
 } from './dto';
 import { SupabaseApiService } from '../common/services/supabase-api.service';
+import { logger } from '../common/logger/logger';
 
 /**
  * ScenarioEquipment Controller 类
@@ -47,7 +48,7 @@ export class ScenarioEquipmentController {
   private readonly logger = new Logger(ScenarioEquipmentController.name);
 
   constructor(private readonly supabaseApi: SupabaseApiService) {
-    this.logger.log('ScenarioEquipmentController initialized with SupabaseApiService');
+    logger.info('ScenarioEquipmentController initialized with SupabaseApiService');
   }
 
   /**
@@ -76,7 +77,7 @@ export class ScenarioEquipmentController {
 
       return existing && existing.length > 0;
     } catch (error) {
-      this.logger.error(`检查关联失败: ${error.message}`);
+      logger.error(`检查关联失败: ${error.message}`);
       return false;
     }
   }
@@ -99,13 +100,16 @@ export class ScenarioEquipmentController {
   @ApiResponse({ status: HttpStatus.CONFLICT, description: '关联已存在' })
   async create(@Body() createDto: CreateScenarioEquipmentDto): Promise<ScenarioEquipmentResponseDto> {
     try {
-      this.logger.log(`创建场景-器材关联: ${JSON.stringify(createDto)}`);
-      this.logger.log('Using direct Supabase API due to database connection issue');
+      logger.info(`创建场景-器材关联: ${JSON.stringify(createDto)}`);
+      logger.info('Using direct Supabase API due to database connection issue');
 
       // 检查关联是否已存在
       const exists = await this.checkAssociationExists(createDto.scenarioId, createDto.equipmentId);
       if (exists) {
-        throw new ConflictException(`Association between scenario ${createDto.scenarioId} and equipment ${createDto.equipmentId} already exists`);
+        throw new ResponseError(ErrorCodes.SCENARIO_EQUIPMENT.ALREADY_EXISTS, undefined, {
+          scenarioId: createDto.scenarioId,
+          equipmentId: createDto.equipmentId,
+        });
       }
 
       // 验证场景和器材是否存在
@@ -131,7 +135,7 @@ export class ScenarioEquipmentController {
 
       const newAssociation = await this.supabaseApi.post('scenario_equipment', createData);
 
-      this.logger.log(`场景-器材关联创建成功: ${createDto.scenarioId} - ${createDto.equipmentId}`);
+      logger.info(`场景-器材关联创建成功: ${createDto.scenarioId} - ${createDto.equipmentId}`);
       return this.mapToResponseDto(newAssociation);
     } catch (error) {
       this.handleError(error, 'create', { createDto });
@@ -158,8 +162,8 @@ export class ScenarioEquipmentController {
     results: Array<{ equipmentId: string; status: string; message?: string }>;
   }> {
     try {
-      this.logger.log(`批量创建场景-器材关联: ${JSON.stringify(batchCreateDto)}`);
-      this.logger.log('Using direct Supabase API due to database connection issue');
+      logger.info(`批量创建场景-器材关联: ${JSON.stringify(batchCreateDto)}`);
+      logger.info('Using direct Supabase API due to database connection issue');
 
       if (!batchCreateDto.equipmentIds || batchCreateDto.equipmentIds.length === 0) {
         throw new BadRequestException('Equipment IDs are required');
@@ -215,7 +219,7 @@ export class ScenarioEquipmentController {
           });
           successCount++;
         } catch (error) {
-          this.logger.error(`Failed to create association for equipment ${equipmentId}: ${error.message}`);
+          logger.error(`Failed to create association for equipment ${equipmentId}: ${error.message}`);
           results.push({
             equipmentId,
             status: 'failed',
@@ -225,7 +229,7 @@ export class ScenarioEquipmentController {
         }
       }
 
-      this.logger.log(`批量创建场景-器材关联完成: 成功=${successCount}, 失败=${failedCount}`);
+      logger.info(`批量创建场景-器材关联完成: 成功=${successCount}, 失败=${failedCount}`);
 
       return {
         success: successCount,
@@ -261,8 +265,8 @@ export class ScenarioEquipmentController {
     @Body() updateDto: UpdateScenarioEquipmentDto
   ): Promise<ScenarioEquipmentResponseDto> {
     try {
-      this.logger.log(`更新场景-器材关联: ${scenarioId} - ${equipmentId}, data=${JSON.stringify(updateDto)}`);
-      this.logger.log('Using direct Supabase API due to database connection issue');
+      logger.info(`更新场景-器材关联: ${scenarioId} - ${equipmentId}, data=${JSON.stringify(updateDto)}`);
+      logger.info('Using direct Supabase API due to database connection issue');
 
       // 检查关联是否存在
       const existing = await this.supabaseApi.get('scenario_equipment', {
@@ -290,7 +294,7 @@ export class ScenarioEquipmentController {
 
       const updatedAssociation = await this.supabaseApi.post('scenario_equipment', newData);
 
-      this.logger.log(`场景-器材关联更新成功: ${scenarioId} - ${equipmentId}`);
+      logger.info(`场景-器材关联更新成功: ${scenarioId} - ${equipmentId}`);
       return this.mapToResponseDto(updatedAssociation);
     } catch (error) {
       this.handleError(error, 'update', { scenarioId, equipmentId, updateDto });
@@ -318,8 +322,8 @@ export class ScenarioEquipmentController {
     @Param('equipmentId') equipmentId: string
   ): Promise<ScenarioEquipmentResponseDto> {
     try {
-      this.logger.log(`删除场景-器材关联: ${scenarioId} - ${equipmentId}`);
-      this.logger.log('Using direct Supabase API due to database connection issue');
+      logger.info(`删除场景-器材关联: ${scenarioId} - ${equipmentId}`);
+      logger.info('Using direct Supabase API due to database connection issue');
 
       // 查找要删除的关联
       const existing = await this.supabaseApi.get('scenario_equipment', {
@@ -334,7 +338,7 @@ export class ScenarioEquipmentController {
       // 删除关联
       await this.supabaseApi.delete('scenario_equipment', existing[0].id);
 
-      this.logger.log(`场景-器材关联删除成功: ${scenarioId} - ${equipmentId}`);
+      logger.info(`场景-器材关联删除成功: ${scenarioId} - ${equipmentId}`);
       return this.mapToResponseDto(existing[0]);
     } catch (error) {
       this.handleError(error, 'remove', { scenarioId, equipmentId });
@@ -361,8 +365,8 @@ export class ScenarioEquipmentController {
     @Query('onlyCommon') onlyCommon: boolean = false
   ): Promise<EquipmentWithAssociationDto[]> {
     try {
-      this.logger.log(`获取场景器材: scenarioId=${scenarioId}, onlyCommon=${onlyCommon}`);
-      this.logger.log('Using direct Supabase API due to database connection issue');
+      logger.info(`获取场景器材: scenarioId=${scenarioId}, onlyCommon=${onlyCommon}`);
+      logger.info('Using direct Supabase API due to database connection issue');
 
       // 验证场景是否存在
       const scenario = await this.supabaseApi.getById('scenarios', scenarioId);
@@ -404,7 +408,7 @@ export class ScenarioEquipmentController {
         }
       }
 
-      this.logger.log(`获取场景器材成功: ${scenarioId}, 数量: ${result.length}`);
+      logger.info(`获取场景器材成功: ${scenarioId}, 数量: ${result.length}`);
       return result;
     } catch (error) {
       this.handleError(error, 'getEquipmentByScenario', { scenarioId, onlyCommon });
@@ -430,8 +434,8 @@ export class ScenarioEquipmentController {
     @Param('equipmentId') equipmentId: string
   ): Promise<ScenarioWithAssociationDto[]> {
     try {
-      this.logger.log(`获取器材场景: equipmentId=${equipmentId}`);
-      this.logger.log('Using direct Supabase API due to database connection issue');
+      logger.info(`获取器材场景: equipmentId=${equipmentId}`);
+      logger.info('Using direct Supabase API due to database connection issue');
 
       // 验证器材是否存在
       const equipment = await this.supabaseApi.getById('equipment', equipmentId);
@@ -465,7 +469,7 @@ export class ScenarioEquipmentController {
         }
       }
 
-      this.logger.log(`获取器材场景成功: ${equipmentId}, 数量: ${result.length}`);
+      logger.info(`获取器材场景成功: ${equipmentId}, 数量: ${result.length}`);
       return result;
     } catch (error) {
       this.handleError(error, 'getScenariosByEquipment', { equipmentId });
@@ -500,12 +504,12 @@ export class ScenarioEquipmentController {
     @Param('equipmentId') equipmentId: string
   ): Promise<{ exists: boolean }> {
     try {
-      this.logger.log(`检查场景-器材关联: ${scenarioId} - ${equipmentId}`);
-      this.logger.log('Using direct Supabase API due to database connection issue');
+      logger.info(`检查场景-器材关联: ${scenarioId} - ${equipmentId}`);
+      logger.info('Using direct Supabase API due to database connection issue');
 
       const exists = await this.checkAssociationExists(scenarioId, equipmentId);
 
-      this.logger.log(`检查场景-器材关联: ${scenarioId} - ${equipmentId}, 存在: ${exists}`);
+      logger.info(`检查场景-器材关联: ${scenarioId} - ${equipmentId}, 存在: ${exists}`);
       return { exists };
     } catch (error) {
       this.handleError(error, 'checkExists', { scenarioId, equipmentId });
@@ -519,7 +523,7 @@ export class ScenarioEquipmentController {
    * @param context 上下文信息
    */
   private handleError(error: any, method: string, context?: any): never {
-    this.logger.error(`ScenarioEquipment Controller ${method} 失败:`, error.stack || error.message, {
+    logger.error(`ScenarioEquipment Controller ${method} 失败:`, error.stack || error.message, {
       context,
       error: error.message,
     });
@@ -541,7 +545,7 @@ export class ScenarioEquipmentController {
         case ErrorCodes.SCENARIO_EQUIPMENT.DELETE_FAILED.code:
         case ErrorCodes.SCENARIO_EQUIPMENT.FETCH_FAILED.code:
         default:
-          this.logger.error(
+          logger.error(
             `未处理的场景器材错误: code=${error.code}, message=${error.message}`,
             error.stack,
           );

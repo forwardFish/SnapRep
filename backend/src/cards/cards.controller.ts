@@ -21,7 +21,7 @@ import {
   ApiBody
 } from '@nestjs/swagger';
 import { CardsService } from './cards.service';
-import { GqlAuthGuard } from '../auth/gql-auth.guard';
+import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import {
   GenerateCardDto,
   UpdateCardDto,
@@ -31,6 +31,7 @@ import {
   CollectionStatsDto,
   CardShareStatsDto
 } from './dto/cards.dto';
+import { logger } from '../common/logger/logger';
 
 /**
  * Cards REST API 控制器
@@ -38,10 +39,9 @@ import {
  */
 @ApiTags('Cards & Rarity')
 @Controller('api/v1')
-@UseGuards(GqlAuthGuard)
-@ApiBearerAuth()
+@UseGuards(JwtAuthGuard)
+@ApiBearerAuth('JWT-auth')
 export class CardsController {
-  private readonly logger = new Logger(CardsController.name);
 
   constructor(private readonly cardsService: CardsService) {}
 
@@ -76,7 +76,7 @@ export class CardsController {
     description: '训练会话未完成或不存在'
   })
   async generateCard(@Body(ValidationPipe) generateDto: GenerateCardDto) {
-    this.logger.debug(`生成分享卡片请求: sessionId=${generateDto.sessionId}`);
+    logger.debug(`生成分享卡片请求: sessionId=${generateDto.sessionId}`);
 
     try {
       const card = await this.cardsService.generateCard(generateDto);
@@ -87,7 +87,7 @@ export class CardsController {
         message: 'Share card generated successfully'
       };
     } catch (error) {
-      this.logger.error(`生成分享卡片失败: ${error.message}`);
+      logger.error(`生成分享卡片失败: ${error.message}`);
       throw error;
     }
   }
@@ -115,7 +115,7 @@ export class CardsController {
     description: '卡片不存在'
   })
   async getCard(@Param('id') id: string) {
-    this.logger.debug(`获取卡片详情: cardId=${id}`);
+    logger.debug(`获取卡片详情: cardId=${id}`);
 
     try {
       const card = await this.cardsService.findCardById(id);
@@ -125,7 +125,7 @@ export class CardsController {
         data: card
       };
     } catch (error) {
-      this.logger.error(`获取卡片详情失败: ${error.message}`);
+      logger.error(`获取卡片详情失败: ${error.message}`);
       throw error;
     }
   }
@@ -149,7 +149,7 @@ export class CardsController {
     description: '卡片获取成功'
   })
   async getCardBySession(@Param('sessionId') sessionId: string) {
-    this.logger.debug(`根据会话ID获取卡片: sessionId=${sessionId}`);
+    logger.debug(`根据会话ID获取卡片: sessionId=${sessionId}`);
 
     try {
       const card = await this.cardsService.findCardBySessionId(sessionId);
@@ -159,7 +159,7 @@ export class CardsController {
         data: card
       };
     } catch (error) {
-      this.logger.error(`根据会话ID获取卡片失败: ${error.message}`);
+      logger.error(`根据会话ID获取卡片失败: ${error.message}`);
       throw error;
     }
   }
@@ -186,7 +186,7 @@ export class CardsController {
     @Param('userId', ParseUUIDPipe) userId: string,
     @Query(ValidationPipe) query: CardsQueryDto
   ) {
-    this.logger.debug(`获取用户卡片列表: userId=${userId}`);
+    logger.debug(`获取用户卡片列表: userId=${userId}`);
 
     try {
       const cards = await this.cardsService.findUserCards(userId, query);
@@ -200,7 +200,7 @@ export class CardsController {
         }
       };
     } catch (error) {
-      this.logger.error(`获取用户卡片列表失败: ${error.message}`);
+      logger.error(`获取用户卡片列表失败: ${error.message}`);
       throw error;
     }
   }
@@ -228,7 +228,7 @@ export class CardsController {
     @Param('id') id: string,
     @Body(ValidationPipe) updateDto: UpdateCardDto
   ) {
-    this.logger.debug(`更新卡片: cardId=${id}`);
+    logger.debug(`更新卡片: cardId=${id}`);
 
     try {
       const card = await this.cardsService.updateCard(id, updateDto);
@@ -239,7 +239,7 @@ export class CardsController {
         message: 'Card updated successfully'
       };
     } catch (error) {
-      this.logger.error(`更新卡片失败: ${error.message}`);
+      logger.error(`更新卡片失败: ${error.message}`);
       throw error;
     }
   }
@@ -275,7 +275,7 @@ export class CardsController {
     @Param('id') id: string,
     @Body() shareData: { platform?: string; source?: string }
   ) {
-    this.logger.debug(`记录卡片分享: cardId=${id}, platform=${shareData.platform}`);
+    logger.debug(`记录卡片分享: cardId=${id}, platform=${shareData.platform}`);
 
     try {
       const shareStatsDto: CardShareStatsDto = {
@@ -292,7 +292,7 @@ export class CardsController {
         message: 'Share recorded successfully'
       };
     } catch (error) {
-      this.logger.error(`记录卡片分享失败: ${error.message}`);
+      logger.error(`记录卡片分享失败: ${error.message}`);
       throw error;
     }
   }
@@ -314,7 +314,7 @@ export class CardsController {
     @Query('limit') limit: number = 20,
     @Query('offset') offset: number = 0
   ) {
-    this.logger.debug(`获取公开卡片: limit=${limit}, offset=${offset}`);
+    logger.debug(`获取公开卡片: limit=${limit}, offset=${offset}`);
 
     try {
       const cards = await this.cardsService.findPublicCards(limit, offset);
@@ -325,7 +325,7 @@ export class CardsController {
         pagination: { limit, offset }
       };
     } catch (error) {
-      this.logger.error(`获取公开卡片失败: ${error.message}`);
+      logger.error(`获取公开卡片失败: ${error.message}`);
       throw error;
     }
   }
@@ -364,7 +364,7 @@ export class CardsController {
     @Query('region') region?: string,
     @Query('forceRecalculate') forceRecalculate?: boolean
   ) {
-    this.logger.debug(`计算稀有度: equipmentCode=${code}`);
+    logger.debug(`计算稀有度: equipmentCode=${code}`);
 
     try {
       const calculateDto: CalculateRarityDto = {
@@ -380,7 +380,7 @@ export class CardsController {
         data: rarity
       };
     } catch (error) {
-      this.logger.error(`计算稀有度失败: ${error.message}`);
+      logger.error(`计算稀有度失败: ${error.message}`);
       throw error;
     }
   }
@@ -400,7 +400,7 @@ export class CardsController {
     description: '批量稀有度计算成功'
   })
   async calculateBatchRarity(@Body(ValidationPipe) batchDto: BatchRarityDto) {
-    this.logger.debug(`批量计算稀有度: count=${batchDto.equipmentCodes.length}`);
+    logger.debug(`批量计算稀有度: count=${batchDto.equipmentCodes.length}`);
 
     try {
       const rarities = await this.cardsService.calculateBatchRarity(batchDto);
@@ -411,7 +411,7 @@ export class CardsController {
         count: rarities.length
       };
     } catch (error) {
-      this.logger.error(`批量计算稀有度失败: ${error.message}`);
+      logger.error(`批量计算稀有度失败: ${error.message}`);
       throw error;
     }
   }
@@ -430,7 +430,7 @@ export class CardsController {
     description: '稀有度排行榜获取成功'
   })
   async getRarityRanking(@Query('limit') limit: number = 10) {
-    this.logger.debug(`获取稀有度排行榜: limit=${limit}`);
+    logger.debug(`获取稀有度排行榜: limit=${limit}`);
 
     try {
       const rankings = await this.cardsService.getRarityRanking(limit);
@@ -440,7 +440,7 @@ export class CardsController {
         data: rankings
       };
     } catch (error) {
-      this.logger.error(`获取稀有度排行榜失败: ${error.message}`);
+      logger.error(`获取稀有度排行榜失败: ${error.message}`);
       throw error;
     }
   }
@@ -467,7 +467,7 @@ export class CardsController {
     @Param('code') code: string,
     @Query('weeks') weeks: number = 8
   ) {
-    this.logger.debug(`获取稀有度趋势: equipmentCode=${code}, weeks=${weeks}`);
+    logger.debug(`获取稀有度趋势: equipmentCode=${code}, weeks=${weeks}`);
 
     try {
       const trend = await this.cardsService.getRarityTrend(code, weeks);
@@ -477,7 +477,7 @@ export class CardsController {
         data: trend
       };
     } catch (error) {
-      this.logger.error(`获取稀有度趋势失败: ${error.message}`);
+      logger.error(`获取稀有度趋势失败: ${error.message}`);
       throw error;
     }
   }
@@ -504,7 +504,7 @@ export class CardsController {
     @Param('userId', ParseUUIDPipe) userId: string,
     @Query(ValidationPipe) statsDto: CollectionStatsDto
   ) {
-    this.logger.debug(`获取用户收藏统计: userId=${userId}, dimension=${statsDto.dimension}`);
+    logger.debug(`获取用户收藏统计: userId=${userId}, dimension=${statsDto.dimension}`);
 
     try {
       const stats = await this.cardsService.getUserCollectionStats(userId, statsDto);
@@ -514,7 +514,7 @@ export class CardsController {
         data: stats
       };
     } catch (error) {
-      this.logger.error(`获取用户收藏统计失败: ${error.message}`);
+      logger.error(`获取用户收藏统计失败: ${error.message}`);
       throw error;
     }
   }
@@ -541,7 +541,7 @@ export class CardsController {
         data: health
       };
     } catch (error) {
-      this.logger.error(`健康检查失败: ${error.message}`);
+      logger.error(`健康检查失败: ${error.message}`);
       throw error;
     }
   }

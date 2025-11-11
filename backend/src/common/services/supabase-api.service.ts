@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { logger } from '../../common/logger/logger';
 
 /**
  * 通用的 Supabase REST API 调用服务
@@ -7,7 +8,7 @@ import { ConfigService } from '@nestjs/config';
  */
 @Injectable()
 export class SupabaseApiService {
-  private readonly logger = new Logger(SupabaseApiService.name);
+  // private readonly logger = new Logger(SupabaseApiService.name);
   private readonly supabaseUrl: string;
   private readonly anonKey: string;
   private readonly serviceKey: string;
@@ -22,7 +23,7 @@ export class SupabaseApiService {
     }
 
     if (!this.serviceKey) {
-      this.logger.warn('SUPABASE_SERVICE_KEY not found, write operations may fail due to RLS policies');
+      logger.warn('SUPABASE_SERVICE_KEY not found, write operations may fail due to RLS policies');
     }
   }
 
@@ -42,6 +43,10 @@ export class SupabaseApiService {
       select?: string;
     } = {},
   ): Promise<T[]> {
+    logger.debug(`🔍 Supabase GET called - Table: ${table}`);
+    logger.debug(`🔍 Filters: ${JSON.stringify(filters)}`);
+    logger.debug(`🔍 Options: ${JSON.stringify(options)}`);
+
     const searchParams = new URLSearchParams();
 
     // 添加过滤器
@@ -67,11 +72,15 @@ export class SupabaseApiService {
 
     const url = `${this.supabaseUrl}/rest/v1/${table}?${searchParams}`;
 
-    this.logger.debug(`Making Supabase API request: ${url}`);
+    logger.debug(`📡 Making Supabase API request: ${url}`);
 
     try {
       // 优先使用 service key 来绕过 RLS 策略
       const authKey = this.serviceKey || this.anonKey;
+      const keyType = this.serviceKey ? 'SERVICE_KEY' : 'ANON_KEY';
+
+      logger.debug(`🔑 Using ${keyType} for authentication`);
+      logger.debug(`🔑 Auth key length: ${authKey?.length || 0} characters`);
 
       const response = await fetch(url, {
         headers: {
@@ -81,6 +90,8 @@ export class SupabaseApiService {
         },
       });
 
+      logger.debug(`📊 HTTP Response status: ${response.status} ${response.statusText}`);
+
       if (!response.ok) {
         // 安全地读取错误响应
         let errorMessage = `Supabase API error: ${response.status} ${response.statusText}`;
@@ -88,18 +99,27 @@ export class SupabaseApiService {
           const errorBody = await response.text(); // 使用 text() 避免 JSON 解析错误
           if (errorBody) {
             errorMessage += ` - ${errorBody}`;
+            logger.error(`❌ Error response body: ${errorBody}`);
           }
         } catch (readError) {
-          this.logger.warn('Failed to read error response body:', readError.message);
+          logger.warn('Failed to read error response body:', readError.message);
         }
         throw new Error(errorMessage);
       }
 
       const data = await response.json();
-      this.logger.debug(`Supabase API response: ${data.length} records`);
+      logger.debug(`✅ Supabase API response: ${data.length} records`);
+
+      if (data.length > 0) {
+        logger.debug(`📝 First record keys: ${Object.keys(data[0])}`);
+      }
+
       return data;
     } catch (error) {
-      this.logger.error(`Supabase API call failed:`, error);
+      logger.error(`💥 Supabase API call failed for table: ${table}`);
+      logger.error(`🔥 Error type: ${error.constructor?.name}`);
+      logger.error(`📝 Error message: ${error.message}`);
+      logger.error(`📊 Error stack: ${error.stack}`);
       throw error;
     }
   }
@@ -111,8 +131,22 @@ export class SupabaseApiService {
    * @param select 选择字段
    */
   async getById<T = any>(table: string, id: string, select?: string): Promise<T | null> {
+    logger.debug(`🔍 getById called - Table: ${table}, ID: ${id}`);
+
+    if (!id) {
+      logger.error('❌ ID parameter is null or undefined');
+      return null;
+    }
+
     const data = await this.get<T>(table, { id }, { select, limit: 1 });
-    return data.length > 0 ? data[0] : null;
+
+    if (data.length > 0) {
+      logger.debug(`✅ Record found for ID: ${id}`);
+      return data[0];
+    } else {
+      logger.warn(`⚠️ No record found for ID: ${id} in table: ${table}`);
+      return null;
+    }
   }
 
   /**
@@ -141,7 +175,7 @@ export class SupabaseApiService {
   async post<T = any>(table: string, data: Record<string, any>): Promise<T> {
     const url = `${this.supabaseUrl}/rest/v1/${table}`;
 
-    this.logger.debug(`Making Supabase POST request: ${url}`);
+    logger.debug(`Making Supabase POST request: ${url}`);
 
     try {
       const authKey = this.serviceKey || this.anonKey; // 优先使用service key进行写操作
@@ -162,7 +196,7 @@ export class SupabaseApiService {
         try {
           const errorBody = await response.text();
           errorDetails = `: ${errorBody}`;
-          this.logger.error(`Supabase POST API error details: ${errorBody}`);
+          logger.error(`Supabase POST API error details: ${errorBody}`);
         } catch (e) {
           // Ignore error body parsing errors
         }
@@ -170,10 +204,10 @@ export class SupabaseApiService {
       }
 
       const result = await response.json();
-      this.logger.debug(`Supabase POST response: success`);
+      logger.debug(`Supabase POST response: success`);
       return result[0]; // Supabase returns array even for single insert
     } catch (error) {
-      this.logger.error(`Supabase POST call failed:`, error);
+      logger.error(`Supabase POST call failed:`, error);
       throw error;
     }
   }
@@ -187,7 +221,7 @@ export class SupabaseApiService {
   async patch<T = any>(table: string, id: string, data: Record<string, any>): Promise<T> {
     const url = `${this.supabaseUrl}/rest/v1/${table}?id=eq.${id}`;
 
-    this.logger.debug(`Making Supabase PATCH request: ${url}`);
+    logger.debug(`Making Supabase PATCH request: ${url}`);
 
     try {
       const authKey = this.serviceKey || this.anonKey; // 优先使用service key进行写操作
@@ -208,10 +242,10 @@ export class SupabaseApiService {
       }
 
       const result = await response.json();
-      this.logger.debug(`Supabase PATCH response: success`);
+      logger.debug(`Supabase PATCH response: success`);
       return result[0];
     } catch (error) {
-      this.logger.error(`Supabase PATCH call failed:`, error);
+      logger.error(`Supabase PATCH call failed:`, error);
       throw error;
     }
   }
@@ -224,7 +258,7 @@ export class SupabaseApiService {
   async delete(table: string, id: string): Promise<void> {
     const url = `${this.supabaseUrl}/rest/v1/${table}?id=eq.${id}`;
 
-    this.logger.debug(`Making Supabase DELETE request: ${url}`);
+    logger.debug(`Making Supabase DELETE request: ${url}`);
 
     try {
       const authKey = this.serviceKey || this.anonKey; // 优先使用service key进行写操作
@@ -242,9 +276,9 @@ export class SupabaseApiService {
         throw new Error(`Supabase API error: ${response.status} ${response.statusText}`);
       }
 
-      this.logger.debug(`Supabase DELETE response: success`);
+      logger.debug(`Supabase DELETE response: success`);
     } catch (error) {
-      this.logger.error(`Supabase DELETE call failed:`, error);
+      logger.error(`Supabase DELETE call failed:`, error);
       throw error;
     }
   }
@@ -267,7 +301,7 @@ export class SupabaseApiService {
 
     const url = `${this.supabaseUrl}/rest/v1/${table}?${searchParams}`;
 
-    this.logger.debug(`Making Supabase COUNT request: ${url}`);
+    logger.debug(`Making Supabase COUNT request: ${url}`);
 
     try {
       // 优先使用 service key 来绕过 RLS 策略
@@ -289,10 +323,10 @@ export class SupabaseApiService {
       const countHeader = response.headers.get('Content-Range');
       const count = countHeader ? parseInt(countHeader.split('/')[1]) : 0;
 
-      this.logger.debug(`Supabase COUNT response: ${count}`);
+      logger.debug(`Supabase COUNT response: ${count}`);
       return count;
     } catch (error) {
-      this.logger.error(`Supabase COUNT call failed:`, error);
+      logger.error(`Supabase COUNT call failed:`, error);
       throw error;
     }
   }

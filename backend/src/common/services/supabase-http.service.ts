@@ -1,9 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { logger } from '../../common/logger/logger';
 
 @Injectable()
 export class SupabaseHttpService {
-  private readonly logger = new Logger(SupabaseHttpService.name);
+  // private readonly logger = new Logger(SupabaseHttpService.name);
   private readonly supabaseUrl: string;
   private readonly serviceKey: string;
   private readonly anonKey: string;
@@ -60,7 +61,7 @@ export class SupabaseHttpService {
       }
 
       if (!response.ok) {
-        this.logger.error(`Supabase request failed: ${response.status} ${response.statusText}`, {
+        logger.error(`Supabase request failed: ${response.status} ${response.statusText}`, {
           url: url.toString(),
           method,
           response: responseData,
@@ -78,7 +79,7 @@ export class SupabaseHttpService {
 
       return { data: responseData as T };
     } catch (error) {
-      this.logger.error('Supabase HTTP request error', {
+      logger.error('Supabase HTTP request error', {
         error: error.message,
         url: url.toString(),
         method,
