@@ -17,15 +17,9 @@
   UseFilters,
 } from '@nestjs/common';
 import { EquipmentCategory as EquipmentCategoryEnum } from '../common/types/prisma-enums';
-import {
-  ApiTags,
-  ApiOperation,
-  ApiResponse,
-  ApiParam,
-  ApiBody,
-} from '@nestjs/swagger';
-import { EquipmentService } from './equipment.service';
+import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiBody, ApiQuery } from '@nestjs/swagger';
 import { ResponseError } from '../exception/response-error';
+import { EquipmentService } from './equipment.service';
 import { ErrorCodes } from '../exception/error-codes';
 import {
   GetEquipmentQueryDto,
@@ -115,7 +109,7 @@ export class EquipmentController {
   @Get()
   @ApiOperation({
     summary: '鑾峰彇鍣ㄦ潗鍒楄〃',
-    description: '鍒嗛〉鑾峰彇鍣ㄦ潗鍒楄〃锛屾敮鎸佹寜鍒嗙被绛涢€夊拰鍖呭惈闈炴椿璺冨櫒鏉?,
+    description: '...',
   })
   @ApiResponse({
     status: HttpStatus.OK,
@@ -128,7 +122,7 @@ export class EquipmentController {
   })
   @ApiResponse({
     status: HttpStatus.INTERNAL_SERVER_ERROR,
-    description: '鏈嶅姟鍣ㄥ唴閮ㄩ敊璇?,
+    description: '...',
   })
   async findAll(@Query() queryDto: GetEquipmentQueryDto): Promise<GetEquipmentResponseDto> {
     try {
@@ -160,11 +154,11 @@ export class EquipmentController {
   })
   @ApiResponse({
     status: HttpStatus.NOT_FOUND,
-    description: '鍣ㄦ潗涓嶅瓨鍦?,
+    description: '...',
   })
   @ApiResponse({
     status: HttpStatus.INTERNAL_SERVER_ERROR,
-    description: '鏈嶅姟鍣ㄥ唴閮ㄩ敊璇?,
+    description: '...',
   })
   async findOne(@Param('id') id: string): Promise<EquipmentDto> {
     try {
@@ -217,11 +211,11 @@ export class EquipmentController {
   })
   @ApiResponse({
     status: HttpStatus.NOT_FOUND,
-    description: '鍣ㄦ潗涓嶅瓨鍦?,
+    description: '...',
   })
   @ApiResponse({
     status: HttpStatus.INTERNAL_SERVER_ERROR,
-    description: '鏈嶅姟鍣ㄥ唴閮ㄩ敊璇?,
+    description: '...',
   })
   async findByCode(@Param('code') code: string): Promise<EquipmentDto> {
     try {
@@ -260,7 +254,7 @@ export class EquipmentController {
   @Get('active/list')
   @ApiOperation({
     summary: '鑾峰彇娲昏穬鍣ㄦ潗鍒楄〃',
-    description: '鑾峰彇鎵€鏈夋椿璺冪姸鎬佺殑鍣ㄦ潗锛屽彲鎸夊垎绫荤瓫閫?,
+    description: '...',
   })
   @ApiQuery({
     name: 'category',
@@ -276,7 +270,7 @@ export class EquipmentController {
   })
   @ApiResponse({
     status: HttpStatus.INTERNAL_SERVER_ERROR,
-    description: '鏈嶅姟鍣ㄥ唴閮ㄩ敊璇?,
+    description: '...',
   })
   async findActiveEquipment(@Query('category') category?: string): Promise<EquipmentDto[]> {
     try {
@@ -322,7 +316,7 @@ export class EquipmentController {
    * 鎸夊垎绫昏幏鍙栧櫒鏉?   */
   @Get('category/grouped')
   @ApiOperation({
-    summary: '鎸夊垎绫昏幏鍙栧櫒鏉?,
+    summary: '...',
     description: '鑾峰彇鎸夊垎绫诲垎缁勭殑鍣ㄦ潗鍒楄〃',
   })
   @ApiResponse({
@@ -332,7 +326,7 @@ export class EquipmentController {
   })
   @ApiResponse({
     status: HttpStatus.INTERNAL_SERVER_ERROR,
-    description: '鏈嶅姟鍣ㄥ唴閮ㄩ敊璇?,
+    description: '...',
   })
   async findEquipmentByCategory(): Promise<GetEquipmentByCategoryResponseDto> {
     try {
@@ -388,14 +382,15 @@ export class EquipmentController {
   })
   @ApiResponse({
     status: HttpStatus.INTERNAL_SERVER_ERROR,
-    description: '鏈嶅姟鍣ㄥ唴閮ㄩ敊璇?,
+    description: '...',
   })
   async getEquipmentStats(): Promise<GetEquipmentStatsResponseDto> {
     try {
       logger.info('鑾峰彇鍣ㄦ潗缁熻淇℃伅');
       logger.info('Using direct Supabase API due to database connection issue');
 
-      // 鑾峰彇鎵€鏈夊櫒鏉?      const allEquipment = await this.supabaseApi.get('equipment', {}, {
+      // 鑾峰彇鎵€鏈夊櫒鏉?
+      const allEquipment = await this.supabaseApi.get('equipment', {}, {
         orderBy: 'category.asc,display_order.asc',
       });
 
@@ -404,7 +399,8 @@ export class EquipmentController {
       const active = allEquipment.filter((item: any) => item.is_active).length;
       const inactive = total - active;
 
-      // 鎸夊垎绫荤粺璁?      const categoryStats: Record<string, any> = {};
+      // 鎸夊垎绫荤粺璁?
+      const categoryStats: Record<string, any> = {};
       allEquipment.forEach((item: any) => {
         const category = item.category || 'NONE';
         if (!categoryStats[category]) {
@@ -453,11 +449,11 @@ export class EquipmentController {
   })
   @ApiResponse({
     status: HttpStatus.CONFLICT,
-    description: '鍣ㄦ潗浠ｇ爜宸插瓨鍦?,
+    description: '...',
   })
   @ApiResponse({
     status: HttpStatus.INTERNAL_SERVER_ERROR,
-    description: '鏈嶅姟鍣ㄥ唴閮ㄩ敊璇?,
+    description: '...',
   })
   async create(@Body() createDto: CreateEquipmentDto): Promise<EquipmentDto> {
     try {
@@ -536,15 +532,15 @@ export class EquipmentController {
   })
   @ApiResponse({
     status: HttpStatus.NOT_FOUND,
-    description: '鍣ㄦ潗涓嶅瓨鍦?,
+    description: '...',
   })
   @ApiResponse({
     status: HttpStatus.CONFLICT,
-    description: '鍣ㄦ潗浠ｇ爜宸插瓨鍦?,
+    description: '...',
   })
   @ApiResponse({
     status: HttpStatus.INTERNAL_SERVER_ERROR,
-    description: '鏈嶅姟鍣ㄥ唴閮ㄩ敊璇?,
+    description: '...',
   })
   async update(
     @Param('id') id: string,
@@ -554,7 +550,8 @@ export class EquipmentController {
       logger.info(`鏇存柊鍣ㄦ潗: id=${id}, data=${JSON.stringify(updateDto)}`);
       logger.info('Using direct Supabase API due to database connection issue');
 
-      // 妫€鏌ュ櫒鏉愭槸鍚﹀瓨鍦?      const existing = await this.supabaseApi.getById('equipment', id);
+      // 妫€鏌ュ櫒鏉愭槸鍚﹀瓨鍦?
+      const existing = await this.supabaseApi.getById('equipment', id);
       if (!existing) {
         throw new ResponseError(ErrorCodes.EQUIPMENT.NOT_FOUND, undefined, {
           equipmentId: id,
@@ -578,7 +575,9 @@ export class EquipmentController {
 
       if (updateDto.code) updateData.code = updateDto.code;
       if (updateDto.name) updateData.name = updateDto.name;
-      // if (updateDto.description !== undefined) updateData.description = updateDto.description; // 鏁版嵁搴撲腑娌℃湁姝ゅ瓧娈?      if (updateDto.category !== undefined) updateData.category = updateDto.category;
+      //
+      if (updateDto.description !== undefined) updateData.description = updateDto.description; // 鏁版嵁搴撲腑娌℃湁姝ゅ瓧娈?
+      if (updateDto.category !== undefined) updateData.category = updateDto.category;
       if (updateDto.imageUrl !== undefined) {
         updateData.image_url = updateDto.imageUrl;
         updateData.icon_url = updateDto.imageUrl; // 鍚屾椂鏇存柊icon_url
@@ -626,18 +625,19 @@ export class EquipmentController {
   })
   @ApiResponse({
     status: HttpStatus.NOT_FOUND,
-    description: '鍣ㄦ潗涓嶅瓨鍦?,
+    description: '...',
   })
   @ApiResponse({
     status: HttpStatus.INTERNAL_SERVER_ERROR,
-    description: '鏈嶅姟鍣ㄥ唴閮ㄩ敊璇?,
+    description: '...',
   })
   async remove(@Param('id') id: string): Promise<EquipmentDto> {
     try {
       logger.info(`鍒犻櫎鍣ㄦ潗: id=${id}`);
       logger.info('Using direct Supabase API due to database connection issue');
 
-      // 妫€鏌ュ櫒鏉愭槸鍚﹀瓨鍦?      const existing = await this.supabaseApi.getById('equipment', id);
+      // 妫€鏌ュ櫒鏉愭槸鍚﹀瓨鍦?
+      const existing = await this.supabaseApi.getById('equipment', id);
       if (!existing) {
         throw new ResponseError(ErrorCodes.EQUIPMENT.NOT_FOUND, undefined, {
           equipmentId: id,
@@ -669,7 +669,7 @@ export class EquipmentController {
    * 杞垹闄ゅ櫒鏉?   */
   @Put(':id/deactivate')
   @ApiOperation({
-    summary: '杞垹闄ゅ櫒鏉?,
+    summary: '...',
     description: '灏嗗櫒鏉愯缃负闈炴椿璺冪姸鎬?(杞垹闄?',
   })
   @ApiParam({
@@ -679,23 +679,24 @@ export class EquipmentController {
   })
   @ApiResponse({
     status: HttpStatus.OK,
-    description: '杞垹闄ゆ垚鍔?,
+    description: '...',
     type: EquipmentDto,
   })
   @ApiResponse({
     status: HttpStatus.NOT_FOUND,
-    description: '鍣ㄦ潗涓嶅瓨鍦?,
+    description: '...',
   })
   @ApiResponse({
     status: HttpStatus.INTERNAL_SERVER_ERROR,
-    description: '鏈嶅姟鍣ㄥ唴閮ㄩ敊璇?,
+    description: '...',
   })
   async softRemove(@Param('id') id: string): Promise<EquipmentDto> {
     try {
       logger.info(`杞垹闄ゅ櫒鏉? id=${id}`);
       logger.info('Using direct Supabase API due to database connection issue');
 
-      // 妫€鏌ュ櫒鏉愭槸鍚﹀瓨鍦?      const existing = await this.supabaseApi.getById('equipment', id);
+      // 妫€鏌ュ櫒鏉愭槸鍚﹀瓨鍦?
+      const existing = await this.supabaseApi.getById('equipment', id);
       if (!existing) {
         throw new ResponseError(ErrorCodes.EQUIPMENT.NOT_FOUND, undefined, {
           equipmentId: id,
@@ -732,7 +733,7 @@ export class EquipmentController {
    * 鎵归噺鏇存柊鍣ㄦ潗鐘舵€?   */
   @Put('batch/status')
   @ApiOperation({
-    summary: '鎵归噺鏇存柊鍣ㄦ潗鐘舵€?,
+    summary: '...',
     description: '鎵归噺婵€娲绘垨绂佺敤鍣ㄦ潗',
   })
   @ApiBody({ type: BatchUpdateEquipmentStatusDto })
@@ -744,13 +745,13 @@ export class EquipmentController {
       properties: {
         count: {
           type: 'number',
-          description: '鏇存柊鐨勫櫒鏉愭暟閲?,
+          description: '...',
           example: 5,
         },
         message: {
           type: 'string',
           description: '鎿嶄綔缁撴灉娑堟伅',
-          example: '鎴愬姛婵€娲讳簡 5 涓櫒鏉?,
+          example: '...',
         },
       },
     },
@@ -761,11 +762,11 @@ export class EquipmentController {
   })
   @ApiResponse({
     status: HttpStatus.NOT_FOUND,
-    description: '閮ㄥ垎鍣ㄦ潗涓嶅瓨鍦?,
+    description: '...',
   })
   @ApiResponse({
     status: HttpStatus.INTERNAL_SERVER_ERROR,
-    description: '鏈嶅姟鍣ㄥ唴閮ㄩ敊璇?,
+    description: '...',
   })
   async batchUpdateStatus(
     @Body() batchDto: BatchUpdateEquipmentStatusDto,
@@ -784,9 +785,11 @@ export class EquipmentController {
         updated_at: new Date().toISOString(),
       };
 
-      // 鎵归噺鏇存柊姣忎釜鍣ㄦ潗鐨勭姸鎬?      for (const id of batchDto.ids) {
+      // 鎵归噺鏇存柊姣忎釜鍣ㄦ潗鐨勭姸鎬?
+      for (const id of batchDto.ids) {
         try {
-          // 妫€鏌ュ櫒鏉愭槸鍚﹀瓨鍦?          const existing = await this.supabaseApi.getById('equipment', id);
+          // 妫€鏌ュ櫒鏉愭槸鍚﹀瓨鍦?
+      const existing = await this.supabaseApi.getById('equipment', id);
           if (existing) {
             await this.supabaseApi.patch('equipment', id, updateData);
             successCount++;
@@ -851,12 +854,15 @@ export class EquipmentController {
       }
     }
 
-    // 澶勭悊鍏朵粬绫诲瀷鐨勯敊璇?    if (error.name === 'ValidationError' || error.message?.includes('validation')) {
+    // 澶勭悊鍏朵粬绫诲瀷鐨勯敊璇?
+      if (error.name === 'ValidationError' || error.message?.includes('validation')) {
       throw new BadRequestException('璇锋眰鍙傛暟楠岃瘉澶辫触');
     }
     throw error; 
     // throw new InternalServerErrorException('鏈嶅姟鍣ㄥ唴閮ㄩ敊璇?);
   }
 }
+
+
 
 
