@@ -1,4 +1,4 @@
-﻿import {
+import {
   Controller,
   Get,
   Post,
@@ -36,7 +36,8 @@ import { logger } from '../common/logger/logger';
 import { ResponseErrorFilter } from '../exception/response-error.filter';
 
 /**
- * Equipment Controller 绫? * 鎻愪緵鍣ㄦ潗鐩稿叧鐨凴EST API鎺ュ彛
+ * Equipment Controller
+ * 提供器材相关的REST API接口
  */
 @ApiTags('Equipment')
 @Controller('rest/v1/equipment')
@@ -51,8 +52,9 @@ export class EquipmentController {
   ) {}
 
   /**
-   * 浣跨敤 SupabaseApiService 鑾峰彇鍣ㄦ潗鍒楄〃
-   * 缁曡繃Prisma鏁版嵁搴撹繛鎺ラ棶棰?   */
+   * 使用 SupabaseApiService 获取器材列表
+   * 绕过Prisma数据库连接问题
+   */
   private async getEquipmentDirect(queryDto: GetEquipmentQueryDto): Promise<any> {
     try {
       const filters: Record<string, any> = {};
@@ -89,7 +91,7 @@ export class EquipmentController {
           updatedAt: item.updated_at,
         })),
         pagination: {
-          total: equipment.length, // 娉ㄦ剰锛氳繖涓嶆槸鐪熷疄鐨勬€绘暟
+          total: equipment.length, // 注意：这不是真实的总数
           page: queryDto.page || 1,
           pageSize: limit,
           totalPages: Math.ceil(equipment.length / limit),
@@ -104,29 +106,57 @@ export class EquipmentController {
   }
 
   /**
-   * 鑾峰彇鍣ㄦ潗鍒楄〃 (鍒嗛〉)
+   * 获取器材列表 (分页)
    */
   @Get()
   @ApiOperation({
-    summary: '鑾峰彇鍣ㄦ潗鍒楄〃',
-    description: '...',
+    summary: '获取器材列表',
+    description: '分页获取器材列表，支持按分类筛选和包含非活跃器材选项',
+  })
+  @ApiQuery({
+    name: 'page',
+    description: '页码，从1开始',
+    required: false,
+    example: 1,
+    type: Number,
+  })
+  @ApiQuery({
+    name: 'pageSize',
+    description: '每页大小，最大100',
+    required: false,
+    example: 10,
+    type: Number,
+  })
+  @ApiQuery({
+    name: 'category',
+    description: '器材分类筛选，支持小写输入如 furniture',
+    required: false,
+    enum: ['NONE', 'FURNITURE', 'WALL', 'BOTTLE', 'BAG', 'STAIRS', 'FABRIC', 'STICK', 'OUTDOOR', 'CREATIVE'],
+    example: 'FURNITURE',
+  })
+  @ApiQuery({
+    name: 'includeInactive',
+    description: '是否包含非活跃器材',
+    required: false,
+    example: false,
+    type: Boolean,
   })
   @ApiResponse({
     status: HttpStatus.OK,
-    description: '鑾峰彇鎴愬姛',
+    description: '获取成功',
     type: GetEquipmentResponseDto,
   })
   @ApiResponse({
     status: HttpStatus.BAD_REQUEST,
-    description: '璇锋眰鍙傛暟閿欒',
+    description: '请求参数错误',
   })
   @ApiResponse({
     status: HttpStatus.INTERNAL_SERVER_ERROR,
-    description: '...',
+    description: '服务器内部错误',
   })
   async findAll(@Query() queryDto: GetEquipmentQueryDto): Promise<GetEquipmentResponseDto> {
     try {
-      logger.info(`鑾峰彇鍣ㄦ潗鍒楄〃: ${JSON.stringify(queryDto)}`);
+      logger.info(`获取器材列表: ${JSON.stringify(queryDto)}`);
       logger.info('Using direct Supabase API due to database connection issue');
       return await this.getEquipmentDirect(queryDto);
     } catch (error) {
@@ -135,34 +165,34 @@ export class EquipmentController {
   }
 
   /**
-   * 鏍规嵁ID鑾峰彇鍣ㄦ潗璇︽儏
+   * 根据ID获取器材详情
    */
   @Get(':id')
   @ApiOperation({
-    summary: '鑾峰彇鍣ㄦ潗璇︽儏',
-    description: '鏍规嵁鍣ㄦ潗ID鑾峰彇璇︾粏淇℃伅',
+    summary: '获取器材详情',
+    description: '根据器材ID获取详细信息',
   })
   @ApiParam({
     name: 'id',
-    description: '鍣ㄦ潗ID',
+    description: '器材ID',
     example: 'cm3y5x1w2000xxx',
   })
   @ApiResponse({
     status: HttpStatus.OK,
-    description: '鑾峰彇鎴愬姛',
+    description: '获取成功',
     type: EquipmentDto,
   })
   @ApiResponse({
     status: HttpStatus.NOT_FOUND,
-    description: '...',
+    description: '器材未找到',
   })
   @ApiResponse({
     status: HttpStatus.INTERNAL_SERVER_ERROR,
-    description: '...',
+    description: '服务器内部错误',
   })
   async findOne(@Param('id') id: string): Promise<EquipmentDto> {
     try {
-      logger.info(`鑾峰彇鍣ㄦ潗璇︽儏: id=${id}`);
+      logger.info(`获取器材详情: id=${id}`);
       logger.info('Using direct Supabase API due to database connection issue');
 
       const item = await this.supabaseApi.getById('equipment', id);
@@ -192,34 +222,34 @@ export class EquipmentController {
   }
 
   /**
-   * 鏍规嵁浠ｇ爜鑾峰彇鍣ㄦ潗璇︽儏
+   * 根据代码获取器材详情
    */
   @Get('code/:code')
   @ApiOperation({
-    summary: '鏍规嵁浠ｇ爜鑾峰彇鍣ㄦ潗璇︽儏',
-    description: '鏍规嵁鍣ㄦ潗浠ｇ爜鑾峰彇璇︾粏淇℃伅',
+    summary: '根据代码获取器材详情',
+    description: '根据器材代码获取详细信息',
   })
   @ApiParam({
     name: 'code',
-    description: '鍣ㄦ潗浠ｇ爜',
+    description: '器材代码',
     example: 'DUMBBELLS_5KG',
   })
   @ApiResponse({
     status: HttpStatus.OK,
-    description: '鑾峰彇鎴愬姛',
+    description: '获取成功',
     type: EquipmentDto,
   })
   @ApiResponse({
     status: HttpStatus.NOT_FOUND,
-    description: '...',
+    description: '器材未找到',
   })
   @ApiResponse({
     status: HttpStatus.INTERNAL_SERVER_ERROR,
-    description: '...',
+    description: '服务器内部错误',
   })
   async findByCode(@Param('code') code: string): Promise<EquipmentDto> {
     try {
-      logger.info(`鏍规嵁浠ｇ爜鑾峰彇鍣ㄦ潗璇︽儏: code=${code}`);
+      logger.info(`根据代码获取器材详情: code=${code}`);
       logger.info('Using direct Supabase API due to database connection issue');
 
       const item = await this.supabaseApi.getByField('equipment', 'code', code);
@@ -249,12 +279,12 @@ export class EquipmentController {
   }
 
   /**
-   * 鑾峰彇娲昏穬鍣ㄦ潗鍒楄〃
+   * 获取活跃器材列表
    */
   @Get('active/list')
   @ApiOperation({
-    summary: '鑾峰彇娲昏穬鍣ㄦ潗鍒楄〃',
-    description: '...',
+    summary: '获取活跃器材列表',
+    description: '获取所有活跃状态的器材列表',
   })
   @ApiQuery({
     name: 'category',
@@ -265,23 +295,23 @@ export class EquipmentController {
   })
   @ApiResponse({
     status: HttpStatus.OK,
-    description: '鑾峰彇鎴愬姛',
+    description: '获取成功',
     type: [EquipmentDto],
   })
   @ApiResponse({
     status: HttpStatus.INTERNAL_SERVER_ERROR,
-    description: '...',
+    description: '服务器内部错误',
   })
   async findActiveEquipment(@Query('category') category?: string): Promise<EquipmentDto[]> {
     try {
-      logger.info(`鑾峰彇娲昏穬鍣ㄦ潗鍒楄〃: category=${category}`);
+      logger.info(`获取活跃器材列表: category=${category}`);
       logger.info('Using direct Supabase API due to database connection issue');
 
       const filters: Record<string, any> = {
         is_active: true,
       };
 
-            const cat = category?.toString().toUpperCase();
+      const cat = category?.toString().toUpperCase();
       if (cat) {
         const allowed = Object.values(EquipmentCategoryEnum);
         if (!allowed.includes(cat as EquipmentCategoryEnum)) {
@@ -313,24 +343,25 @@ export class EquipmentController {
   }
 
   /**
-   * 鎸夊垎绫昏幏鍙栧櫒鏉?   */
+   * 按分类获取器材
+   */
   @Get('category/grouped')
   @ApiOperation({
-    summary: '...',
-    description: '鑾峰彇鎸夊垎绫诲垎缁勭殑鍣ㄦ潗鍒楄〃',
+    summary: '获取分组器材列表',
+    description: '获取按分类分组的器材列表',
   })
   @ApiResponse({
     status: HttpStatus.OK,
-    description: '鑾峰彇鎴愬姛',
+    description: '获取成功',
     type: GetEquipmentByCategoryResponseDto,
   })
   @ApiResponse({
     status: HttpStatus.INTERNAL_SERVER_ERROR,
-    description: '...',
+    description: '服务器内部错误',
   })
   async findEquipmentByCategory(): Promise<GetEquipmentByCategoryResponseDto> {
     try {
-      logger.info('鑾峰彇鎸夊垎绫诲垎缁勭殑鍣ㄦ潗');
+      logger.info('获取按分类分组的器材');
       logger.info('Using direct Supabase API due to database connection issue');
 
       const allEquipment = await this.supabaseApi.get('equipment',
@@ -368,38 +399,38 @@ export class EquipmentController {
   }
 
   /**
-   * 鑾峰彇鍣ㄦ潗缁熻淇℃伅
+   * 获取器材统计信息
    */
   @Get('stats/summary')
   @ApiOperation({
-    summary: '鑾峰彇鍣ㄦ潗缁熻淇℃伅',
-    description: '鑾峰彇鍣ㄦ潗鎬绘暟銆佹椿璺冩暟閲忋€佸垎绫荤粺璁＄瓑淇℃伅',
+    summary: '获取器材统计信息',
+    description: '获取器材总数、活跃数量、分类统计等信息',
   })
   @ApiResponse({
     status: HttpStatus.OK,
-    description: '鑾峰彇鎴愬姛',
+    description: '获取成功',
     type: GetEquipmentStatsResponseDto,
   })
   @ApiResponse({
     status: HttpStatus.INTERNAL_SERVER_ERROR,
-    description: '...',
+    description: '服务器内部错误',
   })
   async getEquipmentStats(): Promise<GetEquipmentStatsResponseDto> {
     try {
-      logger.info('鑾峰彇鍣ㄦ潗缁熻淇℃伅');
+      logger.info('获取器材统计信息');
       logger.info('Using direct Supabase API due to database connection issue');
 
-      // 鑾峰彇鎵€鏈夊櫒鏉?
+      // 获取所有器材
       const allEquipment = await this.supabaseApi.get('equipment', {}, {
         orderBy: 'category.asc,display_order.asc',
       });
 
-      // 璁＄畻鎬绘暟鍜屾椿璺冩暟
+      // 计算总数和活跃数
       const total = allEquipment.length;
       const active = allEquipment.filter((item: any) => item.is_active).length;
       const inactive = total - active;
 
-      // 鎸夊垎绫荤粺璁?
+      // 按分类统计
       const categoryStats: Record<string, any> = {};
       allEquipment.forEach((item: any) => {
         const category = item.category || 'NONE';
@@ -430,37 +461,37 @@ export class EquipmentController {
   }
 
   /**
-   * 鍒涘缓鍣ㄦ潗
+   * 创建器材
    */
   @Post()
   @ApiOperation({
-    summary: '鍒涘缓鍣ㄦ潗',
-    description: '鍒涘缓鏂扮殑鍣ㄦ潗璁板綍',
+    summary: '创建器材',
+    description: '创建新的器材记录',
   })
   @ApiBody({ type: CreateEquipmentDto })
   @ApiResponse({
     status: HttpStatus.CREATED,
-    description: '鍒涘缓鎴愬姛',
+    description: '创建成功',
     type: EquipmentDto,
   })
   @ApiResponse({
     status: HttpStatus.BAD_REQUEST,
-    description: '璇锋眰鍙傛暟閿欒',
+    description: '请求参数错误',
   })
   @ApiResponse({
     status: HttpStatus.CONFLICT,
-    description: '...',
+    description: '器材代码已存在',
   })
   @ApiResponse({
     status: HttpStatus.INTERNAL_SERVER_ERROR,
-    description: '...',
+    description: '服务器内部错误',
   })
   async create(@Body() createDto: CreateEquipmentDto): Promise<EquipmentDto> {
     try {
-      logger.info(`鍒涘缓鍣ㄦ潗: ${JSON.stringify(createDto)}`);
+      logger.info(`创建器材: ${JSON.stringify(createDto)}`);
       logger.info('Using direct Supabase API due to database connection issue');
 
-      // 妫€鏌ヤ唬鐮佹槸鍚﹀凡瀛樺湪
+      // 检查代码是否已存在
       const existing = await this.supabaseApi.getByField('equipment', 'code', createDto.code);
       if (existing) {
          throw new ResponseError(ErrorCodes.EQUIPMENT.ALREADY_EXISTS, undefined, {
@@ -468,18 +499,21 @@ export class EquipmentController {
         });
       }
 
-      // 鐢熸垚CUID ID
+      // 生成CUID ID
       const cuidId = `cuid_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
 
-      // 鍒涘缓鍣ㄦ潗鏁版嵁
+      // 创建器材数据
       const createData = {
         id: cuidId,
         code: createDto.code,
         name: createDto.name,
-        // description: createDto.description || null, // 鏁版嵁搴撲腑娌℃湁杩欎釜瀛楁锛屽厛娉ㄩ噴鎺?        category: createDto.category || null,
-        recognizable: false, // 榛樿鍊硷紝DTO涓病鏈夋瀛楁
-        recognition_labels: [], // Supabase涓殑瀛楁鍚嶆槸snake_case
-        recognition_confidence: 0.85, // 榛樿缃俊搴?        icon_url: createDto.imageUrl || 'https://example.com/default-icon.jpg', // 浣跨敤imageUrl浣滀负iconUrl鎴栭粯璁ゅ€?        image_url: createDto.imageUrl || null,
+        // description: createDto.description || null, // 数据库中没有这个字段，先注释掉
+        category: createDto.category || null,
+        recognizable: false, // 默认值，DTO中没有此字段
+        recognition_labels: [], // Supabase中的字段名是snake_case
+        recognition_confidence: 0.85, // 默认置信度
+        icon_url: createDto.imageUrl || 'https://example.com/default-icon.jpg', // 使用imageUrl作为iconUrl或默认值
+        image_url: createDto.imageUrl || null,
         display_order: createDto.displayOrder || 0,
         is_active: createDto.isActive !== undefined ? createDto.isActive : true,
         created_at: new Date().toISOString(),
@@ -492,7 +526,7 @@ export class EquipmentController {
         id: newItem.id,
         code: newItem.code,
         name: newItem.name,
-        // description: newItem.description, // 鏁版嵁搴撲腑娌℃湁杩欎釜瀛楁
+        // description: newItem.description, // 数据库中没有这个字段
         category: newItem.category,
         recognizable: newItem.recognizable || false,
         iconUrl: newItem.icon_url,
@@ -508,49 +542,49 @@ export class EquipmentController {
   }
 
   /**
-   * 鏇存柊鍣ㄦ潗
+   * 更新器材
    */
   @Put(':id')
   @ApiOperation({
-    summary: '鏇存柊鍣ㄦ潗',
-    description: '鏍规嵁ID鏇存柊鍣ㄦ潗淇℃伅',
+    summary: '更新器材',
+    description: '根据ID更新器材信息',
   })
   @ApiParam({
     name: 'id',
-    description: '鍣ㄦ潗ID',
+    description: '器材ID',
     example: 'cm3y5x1w2000xxx',
   })
   @ApiBody({ type: UpdateEquipmentDto })
   @ApiResponse({
     status: HttpStatus.OK,
-    description: '鏇存柊鎴愬姛',
+    description: '更新成功',
     type: EquipmentDto,
   })
   @ApiResponse({
     status: HttpStatus.BAD_REQUEST,
-    description: '璇锋眰鍙傛暟閿欒',
+    description: '请求参数错误',
   })
   @ApiResponse({
     status: HttpStatus.NOT_FOUND,
-    description: '...',
+    description: '器材未找到',
   })
   @ApiResponse({
     status: HttpStatus.CONFLICT,
-    description: '...',
+    description: '器材代码已存在',
   })
   @ApiResponse({
     status: HttpStatus.INTERNAL_SERVER_ERROR,
-    description: '...',
+    description: '服务器内部错误',
   })
   async update(
     @Param('id') id: string,
     @Body() updateDto: UpdateEquipmentDto,
   ): Promise<EquipmentDto> {
     try {
-      logger.info(`鏇存柊鍣ㄦ潗: id=${id}, data=${JSON.stringify(updateDto)}`);
+      logger.info(`更新器材: id=${id}, data=${JSON.stringify(updateDto)}`);
       logger.info('Using direct Supabase API due to database connection issue');
 
-      // 妫€鏌ュ櫒鏉愭槸鍚﹀瓨鍦?
+      // 检查器材是否存在
       const existing = await this.supabaseApi.getById('equipment', id);
       if (!existing) {
         throw new ResponseError(ErrorCodes.EQUIPMENT.NOT_FOUND, undefined, {
@@ -558,7 +592,7 @@ export class EquipmentController {
         });
       }
 
-      // 濡傛灉瑕佹洿鏂癱ode锛屾鏌ユ槸鍚︿笌鍏朵粬璁板綍鍐茬獊
+      // 如果要更新code，检查是否与其他记录冲突
       if (updateDto.code && updateDto.code !== existing.code) {
         const codeConflict = await this.supabaseApi.getByField('equipment', 'code', updateDto.code);
         if (codeConflict) {
@@ -568,19 +602,18 @@ export class EquipmentController {
         }
       }
 
-      // 鍒涘缓鏇存柊鏁版嵁
+      // 创建更新数据
       const updateData: Record<string, any> = {
         updated_at: new Date().toISOString(),
       };
 
       if (updateDto.code) updateData.code = updateDto.code;
       if (updateDto.name) updateData.name = updateDto.name;
-      //
-      if (updateDto.description !== undefined) updateData.description = updateDto.description; // 鏁版嵁搴撲腑娌℃湁姝ゅ瓧娈?
+      // if (updateDto.description !== undefined) updateData.description = updateDto.description; // 数据库中没有此字段
       if (updateDto.category !== undefined) updateData.category = updateDto.category;
       if (updateDto.imageUrl !== undefined) {
         updateData.image_url = updateDto.imageUrl;
-        updateData.icon_url = updateDto.imageUrl; // 鍚屾椂鏇存柊icon_url
+        updateData.icon_url = updateDto.imageUrl; // 同时更新icon_url
       }
       if (updateDto.displayOrder !== undefined) updateData.display_order = updateDto.displayOrder;
       if (updateDto.isActive !== undefined) updateData.is_active = updateDto.isActive;
@@ -591,7 +624,8 @@ export class EquipmentController {
         id: updatedItem.id,
         code: updatedItem.code,
         name: updatedItem.name,
-        // description: updatedItem.description, // 鏁版嵁搴撲腑娌℃湁姝ゅ瓧娈?        category: updatedItem.category,
+        // description: updatedItem.description, // 数据库中没有此字段
+        category: updatedItem.category,
         recognizable: updatedItem.recognizable || false,
         iconUrl: updatedItem.icon_url,
         imageUrl: updatedItem.image_url,
@@ -606,37 +640,37 @@ export class EquipmentController {
   }
 
   /**
-   * 鍒犻櫎鍣ㄦ潗 (纭垹闄?
+   * 删除器材 (硬删除)
    */
   @Delete(':id')
   @ApiOperation({
-    summary: '鍒犻櫎鍣ㄦ潗',
-    description: '鏍规嵁ID鍒犻櫎鍣ㄦ潗 (纭垹闄?',
+    summary: '删除器材',
+    description: '根据ID删除器材 (硬删除)',
   })
   @ApiParam({
     name: 'id',
-    description: '鍣ㄦ潗ID',
+    description: '器材ID',
     example: 'cm3y5x1w2000xxx',
   })
   @ApiResponse({
     status: HttpStatus.OK,
-    description: '鍒犻櫎鎴愬姛',
+    description: '删除成功',
     type: EquipmentDto,
   })
   @ApiResponse({
     status: HttpStatus.NOT_FOUND,
-    description: '...',
+    description: '器材未找到',
   })
   @ApiResponse({
     status: HttpStatus.INTERNAL_SERVER_ERROR,
-    description: '...',
+    description: '服务器内部错误',
   })
   async remove(@Param('id') id: string): Promise<EquipmentDto> {
     try {
-      logger.info(`鍒犻櫎鍣ㄦ潗: id=${id}`);
+      logger.info(`删除器材: id=${id}`);
       logger.info('Using direct Supabase API due to database connection issue');
 
-      // 妫€鏌ュ櫒鏉愭槸鍚﹀瓨鍦?
+      // 检查器材是否存在
       const existing = await this.supabaseApi.getById('equipment', id);
       if (!existing) {
         throw new ResponseError(ErrorCodes.EQUIPMENT.NOT_FOUND, undefined, {
@@ -644,14 +678,16 @@ export class EquipmentController {
         });
       }
 
-      // 鎵ц纭垹闄?      await this.supabaseApi.delete('equipment', id);
+      // 执行硬删除
+      await this.supabaseApi.delete('equipment', id);
 
-      // 杩斿洖琚垹闄ょ殑鍣ㄦ潗淇℃伅
+      // 返回被删除的器材信息
       return {
         id: existing.id,
         code: existing.code,
         name: existing.name,
-        // description: existing.description, // 鏁版嵁搴撲腑娌℃湁姝ゅ瓧娈?        category: existing.category,
+        // description: existing.description, // 数据库中没有此字段
+        category: existing.category,
         recognizable: existing.recognizable || false,
         iconUrl: existing.icon_url,
         imageUrl: existing.image_url,
@@ -666,36 +702,37 @@ export class EquipmentController {
   }
 
   /**
-   * 杞垹闄ゅ櫒鏉?   */
+   * 软删除器材
+   */
   @Put(':id/deactivate')
   @ApiOperation({
-    summary: '...',
-    description: '灏嗗櫒鏉愯缃负闈炴椿璺冪姸鎬?(杞垹闄?',
+    summary: '软删除器材',
+    description: '将器材设置为非活跃状态(软删除)',
   })
   @ApiParam({
     name: 'id',
-    description: '鍣ㄦ潗ID',
+    description: '器材ID',
     example: 'cm3y5x1w2000xxx',
   })
   @ApiResponse({
     status: HttpStatus.OK,
-    description: '...',
+    description: '软删除成功',
     type: EquipmentDto,
   })
   @ApiResponse({
     status: HttpStatus.NOT_FOUND,
-    description: '...',
+    description: '器材未找到',
   })
   @ApiResponse({
     status: HttpStatus.INTERNAL_SERVER_ERROR,
-    description: '...',
+    description: '服务器内部错误',
   })
   async softRemove(@Param('id') id: string): Promise<EquipmentDto> {
     try {
-      logger.info(`杞垹闄ゅ櫒鏉? id=${id}`);
+      logger.info(`软删除器材: id=${id}`);
       logger.info('Using direct Supabase API due to database connection issue');
 
-      // 妫€鏌ュ櫒鏉愭槸鍚﹀瓨鍦?
+      // 检查器材是否存在
       const existing = await this.supabaseApi.getById('equipment', id);
       if (!existing) {
         throw new ResponseError(ErrorCodes.EQUIPMENT.NOT_FOUND, undefined, {
@@ -703,7 +740,7 @@ export class EquipmentController {
         });
       }
 
-      // 鎵ц杞垹闄?- 璁剧疆 is_active = false
+      // 执行软删除 - 设置 is_active = false
       const updateData = {
         is_active: false,
         updated_at: new Date().toISOString(),
@@ -715,7 +752,8 @@ export class EquipmentController {
         id: updatedItem.id,
         code: updatedItem.code,
         name: updatedItem.name,
-        // description: updatedItem.description, // 鏁版嵁搴撲腑娌℃湁姝ゅ瓧娈?        category: updatedItem.category,
+        // description: updatedItem.description, // 数据库中没有此字段
+        category: updatedItem.category,
         recognizable: updatedItem.recognizable || false,
         iconUrl: updatedItem.icon_url,
         imageUrl: updatedItem.image_url,
@@ -730,49 +768,50 @@ export class EquipmentController {
   }
 
   /**
-   * 鎵归噺鏇存柊鍣ㄦ潗鐘舵€?   */
+   * 批量更新器材状态
+   */
   @Put('batch/status')
   @ApiOperation({
-    summary: '...',
-    description: '鎵归噺婵€娲绘垨绂佺敤鍣ㄦ潗',
+    summary: '批量更新器材状态',
+    description: '批量激活或禁用器材',
   })
   @ApiBody({ type: BatchUpdateEquipmentStatusDto })
   @ApiResponse({
     status: HttpStatus.OK,
-    description: '鎵归噺鏇存柊鎴愬姛',
+    description: '批量更新成功',
     schema: {
       type: 'object',
       properties: {
         count: {
           type: 'number',
-          description: '...',
+          description: '更新成功的器材数量',
           example: 5,
         },
         message: {
           type: 'string',
-          description: '鎿嶄綔缁撴灉娑堟伅',
-          example: '...',
+          description: '操作结果消息',
+          example: '成功更新 5 个器材状态',
         },
       },
     },
   })
   @ApiResponse({
     status: HttpStatus.BAD_REQUEST,
-    description: '璇锋眰鍙傛暟閿欒',
+    description: '请求参数错误',
   })
   @ApiResponse({
     status: HttpStatus.NOT_FOUND,
-    description: '...',
+    description: '器材未找到',
   })
   @ApiResponse({
     status: HttpStatus.INTERNAL_SERVER_ERROR,
-    description: '...',
+    description: '服务器内部错误',
   })
   async batchUpdateStatus(
     @Body() batchDto: BatchUpdateEquipmentStatusDto,
   ): Promise<{ count: number; message: string }> {
     try {
-      logger.info(`鎵归噺鏇存柊鍣ㄦ潗鐘舵€? ${JSON.stringify(batchDto)}`);
+      logger.info(`批量更新器材状态: ${JSON.stringify(batchDto)}`);
       logger.info('Using direct Supabase API due to database connection issue');
 
       if (!batchDto.ids || batchDto.ids.length === 0) {
@@ -785,11 +824,11 @@ export class EquipmentController {
         updated_at: new Date().toISOString(),
       };
 
-      // 鎵归噺鏇存柊姣忎釜鍣ㄦ潗鐨勭姸鎬?
+      // 批量更新每个器材的状态
       for (const id of batchDto.ids) {
         try {
-          // 妫€鏌ュ櫒鏉愭槸鍚﹀瓨鍦?
-      const existing = await this.supabaseApi.getById('equipment', id);
+          // 检查器材是否存在
+          const existing = await this.supabaseApi.getById('equipment', id);
           if (existing) {
             await this.supabaseApi.patch('equipment', id, updateData);
             successCount++;
@@ -814,11 +853,13 @@ export class EquipmentController {
   }
 
   /**
-   * 缁熶竴閿欒澶勭悊鏂规硶
-   * @param error 閿欒瀵硅薄
-   * @param method 鏂规硶鍚?   * @param context 涓婁笅鏂囦俊鎭?   */
+   * 统一错误处理方法
+   * @param error 错误对象
+   * @param method 方法名
+   * @param context 上下文信息
+   */
   private handleError(error: any, method: string, context?: any): never {
-    logger.error(`Equipment Controller ${method} 澶辫触:`, error.stack || error.message, {
+    logger.error(`Equipment Controller ${method} 失败:`, error.stack || error.message, {
       context,
       error: error.message,
     });
@@ -826,17 +867,17 @@ export class EquipmentController {
     if (error instanceof ResponseError) {
       switch (error.code) {
         case ErrorCodes.EQUIPMENT.NOT_FOUND.code:
-          throw error; // 鐩存帴鎶涘嚭 ResponseError 鑰屼笉鏄浆鎹负 NotFoundException
+          throw error; // 直接抛出 ResponseError 而不是转换为 NotFoundException
 
         case ErrorCodes.EQUIPMENT.CODE_EXISTS.code:
-          throw error; // 鐩存帴鎶涘嚭 ResponseError
+          throw error; // 直接抛出 ResponseError
 
         case ErrorCodes.EQUIPMENT.INVALID_CODE.code:
         case ErrorCodes.COMMON.VALIDATION_ERROR.code:
-          throw error; // 鐩存帴鎶涘嚭 ResponseError
+          throw error; // 直接抛出 ResponseError
 
         case ErrorCodes.EQUIPMENT.INACTIVE_EQUIPMENT.code:
-          throw error; // 鐩存帴鎶涘嚭 ResponseError
+          throw error; // 直接抛出 ResponseError
 
         case ErrorCodes.EQUIPMENT.CREATE_FAILED.code:
         case ErrorCodes.EQUIPMENT.UPDATE_FAILED.code:
@@ -846,23 +887,19 @@ export class EquipmentController {
         case ErrorCodes.EQUIPMENT.COUNT_FAILED.code:
         default:
           logger.error(
-            `鏈鐞嗙殑鍣ㄦ潗閿欒: code=${error.code}, message=${error.message}`,
+            `未处理的器材错误: code=${error.code}, message=${error.message}`,
             error.stack,
           );
-          throw error; 
-          // throw new InternalServerErrorException('鏈嶅姟鍣ㄥ唴閮ㄩ敊璇?);
+          throw error;
+          // throw new InternalServerErrorException('服务器内部错误');
       }
     }
 
-    // 澶勭悊鍏朵粬绫诲瀷鐨勯敊璇?
-      if (error.name === 'ValidationError' || error.message?.includes('validation')) {
-      throw new BadRequestException('璇锋眰鍙傛暟楠岃瘉澶辫触');
+    // 处理其他类型的错误
+    if (error.name === 'ValidationError' || error.message?.includes('validation')) {
+      throw new BadRequestException('请求参数验证失败');
     }
-    throw error; 
-    // throw new InternalServerErrorException('鏈嶅姟鍣ㄥ唴閮ㄩ敊璇?);
+    throw error;
+    // throw new InternalServerErrorException('服务器内部错误');
   }
 }
-
-
-
-

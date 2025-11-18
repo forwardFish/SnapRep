@@ -8,6 +8,7 @@ import { RarityCalculatorService } from './services/rarity-calculator.service';
 import { WorkoutSessionsModule } from '../workout-sessions/workout-sessions.module';
 import { AuthModule } from '../auth/auth.module';
 import { UsersModule } from '../users/users.module';
+import { CommonModule } from '../common/common.module';
 
 /**
  * Cards 模块
@@ -15,6 +16,7 @@ import { UsersModule } from '../users/users.module';
  */
 @Module({
   imports: [
+    CommonModule, // 为SupabaseApiService提供支持
     WorkoutSessionsModule,
     AuthModule, // 为JwtAuthGuard提供支持
     UsersModule, // 为JwtAuthGuard提供UsersService

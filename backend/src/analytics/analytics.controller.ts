@@ -41,8 +41,6 @@ import { logger } from '../common/logger/logger';
  */
 @ApiTags('Analytics')
 @Controller('api/v1/analytics')
-@UseGuards(JwtAuthGuard)
-@ApiBearerAuth('JWT-auth')
 @UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
 export class AnalyticsController {
   // private readonly logger = new Logger(AnalyticsController.name);

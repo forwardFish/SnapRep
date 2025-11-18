@@ -1,4 +1,5 @@
-import { HttpStatus } from '@nestjs/common';
+﻿import { HttpStatus } from '@nestjs/common';
+import { logger } from '../common/logger/logger';
 
 /**
  * 错误代码接口定义
@@ -84,6 +85,23 @@ export class ResponseError extends Error {
 
     // 验证错误代码
     this.validateErrorCode(errorCode);
+    
+    // Auto-log ResponseError on creation
+    try {
+      logger.error("ResponseError", {
+        code: this.code,
+        message: this.message,
+        category: this.category,
+        httpStatus: this.httpStatus,
+        timestamp: this.timestamp,
+        requestId: this.requestId,
+        context: this.context,
+        cause: this.cause ? { name: this.cause.name, message: this.cause.message, stack: this.cause.stack } : undefined,
+        stack: this.stack,
+      });
+    } catch (_) {
+      // ignore logging errors
+    }
   }
 
   /**

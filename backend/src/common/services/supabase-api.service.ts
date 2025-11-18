@@ -52,7 +52,14 @@ export class SupabaseApiService {
     // 添加过滤器
     Object.entries(filters).forEach(([key, value]) => {
       if (value !== undefined && value !== null) {
-        searchParams.append(key, `eq.${value}`);
+        // 检查是否已经包含操作符（如 in.、eq.、gte. 等）
+        if (typeof value === 'string' && value.includes('.')) {
+          // 如果已包含操作符，直接使用
+          searchParams.append(key, value);
+        } else {
+          // 否则默认使用等值查询
+          searchParams.append(key, `eq.${value}`);
+        }
       }
     });
 

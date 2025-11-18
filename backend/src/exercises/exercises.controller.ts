@@ -3,6 +3,9 @@ import { ApiTags, ApiOperation, ApiResponse, ApiBody, ApiParam } from '@nestjs/s
 import { WorkoutRecommendationService } from './services/workout-recommendation.service';
 import { ExerciseMatchingService } from './services/exercise-matching.service';
 import { QuickRecommendationDto, ReplaceExerciseDto, AlternativesQueryDto } from './dto/exercise-recommendation.dto';
+import { SupabaseApiService } from '../common/services/supabase-api.service';
+import { ResponseError } from '../exception/response-error';
+import { ErrorCodes } from '../exception/error-codes';
 import { logger } from '../common/logger/logger';
 
 @ApiTags('Exercise Recommendations')
@@ -13,6 +16,7 @@ export class ExercisesController {
   constructor(
     private readonly workoutRecommendationService: WorkoutRecommendationService,
     private readonly exerciseMatchingService: ExerciseMatchingService,
+    private readonly supabaseApi: SupabaseApiService, // 添加SupabaseApiService注入
   ) {}
 
   @Post('quick')
@@ -84,7 +88,7 @@ export class ExercisesController {
       console.log('🚨 WORKOUT RECOMMENDATION ERROR:', error.message);
       console.log('🚨 ERROR STACK:', error.stack);
       logger.error(`快速推荐失败: ${error.message}`, error.stack);
-      throw error;
+      this.handleError(error, 'quickRecommendation', { dto });
     }
   }
 
@@ -125,7 +129,7 @@ export class ExercisesController {
       return result;
     } catch (error) {
       logger.error(`动作替换失败: ${error.message}`, error.stack);
-      throw error;
+      this.handleError(error, 'replaceExercise', { dto });
     }
   }
 
@@ -175,8 +179,35 @@ export class ExercisesController {
       logger.info(`获取候选成功: ${result.alternatives.length}个候选`);
       return result;
     } catch (error) {
-      logger.error(`获取候选失败: ${error.message}`, error.stack);
-      throw error;
+      this.handleError(error, 'getAlternatives', { query });
     }
+  }
+
+  /**
+   * 统一错误处理方法
+   * @param error 错误对象
+   * @param method 方法名
+   * @param context 上下文信息
+   */
+  private handleError(error: any, method: string, context?: any): never {
+    logger.error(`Exercises Controller ${method} 失败:`, error.stack || error.message, {
+      context,
+      error: error.message,
+    });
+
+    if (error instanceof ResponseError) {
+      throw error; // 直接抛出 ResponseError
+    }
+
+    // 处理其他类型的错误
+    if (error.name === 'ValidationError' || error.message?.includes('validation')) {
+      throw new ResponseError(
+        ErrorCodes.COMMON?.VALIDATION_ERROR || { code: 1005, message: 'Validation failed' },
+        error,
+        context
+      );
+    }
+
+    throw error;
   }
 }

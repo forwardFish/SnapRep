@@ -61,12 +61,18 @@ class HomeProvider extends ChangeNotifier {
     try {
       _scenarios = await _apiService.getScenarios();
       _scenariosError = null;
+      debugPrint('✅ Scenarios loaded successfully from API: ${_scenarios.length} scenarios');
     } catch (e) {
-      // Fallback to default data when API fails
-      debugPrint('⚠️  API failed, using default scenarios: $e');
-      _scenarios = _defaultDataService.getDefaultScenarios();
-      // Don't set error when we have fallback data
-      _scenariosError = null;
+      debugPrint('❌ API failed to load scenarios: $e');
+
+      // Show error to user but only fallback if we have no data at all
+      _scenariosError = 'Failed to load scenarios from server: ${e.toString().split(':').first}';
+
+      if (_scenarios.isEmpty) {
+        debugPrint('⚠️ Using default scenarios as emergency fallback');
+        _scenarios = _defaultDataService.getDefaultScenarios();
+        // Keep the error message so user knows there was a problem
+      }
     } finally {
       _isLoadingScenarios = false;
       notifyListeners();
@@ -82,12 +88,18 @@ class HomeProvider extends ChangeNotifier {
     try {
       _equipment = await _apiService.getEquipment();
       _equipmentError = null;
+      debugPrint('✅ Equipment loaded successfully from API: ${_equipment.length} items');
     } catch (e) {
-      // Fallback to default data when API fails
-      debugPrint('⚠️  API failed, using default equipment: $e');
-      _equipment = _defaultDataService.getDefaultEquipment();
-      // Don't set error when we have fallback data
-      _equipmentError = null;
+      debugPrint('❌ API failed to load equipment: $e');
+
+      // Show error to user but only fallback if we have no data at all
+      _equipmentError = 'Failed to load equipment from server: ${e.toString().split(':').first}';
+
+      if (_equipment.isEmpty) {
+        debugPrint('⚠️ Using default equipment as emergency fallback');
+        _equipment = _defaultDataService.getDefaultEquipment();
+        // Keep the error message so user knows there was a problem
+      }
     } finally {
       _isLoadingEquipment = false;
       notifyListeners();
@@ -96,37 +108,41 @@ class HomeProvider extends ChangeNotifier {
 
   /// Load current theme week
   Future<void> loadCurrentThemeWeek() async {
-    print('🔄 Starting to load current theme week...');
+    debugPrint('🔄 Starting to load current theme week...');
     _isLoadingThemeWeek = true;
     _themeWeekError = null;
     notifyListeners();
 
     try {
-      print('📡 Calling API service to get current theme week...');
+      debugPrint('📡 Calling API service to get current theme week...');
       _currentThemeWeek = await _apiService.getCurrentThemeWeek();
       _themeWeekError = null;
 
       if (_currentThemeWeek != null) {
-        print('✅ Successfully loaded theme week: ${_currentThemeWeek!.title}');
+        debugPrint('✅ Successfully loaded theme week: ${_currentThemeWeek!.title}');
       } else {
-        print('ℹ️ No current theme week found from API');
+        debugPrint('ℹ️ No current theme week found from API');
       }
     } catch (e) {
-      // Fallback to default data when API fails
-      print('⚠️ API failed, using default theme week: $e');
-      _currentThemeWeek = _defaultDataService.getDefaultThemeWeek();
+      debugPrint('❌ API failed to load theme week: $e');
 
-      if (_currentThemeWeek != null) {
-        print('🔄 Using default theme week: ${_currentThemeWeek!.title}');
-      } else {
-        print('❌ Even default theme week is null!');
+      // Show error to user but only fallback if we have no data at all
+      _themeWeekError = 'Failed to load theme week from server: ${e.toString().split(':').first}';
+
+      if (_currentThemeWeek == null) {
+        debugPrint('⚠️ Using default theme week as emergency fallback');
+        _currentThemeWeek = _defaultDataService.getDefaultThemeWeek();
+
+        if (_currentThemeWeek != null) {
+          debugPrint('🔄 Using default theme week: ${_currentThemeWeek!.title}');
+        } else {
+          debugPrint('❌ Even default theme week is null!');
+        }
+        // Keep the error message so user knows there was a problem
       }
-
-      // Don't set error when we have fallback data
-      _themeWeekError = null;
     } finally {
       _isLoadingThemeWeek = false;
-      print('🏁 Theme week loading completed. IsLoading: $_isLoadingThemeWeek');
+      debugPrint('🏁 Theme week loading completed. IsLoading: $_isLoadingThemeWeek');
       notifyListeners();
     }
   }

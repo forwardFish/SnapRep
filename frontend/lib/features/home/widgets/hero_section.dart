@@ -92,25 +92,26 @@ class HeroSection extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 16),
-                    ElevatedButton(
-                      onPressed: onCtaPressed,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFFFD700), // Yellow CTA
-                        foregroundColor: const Color(0xFF1A1A1A), // Premium Black
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 24,
-                          vertical: 12,
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: onCtaPressed,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFFFD700), // HTML yellow-cta
+                          foregroundColor: const Color(0xFF1A1A1A), // premium-black
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          elevation: 8,
+                          shadowColor: const Color(0xFFFFD700).withOpacity(0.4),
                         ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        elevation: 0,
-                      ),
-                      child: const Text(
-                        'Give Me 60 Seconds',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
+                        child: const Text(
+                          'Give Me 60 Seconds',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                          ),
                         ),
                       ),
                     ),

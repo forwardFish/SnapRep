@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SnapRep - Workout Guide Step 3 | Choose Target Areas</title>
+    <title>SnapRep - Target Areas | Choose your target zones</title>
     <style>
         /* ========== GLOBAL RESET & PREMIUM TYPOGRAPHY ========== */
         * {
@@ -13,17 +13,18 @@
         }
 
         :root {
-            /* Premium Color System */
-            --primary-gradient: linear-gradient(135deg, #FF6B6B 0%, #FF8E53 25%, #FF7F50 50%, #FFB347 75%, #FFA500 100%);
-            --crystal-white: linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(255, 255, 255, 0.92) 30%, rgba(255, 255, 255, 0.85) 60%, rgba(255, 255, 255, 0.1) 100%);
-            --glass-effect: linear-gradient(135deg, rgba(255, 255, 255, 0.25) 0%, rgba(255, 255, 255, 0.1) 50%, rgba(255, 255, 255, 0.05) 100%);
-            --shadow-soft: 0 8px 32px rgba(0, 0, 0, 0.04), 0 2px 16px rgba(255, 127, 80, 0.08);
-            --shadow-medium: 0 12px 48px rgba(0, 0, 0, 0.08), 0 4px 24px rgba(255, 127, 80, 0.12);
-            --text-primary: #2C3E50;
-            --text-secondary: #546E7A;
-            --text-caption: #90A4AE;
-
-            /* Reference UI Style - Premium Yellow CTA */
+            /* Color System based on reference */
+            --orange-primary: #FF6B35;
+            --orange-hover: #E55A30;
+            --gray-unselected: #E5E5E5;
+            --gray-text: #666666;
+            --green-continue: #4CAF50;
+            --green-continue-hover: #45A049;
+            --text-primary: #333333;
+            --text-secondary: #666666;
+            --white: #FFFFFF;
+            --light-gray: #F5F5F5;
+            /* Yellow CTA colors for consistency with 03-guide-step2.html */
             --yellow-cta: #FFD700;
             --yellow-cta-hover: #FFC107;
             --yellow-shadow: 0 8px 24px rgba(255, 215, 0, 0.25);
@@ -32,7 +33,7 @@
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Helvetica Neue', 'Roboto', 'Segoe UI', system-ui, sans-serif;
-            background: radial-gradient(ellipse at top, #f8fafc 0%, #ffffff 50%, #f1f5f9 100%);
+            background: var(--white);
             color: var(--text-primary);
             line-height: 1.6;
             overflow-x: auto;
@@ -80,327 +81,342 @@
             background: #ffffff;
         }
 
-        /* ========== PAGE CONTENT & SCROLLING ========== */
+        /* ========== PAGE CONTENT ========== */
         .page-content {
             height: calc(100% - 44px);
             overflow-y: auto;
             overflow-x: hidden;
             scroll-behavior: smooth;
             background: #ffffff;
+            display: flex;
+            flex-direction: column;
         }
 
-        .scrollable-content {
-            height: calc(100% - 80px);
-            overflow-y: auto;
-            padding-bottom: 20px;
+        /* ========== HEADER SECTION ========== */
+        .header-section {
+            padding: 24px;
+            text-align: center;
+            position: relative;
         }
 
-        /* ========== PREMIUM CARD SYSTEM ========== */
-        .premium-card {
-            background: var(--crystal-white);
-            backdrop-filter: blur(24px) saturate(1.2);
-            border: 1px solid rgba(255, 255, 255, 0.8);
-            border-radius: 20px;
-            box-shadow: var(--shadow-soft);
-            transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+        .back-button {
+            position: absolute;
+            left: 24px;
+            top: 24px;
+            background: none;
+            border: none;
+            font-size: 24px;
+            color: var(--text-primary);
+            cursor: pointer;
+            padding: 8px;
+        }
+
+        .progress-bar-container {
+            margin: 16px 0 24px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: var(--light-gray);
+            border-radius: 3px;
             overflow: hidden;
         }
 
-        .premium-card:hover {
-            transform: translateY(-4px);
-            box-shadow: var(--shadow-medium);
+        .progress-fill {
+            height: 100%;
+            background: var(--green-continue);
+            width: 66.7%; /* 2/3 complete */
+            border-radius: 3px;
         }
 
-        .premium-card.selected {
-            border-color: var(--yellow-cta);
-            box-shadow: 0 0 0 2px rgba(255, 215, 0, 0.3), var(--shadow-medium);
-        }
 
-        /* ========== CHIP SYSTEM ========== */
-        .chip {
-            display: inline-block;
-            padding: 8px 16px;
-            margin: 4px;
-            background: var(--glass-effect);
-            border: 2px solid transparent;
-            border-radius: 20px;
-            font-size: 14px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
 
-        .chip:hover {
-            background: var(--crystal-white);
-            transform: translateY(-1px);
-        }
-
-        .chip.selected {
-            background: var(--yellow-cta);
-            color: var(--premium-black);
-            border-color: var(--yellow-cta);
-        }
-
-        /* ========== TYPOGRAPHY SYSTEM ========== */
-        .hero-title {
+        .page-title {
             font-size: 32px;
-            font-weight: 800;
-            line-height: 1.2;
-            background: var(--primary-gradient);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            margin-bottom: 12px;
-        }
-
-        .section-title {
-            font-size: 24px;
             font-weight: 700;
             color: var(--text-primary);
-            margin-bottom: 16px;
+            margin: 24px 0 8px;
+            line-height: 1.2;
         }
 
-        .card-title {
-            font-size: 18px;
-            font-weight: 600;
-            color: var(--text-primary);
-            margin-bottom: 8px;
+        /* ========== MAIN CONTENT LAYOUT ========== */
+        .main-content {
+            flex: 1;
+            display: flex;
+            padding: 0 24px;
+            gap: 20px;
+            align-items: flex-start;
         }
 
-        .body-text {
-            font-size: 16px;
-            color: var(--text-secondary);
-            line-height: 1.5;
-        }
-
-        .caption-text {
-            font-size: 14px;
-            color: var(--text-caption);
-            line-height: 1.4;
-        }
-
-        /* ========== PROGRESS INDICATOR ========== */
-        .progress-indicator {
+        /* ========== BODY DIAGRAM SECTION ========== */
+        .body-diagram-section {
+            flex: 1;
             display: flex;
             justify-content: center;
-            gap: 8px;
-            margin: 16px 0;
-        }
-
-        .progress-step {
-            width: 32px;
-            height: 4px;
-            border-radius: 2px;
-            background: rgba(0,0,0,0.2);
-        }
-
-        .progress-step.active {
-            background: var(--yellow-cta);
-        }
-
-        /* ========== BODY PARTS GRID ========== */
-        .body-parts-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
-            margin: 20px 0;
-        }
-
-        /* ========== BOTTOM NAVIGATION ========== */
-        .bottom-nav {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: var(--crystal-white);
-            backdrop-filter: blur(20px);
-            border-top: 1px solid rgba(255, 255, 255, 0.8);
-            padding: 12px 0 24px;
-        }
-
-        .nav-items {
-            display: flex;
-            justify-content: space-around;
             align-items: center;
+            padding: 20px 0;
         }
 
-        .nav-item {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 4px;
-            padding: 8px;
+        .body-diagram {
+            width: 160px;
+            height: 400px;
+            background: url('https://images.unsplash.com/photo-1583454110551-21f2fa2afe61?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80') no-repeat center;
+            background-size: cover;
+            border-radius: 20px;
+            position: relative;
+            filter: brightness(1.1) contrast(1.1);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+        }
+
+        /* ========== BODY PARTS SELECTION ========== */
+        .body-parts-section {
+            flex: 1;
+            padding: 10px 0;
+        }
+
+        .body-part-button {
+            width: 100%;
+            padding: 12px 16px;
+            margin-bottom: 10px;
+            border: 2px solid #F5F5F5;
+            border-radius: 20px;
+            font-size: 16px;
+            font-weight: 600;
             cursor: pointer;
             transition: all 0.3s ease;
-            color: var(--text-caption);
+            background: #FFFFFF;
+            color: #333333;
         }
 
-        .nav-item.active {
-            color: var(--yellow-cta);
+        .body-part-button.selected {
+            background: #FF6B35 !important;
+            color: #FFFFFF !important;
+            border-color: #FF6B35 !important;
+            transform: scale(1.02);
+            box-shadow: 0 4px 20px rgba(255, 107, 53, 0.3);
+        }
+
+        .body-part-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            border-color: #FF6B35;
+        }
+
+        .body-part-button.selected:hover {
+            background: #E55A30 !important;
+            border-color: #E55A30 !important;
+        }
+
+        /* ========== CONTINUE BUTTON (Matching 03-guide-step2.html) ========== */
+        .bottom-section {
+            padding: 20px 24px 40px;
+        }
+
+        .yellow-cta-button {
+            background: var(--yellow-cta);
+            color: var(--premium-black);
+            border: none;
+            border-radius: 16px;
+            padding: 16px 32px;
+            font-size: 18px;
+            font-weight: 700;
+            text-align: center;
+            box-shadow: var(--yellow-shadow);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+            width: 100%;
+            margin-top: 20px;
+        }
+
+        .yellow-cta-button:hover {
+            background: var(--yellow-cta-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 12px 32px rgba(255, 215, 0, 0.35);
+        }
+
+        .yellow-cta-button:disabled {
+            background: #E0E0E0;
+            color: #9E9E9E;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        /* ========== RESPONSIVE ADJUSTMENTS ========== */
+        @media (max-width: 400px) {
+            .main-content {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .body-diagram {
+                width: 120px;
+                height: 250px;
+            }
+
+            .body-part-button {
+                font-size: 16px;
+                padding: 14px 16px;
+            }
         }
 
         /* ========== ANIMATIONS ========== */
-        @keyframes premiumGlow {
-            0%, 100% { box-shadow: var(--shadow-soft); }
-            50% { box-shadow: var(--shadow-medium), 0 0 40px rgba(255, 127, 80, 0.3); }
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-8px); }
         }
 
-        .glow { animation: premiumGlow 3s ease-in-out infinite; }
-
-        /* ========== CUSTOM SCROLLBAR ========== */
-        .page-content::-webkit-scrollbar,
-        .scrollable-content::-webkit-scrollbar {
-            width: 4px;
-        }
-
-        .page-content::-webkit-scrollbar-thumb,
-        .scrollable-content::-webkit-scrollbar-thumb {
-            background: var(--yellow-cta);
-            border-radius: 2px;
+        .float {
+            animation: float 4s ease-in-out infinite;
         }
     </style>
 </head>
 <body>
-    <div class="phone-frame glow">
+    <div class="phone-frame float">
         <div class="phone-screen">
             <div class="status-bar">
-                <span>9:44</span>
-                <span>📶 🔋</span>
+                <span>9:58</span>
+                <span>📶 4G📶 (43%)</span>
             </div>
 
             <div class="page-content">
-                <div class="scrollable-content">
-                    <div style="padding: 24px;">
-                        <!-- Header with Back Button -->
-                        <div style="display: flex; align-items: center; margin-bottom: 32px;">
-                            <button style="border: none; background: none; font-size: 20px; cursor: pointer; margin-right: 16px;">←</button>
-                            <div style="flex: 1; text-align: center;">
-                                <h1 class="hero-title">Choose Target Areas</h1>
-                                <p class="body-text">Focus on what needs attention</p>
-                            </div>
-                            <button style="border: none; background: none; color: var(--text-caption); font-size: 14px; cursor: pointer;">Skip</button>
-                        </div>
+                <!-- Header Section -->
+                <div class="header-section">
+                    <button class="back-button">←</button>
 
-                        <!-- Body Diagram (Placeholder) -->
-                        <div style="text-align: center; margin-bottom: 32px;">
-                            <div style="width: 120px; height: 200px; margin: 0 auto; background: var(--glass-effect); border-radius: 60px; display: flex; align-items: center; justify-content: center; font-size: 48px;">
-                                🏃
-                            </div>
-                            <p class="caption-text" style="margin-top: 12px;">Tap areas below to highlight</p>
+                    <div class="progress-bar-container">
+                        <div class="progress-bar">
+                            <div class="progress-fill"></div>
                         </div>
+                    </div>
 
-                        <!-- Target Areas Selection -->
-                        <div style="margin-bottom: 32px;">
-                            <h3 class="section-title">Which areas need attention? (Select up to 2)</h3>
-                            <div class="body-parts-grid">
-                                <div class="chip selected" onclick="toggleBodyPart(this)" data-max="2">
-                                    <span style="font-size: 20px; margin-right: 8px;">🧠</span>
-                                    Full Body
-                                </div>
-                                <div class="chip" onclick="toggleBodyPart(this)" data-max="2">
-                                    <span style="font-size: 20px; margin-right: 8px;">🦢</span>
-                                    Neck & Shoulders
-                                </div>
-                                <div class="chip" onclick="toggleBodyPart(this)" data-max="2">
-                                    <span style="font-size: 20px; margin-right: 8px;">💪</span>
-                                    Chest & Back
-                                </div>
-                                <div class="chip" onclick="toggleBodyPart(this)" data-max="2">
-                                    <span style="font-size: 20px; margin-right: 8px;">⚡</span>
-                                    Core
-                                </div>
-                                <div class="chip" onclick="toggleBodyPart(this)" data-max="2">
-                                    <span style="font-size: 20px; margin-right: 8px;">🦵</span>
-                                    Thighs
-                                </div>
-                                <div class="chip" onclick="toggleBodyPart(this)" data-max="2">
-                                    <span style="font-size: 20px; margin-right: 8px;">🍑</span>
-                                    Glutes
-                                </div>
-                                <div class="chip" onclick="toggleBodyPart(this)" data-max="2">
-                                    <span style="font-size: 20px; margin-right: 8px;">🦶</span>
-                                    Calves
-                                </div>
-                                <div class="chip" onclick="toggleBodyPart(this)" data-max="2">
-                                    <span style="font-size: 20px; margin-right: 8px;">💪</span>
-                                    Arms
-                                </div>
-                            </div>
-                            <p class="caption-text" style="text-align: center; margin-top: 12px;">
-                                <span id="selection-count">Selected: 1/2</span>
-                            </p>
-                        </div>
+                    <h1 class="page-title">Choose your<br>target zones</h1>
+                </div>
 
-                        <!-- Current Selection Summary -->
-                        <div style="background: var(--glass-effect); padding: 16px; border-radius: 16px; margin-bottom: 32px;">
-                            <h4 class="card-title">Your Workout Plan:</h4>
-                            <p class="body-text">Home • Chair, None • Full Body</p>
-                            <p class="caption-text">Estimated duration: 60 seconds</p>
-                        </div>
+                <!-- Main Content: Left-Right Layout -->
+                <div class="main-content">
+                    <!-- Left Side: Body Diagram -->
+                    <div class="body-diagram-section">
+                        <div class="body-diagram"></div>
+                    </div>
 
-                        <!-- Progress Indicator -->
-                        <div style="text-align: center; margin: 32px 0;">
-                            <div class="progress-indicator">
-                                <div class="progress-step"></div>
-                                <div class="progress-step"></div>
-                                <div class="progress-step active"></div>
-                            </div>
-                            <p class="caption-text">Step 3 of 3</p>
-                        </div>
-
-                        <!-- Complete Button -->
-                        <div style="margin-bottom: 80px;">
-                            <button style="width: 100%; background: var(--yellow-cta); color: var(--premium-black); border: none; border-radius: 16px; padding: 16px; font-size: 18px; font-weight: 700;">
-                                Get My Workout
-                            </button>
-                        </div>
+                    <!-- Right Side: Body Parts Selection -->
+                    <div class="body-parts-section">
+                        <button class="body-part-button" data-part="neck" onclick="selectBodyPart(this, 'neck')">
+                            Neck
+                        </button>
+                        <button class="body-part-button selected" data-part="pecs" onclick="selectBodyPart(this, 'pecs')">
+                            Pecs
+                        </button>
+                        <button class="body-part-button selected" data-part="arms" onclick="selectBodyPart(this, 'arms')">
+                            Arms
+                        </button>
+                        <button class="body-part-button selected" data-part="belly" onclick="selectBodyPart(this, 'belly')">
+                            Belly
+                        </button>
+                        <button class="body-part-button selected" data-part="back" onclick="selectBodyPart(this, 'back')">
+                            Back
+                        </button>
+                        <button class="body-part-button" data-part="legs" onclick="selectBodyPart(this, 'legs')">
+                            Legs
+                        </button>
+                        <button class="body-part-button" data-part="knees" onclick="selectBodyPart(this, 'knees')">
+                            Knees
+                        </button>
+                        <button class="body-part-button" data-part="lower-back" onclick="selectBodyPart(this, 'lower-back')">
+                            Lower back
+                        </button>
                     </div>
                 </div>
-            </div>
 
-            <div class="bottom-nav">
-                <div class="nav-items">
-                    <div class="nav-item">
-                        <span style="font-size: 20px;">🏠</span>
-                        <span style="font-size: 11px;">Home</span>
-                    </div>
-                    <div class="nav-item active">
-                        <span style="font-size: 20px;">📷</span>
-                        <span style="font-size: 11px;">Camera</span>
-                    </div>
-                    <div class="nav-item">
-                        <span style="font-size: 20px;">👤</span>
-                        <span style="font-size: 11px;">My</span>
-                    </div>
+                <!-- Bottom Section: Continue Button -->
+                <div class="bottom-section">
+                    <button class="yellow-cta-button" id="continueBtn" onclick="continueToWorkout()">
+                        Continue
+                    </button>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
-        function toggleBodyPart(chip) {
-            const maxSelection = parseInt(chip.getAttribute('data-max'));
-            const selectedChips = document.querySelectorAll('.chip.selected');
+        // Selected body parts array (matching the reference image defaults)
+        let selectedBodyParts = ['pecs', 'arms', 'belly', 'back'];
 
-            if (chip.classList.contains('selected')) {
-                chip.classList.remove('selected');
-            } else if (selectedChips.length < maxSelection) {
-                chip.classList.add('selected');
+        function selectBodyPart(button, partName) {
+            const isSelected = button.classList.contains('selected');
+
+            if (isSelected) {
+                // Deselect the body part
+                button.classList.remove('selected');
+                selectedBodyParts = selectedBodyParts.filter(part => part !== partName);
             } else {
-                // Show warning if trying to select more than max
-                alert(`You can select maximum ${maxSelection} areas`);
-                return;
+                // Select the body part
+                button.classList.add('selected');
+                selectedBodyParts.push(partName);
             }
 
-            updateSelectionCount();
+            // Update continue button state
+            updateContinueButton();
+
+            // Store selections in localStorage
+            localStorage.setItem('selectedTargetZones', JSON.stringify(selectedBodyParts));
         }
 
-        function updateSelectionCount() {
-            const selectedChips = document.querySelectorAll('.chip.selected');
-            const maxSelection = 2;
-            document.getElementById('selection-count').textContent =
-                `Selected: ${selectedChips.length}/${maxSelection}`;
+        function updateContinueButton() {
+            const continueBtn = document.getElementById('continueBtn');
+            // Enable button if at least one body part is selected
+            continueBtn.disabled = selectedBodyParts.length === 0;
         }
+
+        function continueToWorkout() {
+            if (selectedBodyParts.length > 0) {
+                // Store final selections
+                localStorage.setItem('selectedTargetZones', JSON.stringify(selectedBodyParts));
+
+                // Show selected parts (in actual app this would navigate to workout screen)
+                alert(`Selected target zones: ${selectedBodyParts.join(', ')}\n\nReady to start your personalized workout!`);
+
+                // Example navigation: window.location.href = '05-workout-screen.html';
+            }
+        }
+
+        // Add interactive feedback to buttons
+        document.querySelectorAll('.body-part-button').forEach(button => {
+            button.addEventListener('mouseenter', function() {
+                if (!this.classList.contains('selected')) {
+                    this.style.background = '#F8F8F8';
+                    this.style.borderColor = '#FF6B35';
+                }
+            });
+
+            button.addEventListener('mouseleave', function() {
+                if (!this.classList.contains('selected')) {
+                    this.style.background = '#FFFFFF';
+                    this.style.borderColor = '#F5F5F5';
+                }
+            });
+        });
+
+        // Initialize the page
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Target zones selection page loaded');
+
+            // Update continue button state
+            updateContinueButton();
+
+            // Store initial selections
+            localStorage.setItem('selectedTargetZones', JSON.stringify(selectedBodyParts));
+
+            console.log('Initial selected parts:', selectedBodyParts);
+        });
+
+        // Add back button functionality
+        document.querySelector('.back-button').addEventListener('click', function() {
+            // In actual app: window.history.back() or navigate to previous page
+            alert('Navigate back to previous step');
+        });
     </script>
 </body>
 </html>

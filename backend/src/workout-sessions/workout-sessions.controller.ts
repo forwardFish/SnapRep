@@ -31,6 +31,9 @@ import {
   UserStatsQueryDto
 } from './dto/workout-session.dto';
 import { QuickRecommendationDto } from '../exercises/dto/exercise-recommendation.dto';
+import { SupabaseApiService } from '../common/services/supabase-api.service';
+import { ResponseError } from '../exception/response-error';
+import { ErrorCodes } from '../exception/error-codes';
 import { logger } from '../common/logger/logger';
 
 /**
@@ -39,18 +42,21 @@ import { logger } from '../common/logger/logger';
  */
 @ApiTags('Workout Sessions')
 @Controller('api/v1')
-@UseGuards(JwtAuthGuard)
-@ApiBearerAuth('JWT-auth')
 export class WorkoutSessionsController {
   // private readonly logger = new Logger(WorkoutSessionsController.name);
 
-  constructor(private readonly workoutSessionsService: WorkoutSessionsService) {}
+  constructor(
+    private readonly workoutSessionsService: WorkoutSessionsService,
+    private readonly supabaseApi: SupabaseApiService, // 添加SupabaseApiService注入
+  ) {}
 
   /**
    * 创建新的训练会话
    * POST /api/v1/workout-sessions
    */
   @Post('workout-sessions')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: '创建训练会话',
     description: '根据用户选择的参数和动作列表创建新的训练会话'
@@ -108,7 +114,7 @@ export class WorkoutSessionsController {
       };
     } catch (error) {
       logger.error(`创建训练会话失败: ${error.message}`);
-      throw error;
+      this.handleError(error, 'createWorkoutSession', { createDto });
     }
   }
 
@@ -117,6 +123,8 @@ export class WorkoutSessionsController {
    * POST /api/v1/workout-sessions/from-recommendation
    */
   @Post('workout-sessions/from-recommendation')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: '从推荐结果创建训练会话',
     description: '根据推荐参数生成动作推荐，并创建对应的训练会话'
@@ -157,7 +165,7 @@ export class WorkoutSessionsController {
       };
     } catch (error) {
       logger.error(`从推荐创建会话失败: ${error.message}`);
-      throw error;
+      this.handleError(error, 'createSessionFromRecommendation', { recommendationDto });
     }
   }
 
@@ -166,6 +174,8 @@ export class WorkoutSessionsController {
    * GET /api/v1/workout-sessions/:id
    */
   @Get('workout-sessions/:id')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: '获取训练会话详情',
     description: '根据会话ID获取完整的训练会话信息，包括动作列表'
@@ -198,7 +208,7 @@ export class WorkoutSessionsController {
       };
     } catch (error) {
       logger.error(`获取训练会话详情失败: ${error.message}`);
-      throw error;
+      this.handleError(error, 'getWorkoutSession', { id, includeExercises });
     }
   }
 
@@ -207,6 +217,8 @@ export class WorkoutSessionsController {
    * PATCH /api/v1/workout-sessions/:id
    */
   @Patch('workout-sessions/:id')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: '更新训练会话',
     description: '更新训练会话的状态、进度等信息'
@@ -245,7 +257,7 @@ export class WorkoutSessionsController {
       };
     } catch (error) {
       logger.error(`更新训练会话失败: ${error.message}`);
-      throw error;
+      this.handleError(error, 'updateWorkoutSession', { id, updateDto });
     }
   }
 
@@ -254,6 +266,8 @@ export class WorkoutSessionsController {
    * POST /api/v1/workout-sessions/:id/complete
    */
   @Post('workout-sessions/:id/complete')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: '完成训练会话',
     description: '标记训练会话为完成状态，记录实际时长和用户评价'
@@ -302,7 +316,7 @@ export class WorkoutSessionsController {
       };
     } catch (error) {
       logger.error(`完成训练会话失败: ${error.message}`);
-      throw error;
+      this.handleError(error, 'completeSession', { id, completeData });
     }
   }
 
@@ -311,6 +325,8 @@ export class WorkoutSessionsController {
    * POST /api/v1/workout-sessions/:id/abandon
    */
   @Post('workout-sessions/:id/abandon')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: '放弃训练会话',
     description: '标记训练会话为放弃状态'
@@ -348,7 +364,7 @@ export class WorkoutSessionsController {
       };
     } catch (error) {
       logger.error(`放弃训练会话失败: ${error.message}`);
-      throw error;
+      this.handleError(error, 'abandonSession', { id, abandonData });
     }
   }
 
@@ -357,6 +373,8 @@ export class WorkoutSessionsController {
    * GET /api/v1/users/:userId/sessions
    */
   @Get('users/:userId/sessions')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: '获取用户训练会话列表',
     description: '获取指定用户的训练会话历史记录，支持筛选和分页'
@@ -389,7 +407,7 @@ export class WorkoutSessionsController {
       };
     } catch (error) {
       logger.error(`获取用户会话列表失败: ${error.message}`);
-      throw error;
+      this.handleError(error, 'getUserSessions', { userId, query });
     }
   }
 
@@ -398,6 +416,8 @@ export class WorkoutSessionsController {
    * PATCH /api/v1/workout-sessions/:sessionId/exercises/:exerciseId
    */
   @Patch('workout-sessions/:sessionId/exercises/:exerciseId')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: '更新会话中的动作',
     description: '更新训练会话中特定动作的完成状态和用户反馈'
@@ -430,7 +450,7 @@ export class WorkoutSessionsController {
       };
     } catch (error) {
       logger.error(`更新会话动作失败: ${error.message}`);
-      throw error;
+      this.handleError(error, 'updateSessionExercise', { sessionId, exerciseId, updateDto });
     }
   }
 
@@ -439,6 +459,8 @@ export class WorkoutSessionsController {
    * GET /api/v1/users/:userId/stats
    */
   @Get('users/:userId/stats')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: '获取用户训练统计',
     description: '获取用户的训练统计数据，包括总时长、连击天数等'
@@ -479,7 +501,7 @@ export class WorkoutSessionsController {
       };
     } catch (error) {
       logger.error(`获取用户训练统计失败: ${error.message}`);
-      throw error;
+      this.handleError(error, 'getUserStats', { userId, query });
     }
   }
 
@@ -506,7 +528,35 @@ export class WorkoutSessionsController {
       };
     } catch (error) {
       logger.error(`健康检查失败: ${error.message}`);
-      throw error;
+      this.handleError(error, 'healthCheck');
     }
+  }
+
+  /**
+   * 统一错误处理方法
+   * @param error 错误对象
+   * @param method 方法名
+   * @param context 上下文信息
+   */
+  private handleError(error: any, method: string, context?: any): never {
+    logger.error(`WorkoutSessions Controller ${method} 失败:`, error.stack || error.message, {
+      context,
+      error: error.message,
+    });
+
+    if (error instanceof ResponseError) {
+      throw error; // 直接抛出 ResponseError
+    }
+
+    // 处理其他类型的错误
+    if (error.name === 'ValidationError' || error.message?.includes('validation')) {
+      throw new ResponseError(
+        ErrorCodes.COMMON?.VALIDATION_ERROR || { code: 1005, message: 'Validation failed' },
+        error,
+        context
+      );
+    }
+
+    throw error;
   }
 }

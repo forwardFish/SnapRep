@@ -373,10 +373,10 @@ model WorkoutSession {
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   // 用户选择的训练参数
-  intentType    IntentType // 运动意图（v3.0 统一）
+  intentType    IntentType @map("intent_type") // 运动意图（v3.0 统一）
   scenarioId    String?         @map("scenario_id")
   scenario      Scenario?       @relation(fields: [scenarioId], references: [id])
-  targetMuscles PrimaryMuscle[] @default([]) // 目标肌群列表
+  targetMuscles PrimaryMuscle[] @default([]) @map("target_muscles") // 目标肌群列表
 
   // 训练配置
   totalDuration Int        @map("total_duration") // 总时长（秒）

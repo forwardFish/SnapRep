@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'dart:async';
+import '../../../routes/app_routes.dart';
+import '../../../core/services/supabase_service.dart';
 
 /// SnapRep Simple Splash Screen
 /// Clean English design inspired by reference UI
@@ -38,16 +40,44 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
   }
 
   void _startNavigationTimer() {
-    // Navigate to home after 3 seconds
+    // Navigate to home after 3 seconds, with authentication
     Timer(const Duration(milliseconds: 3000), () {
       if (mounted) {
-        _navigateToHome();
+        _initializeAuthAndNavigate();
       }
     });
   }
 
+  Future<void> _initializeAuthAndNavigate() async {
+    try {
+      final supabaseService = SupabaseService.instance;
+
+      // Check if user is already authenticated
+      if (!supabaseService.isAuthenticated) {
+        debugPrint('🔐 No existing session, signing in anonymously...');
+        final response = await supabaseService.signInAnonymously();
+
+        if (response.user != null) {
+          debugPrint('✅ Anonymous authentication successful');
+          debugPrint('🆔 User ID: ${response.user!.id}');
+        } else {
+          throw Exception('Anonymous authentication failed');
+        }
+      } else {
+        debugPrint('✅ Existing session found');
+        debugPrint('🆔 User ID: ${supabaseService.currentUser?.id}');
+      }
+
+      _navigateToHome();
+    } catch (e) {
+      debugPrint('❌ Authentication error: $e');
+      // Even if authentication fails, navigate to home (app can work without auth for basic features)
+      _navigateToHome();
+    }
+  }
+
   void _navigateToHome() {
-    Navigator.of(context).pushReplacementNamed('/home');
+    AppRoutes.navigateToHome(context);
   }
 
   @override

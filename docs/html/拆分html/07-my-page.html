@@ -95,33 +95,33 @@
         }
 
         .scrollable-content {
-            height: calc(100% - 80px);
+            height: 100%;
             overflow-y: auto;
             padding-bottom: 20px;
         }
 
         /* ========== PREMIUM CARD SYSTEM ========== */
         .premium-card {
-            background: var(--crystal-white);
-            backdrop-filter: blur(24px) saturate(1.2);
+            background: white;
             border: 1px solid rgba(255, 255, 255, 0.8);
             border-radius: 20px;
-            box-shadow: var(--shadow-soft);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
             transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
             overflow: hidden;
         }
 
         .premium-card:hover {
             transform: translateY(-4px);
-            box-shadow: var(--shadow-medium);
+            box-shadow: 0 12px 48px rgba(0, 0, 0, 0.12);
         }
 
         /* ========== CALENDAR SYSTEM ========== */
         .calendar {
             background: white;
-            border-radius: 16px;
-            padding: 16px;
+            border-radius: 20px;
+            padding: 20px;
             margin: 20px 0;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
         }
 
         .calendar-header {
@@ -179,10 +179,17 @@
             display: flex;
             align-items: center;
             gap: 12px;
-            padding: 16px;
-            background: var(--crystal-white);
-            border-radius: 16px;
-            margin-bottom: 12px;
+            padding: 20px;
+            background: white;
+            border-radius: 20px;
+            margin-bottom: 16px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s ease;
+        }
+
+        .achievement-badge:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 48px rgba(0, 0, 0, 0.12);
         }
 
         .badge-icon {
@@ -194,16 +201,16 @@
         }
 
         .progress-bar {
-            height: 8px;
-            background: rgba(0,0,0,0.1);
-            border-radius: 4px;
+            height: 6px;
+            background: #F5F5F5;
+            border-radius: 3px;
             overflow: hidden;
             margin-top: 8px;
         }
 
         .progress-fill {
             height: 100%;
-            border-radius: 4px;
+            border-radius: 3px;
             transition: width 0.3s ease;
         }
 
@@ -246,7 +253,7 @@
         }
 
         .section-title {
-            font-size: 24px;
+            font-size: 18px;
             font-weight: 700;
             color: var(--text-primary);
             margin-bottom: 16px;
@@ -269,39 +276,6 @@
             font-size: 14px;
             color: var(--text-caption);
             line-height: 1.4;
-        }
-
-        /* ========== BOTTOM NAVIGATION ========== */
-        .bottom-nav {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: var(--crystal-white);
-            backdrop-filter: blur(20px);
-            border-top: 1px solid rgba(255, 255, 255, 0.8);
-            padding: 12px 0 24px;
-        }
-
-        .nav-items {
-            display: flex;
-            justify-content: space-around;
-            align-items: center;
-        }
-
-        .nav-item {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 4px;
-            padding: 8px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            color: var(--text-caption);
-        }
-
-        .nav-item.active {
-            color: var(--yellow-cta);
         }
 
         /* ========== ANIMATIONS ========== */
@@ -338,8 +312,8 @@
                     <div style="padding: 24px;">
                         <!-- Profile Header -->
                         <div style="text-align: center; margin-bottom: 32px;">
-                            <div style="width: 80px; height: 80px; border-radius: 50%; background: var(--primary-gradient); margin: 0 auto 16px; display: flex; align-items: center; justify-content: center; font-size: 32px; color: white;">👤</div>
-                            <h2 class="section-title">Alex Johnson</h2>
+                            <div style="width: 80px; height: 80px; border-radius: 50%; background: var(--primary-gradient); margin: 0 auto 16px; display: flex; align-items: center; justify-content: center; font-size: 32px; color: white; box-shadow: var(--shadow-soft);">👤</div>
+                            <h1 style="font-size: 28px; font-weight: 600; color: var(--text-primary); margin-bottom: 8px; letter-spacing: -0.5px;">Alex Johnson</h1>
                             <p class="caption-text">Fitness Enthusiast • 42 workouts</p>
                         </div>
 
@@ -380,9 +354,9 @@
 
                             <div class="calendar">
                                 <div class="calendar-header">
-                                    <button style="border: none; background: none; font-size: 20px; cursor: pointer;">◀</button>
+                                    <button style="border: none; background: none; font-size: 20px; cursor: pointer; color: var(--text-secondary); transition: color 0.3s ease;" onmouseover="this.style.color='var(--text-primary)'" onmouseout="this.style.color='var(--text-secondary)'">◀</button>
                                     <h4 class="card-title" style="margin: 0;">November 2024</h4>
-                                    <button style="border: none; background: none; font-size: 20px; cursor: pointer;">▶</button>
+                                    <button style="border: none; background: none; font-size: 20px; cursor: pointer; color: var(--text-secondary); transition: color 0.3s ease;" onmouseover="this.style.color='var(--text-primary)'" onmouseout="this.style.color='var(--text-secondary)'">▶</button>
                                 </div>
 
                                 <div class="calendar-grid">
@@ -444,71 +418,90 @@
                                 <h4 class="card-title">🪑 Chair Workout • Home</h4>
                                 <p class="body-text" style="margin: 12px 0;">✅ 3 exercises • 1:02 minutes • Full Body mode</p>
                                 <p class="caption-text">Chair squats • Shoulder rolls • Calf raises</p>
-                                <button style="background: var(--yellow-cta); color: var(--premium-black); border: none; border-radius: 12px; padding: 12px 24px; font-weight: 600; margin-top: 16px; width: 100%; cursor: pointer;">
+                                <button class="yellow-cta-button" style="font-size: 16px; padding: 12px 24px; margin-top: 16px;">
                                     Repeat This Workout
                                 </button>
                             </div>
                         </div>
 
                         <!-- Card Collection -->
-                        <div style="margin-bottom: 80px;">
+                        <div style="margin-bottom: 40px;">
                             <h3 class="card-title" style="margin-bottom: 16px;">My Collection (12 Cards)</h3>
 
                             <div class="grid-3x3">
-                                <div class="premium-card" style="padding: 16px; text-align: center; aspect-ratio: 3/4;">
-                                    <span class="rarity-badge rarity-fine" style="font-size: 10px; margin-bottom: 8px; display: block;">FINE</span>
-                                    <div style="font-size: 24px; margin-bottom: 8px;">🪑</div>
-                                    <p style="font-size: 12px;">Chair Squats</p>
+                                <!-- Chair Squats Card -->
+                                <div class="premium-card" style="padding: 0; aspect-ratio: 3/4; position: relative; overflow: hidden;">
+                                    <div style="background: url('https://images.unsplash.com/photo-1586023492125-27b2c045efd7?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80') center/cover; height: 70%; position: relative;">
+                                        <div style="position: absolute; top: 12px; left: 12px;">
+                                            <span class="rarity-badge rarity-fine" style="font-size: 10px;">FINE</span>
+                                        </div>
+                                    </div>
+                                    <div style="padding: 12px; height: 30%; display: flex; flex-direction: column; justify-content: center;">
+                                        <p style="font-size: 12px; font-weight: 600; text-align: center; margin: 0;">Chair Squats</p>
+                                    </div>
                                 </div>
 
-                                <div class="premium-card" style="padding: 16px; text-align: center; aspect-ratio: 3/4;">
-                                    <span class="rarity-badge rarity-common" style="font-size: 10px; margin-bottom: 8px; display: block;">COMMON</span>
-                                    <div style="font-size: 24px; margin-bottom: 8px;">✋</div>
-                                    <p style="font-size: 12px;">Push-ups</p>
+                                <!-- Push-ups Card -->
+                                <div class="premium-card" style="padding: 0; aspect-ratio: 3/4; position: relative; overflow: hidden;">
+                                    <div style="background: url('https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80') center/cover; height: 70%; position: relative;">
+                                        <div style="position: absolute; top: 12px; left: 12px;">
+                                            <span class="rarity-badge rarity-common" style="font-size: 10px;">COMMON</span>
+                                        </div>
+                                    </div>
+                                    <div style="padding: 12px; height: 30%; display: flex; flex-direction: column; justify-content: center;">
+                                        <p style="font-size: 12px; font-weight: 600; text-align: center; margin: 0;">Push-ups</p>
+                                    </div>
                                 </div>
 
-                                <div class="premium-card" style="padding: 16px; text-align: center; aspect-ratio: 3/4;">
-                                    <span class="rarity-badge rarity-rare" style="font-size: 10px; margin-bottom: 8px; display: block;">RARE</span>
-                                    <div style="font-size: 24px; margin-bottom: 8px;">🎒</div>
-                                    <p style="font-size: 12px;">Bag Lifts</p>
+                                <!-- Bag Lifts Card -->
+                                <div class="premium-card" style="padding: 0; aspect-ratio: 3/4; position: relative; overflow: hidden;">
+                                    <div style="background: url('https://images.unsplash.com/photo-1548036328-c9fa89d128fa?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80') center/cover; height: 70%; position: relative;">
+                                        <div style="position: absolute; top: 12px; left: 12px;">
+                                            <span class="rarity-badge rarity-rare" style="font-size: 10px;">RARE</span>
+                                        </div>
+                                    </div>
+                                    <div style="padding: 12px; height: 30%; display: flex; flex-direction: column; justify-content: center;">
+                                        <p style="font-size: 12px; font-weight: 600; text-align: center; margin: 0;">Bag Lifts</p>
+                                    </div>
                                 </div>
 
-                                <div class="premium-card" style="padding: 16px; text-align: center; aspect-ratio: 3/4;">
-                                    <span class="rarity-badge rarity-common" style="font-size: 10px; margin-bottom: 8px; display: block;">COMMON</span>
-                                    <div style="font-size: 24px; margin-bottom: 8px;">🧱</div>
-                                    <p style="font-size: 12px;">Wall Push</p>
+                                <!-- Wall Push Card -->
+                                <div class="premium-card" style="padding: 0; aspect-ratio: 3/4; position: relative; overflow: hidden;">
+                                    <div style="background: url('https://images.unsplash.com/photo-1631679706909-1844bbd07221?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80') center/cover; height: 70%; position: relative;">
+                                        <div style="position: absolute; top: 12px; left: 12px;">
+                                            <span class="rarity-badge rarity-common" style="font-size: 10px;">COMMON</span>
+                                        </div>
+                                    </div>
+                                    <div style="padding: 12px; height: 30%; display: flex; flex-direction: column; justify-content: center;">
+                                        <p style="font-size: 12px; font-weight: 600; text-align: center; margin: 0;">Wall Push</p>
+                                    </div>
                                 </div>
 
-                                <div class="premium-card" style="padding: 16px; text-align: center; aspect-ratio: 3/4;">
-                                    <span class="rarity-badge rarity-fine" style="font-size: 10px; margin-bottom: 8px; display: block;">FINE</span>
-                                    <div style="font-size: 24px; margin-bottom: 8px;">🍼</div>
-                                    <p style="font-size: 12px;">Bottle Press</p>
+                                <!-- Bottle Press Card -->
+                                <div class="premium-card" style="padding: 0; aspect-ratio: 3/4; position: relative; overflow: hidden;">
+                                    <div style="background: url('https://images.unsplash.com/photo-1523362628745-0c100150b504?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80') center/cover; height: 70%; position: relative;">
+                                        <div style="position: absolute; top: 12px; left: 12px;">
+                                            <span class="rarity-badge rarity-fine" style="font-size: 10px;">FINE</span>
+                                        </div>
+                                    </div>
+                                    <div style="padding: 12px; height: 30%; display: flex; flex-direction: column; justify-content: center;">
+                                        <p style="font-size: 12px; font-weight: 600; text-align: center; margin: 0;">Bottle Press</p>
+                                    </div>
                                 </div>
 
-                                <div class="premium-card" style="padding: 16px; text-align: center; aspect-ratio: 3/4;">
-                                    <span class="rarity-badge rarity-epic" style="font-size: 10px; margin-bottom: 8px; display: block;">EPIC</span>
-                                    <div style="font-size: 24px; margin-bottom: 8px;">🧳</div>
-                                    <p style="font-size: 12px;">Luggage Lift</p>
+                                <!-- Luggage Lift Card -->
+                                <div class="premium-card" style="padding: 0; aspect-ratio: 3/4; position: relative; overflow: hidden;">
+                                    <div style="background: url('https://images.unsplash.com/photo-1544427920-c49ccfb85579?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80') center/cover; height: 70%; position: relative;">
+                                        <div style="position: absolute; top: 12px; left: 12px;">
+                                            <span class="rarity-badge rarity-epic" style="font-size: 10px;">EPIC</span>
+                                        </div>
+                                    </div>
+                                    <div style="padding: 12px; height: 30%; display: flex; flex-direction: column; justify-content: center;">
+                                        <p style="font-size: 12px; font-weight: 600; text-align: center; margin: 0;">Luggage Lift</p>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="bottom-nav">
-                <div class="nav-items">
-                    <div class="nav-item">
-                        <span style="font-size: 20px;">🏠</span>
-                        <span style="font-size: 11px;">Home</span>
-                    </div>
-                    <div class="nav-item">
-                        <span style="font-size: 20px;">📷</span>
-                        <span style="font-size: 11px;">Camera</span>
-                    </div>
-                    <div class="nav-item active">
-                        <span style="font-size: 20px;">👤</span>
-                        <span style="font-size: 11px;">My</span>
                     </div>
                 </div>
             </div>

@@ -31,6 +31,9 @@ import {
   CollectionStatsDto,
   CardShareStatsDto
 } from './dto/cards.dto';
+import { SupabaseApiService } from '../common/services/supabase-api.service';
+import { ResponseError } from '../exception/response-error';
+import { ErrorCodes } from '../exception/error-codes';
 import { logger } from '../common/logger/logger';
 
 /**
@@ -39,11 +42,12 @@ import { logger } from '../common/logger/logger';
  */
 @ApiTags('Cards & Rarity')
 @Controller('api/v1')
-@UseGuards(JwtAuthGuard)
-@ApiBearerAuth('JWT-auth')
 export class CardsController {
 
-  constructor(private readonly cardsService: CardsService) {}
+  constructor(
+    private readonly cardsService: CardsService,
+    private readonly supabaseApi: SupabaseApiService, // 添加SupabaseApiService注入
+  ) {}
 
   /**
    * 生成分享卡片
@@ -87,8 +91,66 @@ export class CardsController {
         message: 'Share card generated successfully'
       };
     } catch (error) {
-      logger.error(`生成分享卡片失败: ${error.message}`);
-      throw error;
+      this.handleError(error, 'generateCard', { generateDto });
+    }
+  }
+
+  /**
+   * 获取公开卡片（首页展示）
+   * GET /api/v1/cards/public
+   */
+  @Get('cards/public')
+  @ApiOperation({
+    summary: '获取公开卡片',
+    description: '获取所有公开分享的卡片，用于首页展示'
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: '公开卡片列表获取成功'
+  })
+  async getPublicCards(
+    @Query('limit') limit: number = 20,
+    @Query('offset') offset: number = 0
+  ) {
+    logger.debug(`获取公开卡片: limit=${limit}, offset=${offset}`);
+
+    try {
+      const cards = await this.cardsService.findPublicCards(limit, offset);
+
+      return {
+        success: true,
+        data: cards,
+        pagination: { limit, offset }
+      };
+    } catch (error) {
+      this.handleError(error, 'getPublicCards', { limit, offset });
+    }
+  }
+
+  /**
+   * 健康检查
+   * GET /api/v1/cards/health
+   */
+  @Get('cards/health')
+  @ApiOperation({
+    summary: '服务健康检查',
+    description: '检查卡片服务的健康状态'
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: '服务状态正常'
+  })
+  async healthCheck() {
+    try {
+      const health = await this.cardsService.healthCheck();
+
+      return {
+        success: true,
+        data: health
+      };
+    } catch (error) {
+      logger.error(`健康检查失败: ${error.message}`);
+      this.handleError(error, 'healthCheck');
     }
   }
 
@@ -125,8 +187,7 @@ export class CardsController {
         data: card
       };
     } catch (error) {
-      logger.error(`获取卡片详情失败: ${error.message}`);
-      throw error;
+      this.handleError(error, 'getCard', { cardId: id });
     }
   }
 
@@ -159,8 +220,7 @@ export class CardsController {
         data: card
       };
     } catch (error) {
-      logger.error(`根据会话ID获取卡片失败: ${error.message}`);
-      throw error;
+      this.handleError(error, 'getCardBySession', { sessionId });
     }
   }
 
@@ -200,8 +260,7 @@ export class CardsController {
         }
       };
     } catch (error) {
-      logger.error(`获取用户卡片列表失败: ${error.message}`);
-      throw error;
+      this.handleError(error, 'getUserCards', { userId, query });
     }
   }
 
@@ -239,8 +298,7 @@ export class CardsController {
         message: 'Card updated successfully'
       };
     } catch (error) {
-      logger.error(`更新卡片失败: ${error.message}`);
-      throw error;
+      this.handleError(error, 'updateCard', { cardId: id, updateDto });
     }
   }
 
@@ -292,43 +350,10 @@ export class CardsController {
         message: 'Share recorded successfully'
       };
     } catch (error) {
-      logger.error(`记录卡片分享失败: ${error.message}`);
-      throw error;
+      this.handleError(error, 'recordShare', { cardId: id, shareData });
     }
   }
 
-  /**
-   * 获取公开卡片（首页展示）
-   * GET /api/v1/cards/public
-   */
-  @Get('cards/public')
-  @ApiOperation({
-    summary: '获取公开卡片',
-    description: '获取所有公开分享的卡片，用于首页展示'
-  })
-  @ApiResponse({
-    status: HttpStatus.OK,
-    description: '公开卡片列表获取成功'
-  })
-  async getPublicCards(
-    @Query('limit') limit: number = 20,
-    @Query('offset') offset: number = 0
-  ) {
-    logger.debug(`获取公开卡片: limit=${limit}, offset=${offset}`);
-
-    try {
-      const cards = await this.cardsService.findPublicCards(limit, offset);
-
-      return {
-        success: true,
-        data: cards,
-        pagination: { limit, offset }
-      };
-    } catch (error) {
-      logger.error(`获取公开卡片失败: ${error.message}`);
-      throw error;
-    }
-  }
 
   /**
    * 计算器材稀有度
@@ -380,8 +405,7 @@ export class CardsController {
         data: rarity
       };
     } catch (error) {
-      logger.error(`计算稀有度失败: ${error.message}`);
-      throw error;
+      this.handleError(error, 'calculateRarity', { code, region, forceRecalculate });
     }
   }
 
@@ -412,7 +436,7 @@ export class CardsController {
       };
     } catch (error) {
       logger.error(`批量计算稀有度失败: ${error.message}`);
-      throw error;
+      this.handleError(error, 'calculateBatchRarity', { batchDto });
     }
   }
 
@@ -441,7 +465,7 @@ export class CardsController {
       };
     } catch (error) {
       logger.error(`获取稀有度排行榜失败: ${error.message}`);
-      throw error;
+      this.handleError(error, 'getRarityRanking', { limit });
     }
   }
 
@@ -478,7 +502,7 @@ export class CardsController {
       };
     } catch (error) {
       logger.error(`获取稀有度趋势失败: ${error.message}`);
-      throw error;
+      this.handleError(error, 'getRarityTrend', { code, weeks });
     }
   }
 
@@ -515,34 +539,35 @@ export class CardsController {
       };
     } catch (error) {
       logger.error(`获取用户收藏统计失败: ${error.message}`);
-      throw error;
+      this.handleError(error, 'getCollectionStats', { userId, statsDto });
     }
   }
 
   /**
-   * 健康检查
-   * GET /api/v1/cards/health
+   * 统一错误处理方法
+   * @param error 错误对象
+   * @param method 方法名
+   * @param context 上下文信息
    */
-  @Get('cards/health')
-  @ApiOperation({
-    summary: '服务健康检查',
-    description: '检查卡片服务的健康状态'
-  })
-  @ApiResponse({
-    status: HttpStatus.OK,
-    description: '服务状态正常'
-  })
-  async healthCheck() {
-    try {
-      const health = await this.cardsService.healthCheck();
+  private handleError(error: any, method: string, context?: any): never {
+    logger.error(`Cards Controller ${method} 失败:`, error.stack || error.message, {
+      context,
+      error: error.message,
+    });
 
-      return {
-        success: true,
-        data: health
-      };
-    } catch (error) {
-      logger.error(`健康检查失败: ${error.message}`);
-      throw error;
+    if (error instanceof ResponseError) {
+      throw error; // 直接抛出 ResponseError
     }
+
+    // 处理其他类型的错误
+    if (error.name === 'ValidationError' || error.message?.includes('validation')) {
+      throw new ResponseError(
+        ErrorCodes.COMMON?.VALIDATION_ERROR || { code: 1005, message: 'Validation failed' },
+        error,
+        context
+      );
+    }
+
+    throw error;
   }
 }

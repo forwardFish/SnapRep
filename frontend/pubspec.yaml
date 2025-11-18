@@ -40,6 +40,11 @@ dependencies:
   json_annotation: ^4.9.0
   smooth_page_indicator: ^1.2.1
   flutter_svg: ^2.0.10+1
+  google_sign_in: ^6.1.6
+  video_player: ^2.7.2
+  chewie: ^1.7.5
+  camera: ^0.10.5+9
+  permission_handler: ^10.4.5
 
 dependency_overrides:
   # 强制app_links使用与API 34兼容的版本

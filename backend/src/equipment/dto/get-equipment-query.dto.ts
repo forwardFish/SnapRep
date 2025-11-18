@@ -57,11 +57,12 @@ export class GetEquipmentQueryDto {
    * 器材分类筛选
    */
   @ApiPropertyOptional({
-    description: '器材分类筛选',
+    description: '器材分类筛选，支持小写输入如 furniture',
     example: 'FURNITURE',
     enum: EquipmentCategory,
   })
   @IsOptional()
+  @Transform(({ value }) => value ? value.toString().toUpperCase() : undefined)
   @IsEnum(EquipmentCategory, { message: 'category必须是有效的器材分类' })
   category?: EquipmentCategory;
 

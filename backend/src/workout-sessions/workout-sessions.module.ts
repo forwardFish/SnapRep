@@ -6,9 +6,11 @@ import { WorkoutSessionsDao } from './workout-sessions.dao';
 import { ExercisesModule } from '../exercises/exercises.module';
 import { AuthModule } from '../auth/auth.module';
 import { UsersModule } from '../users/users.module';
+import { CommonModule } from '../common/common.module';
 
 @Module({
   imports: [
+    CommonModule, // 为SupabaseApiService提供支持
     ExercisesModule,
     AuthModule,  // 为JwtAuthGuard提供支持
     UsersModule, // 为JwtAuthGuard提供UsersService

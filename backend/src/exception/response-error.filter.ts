@@ -1,42 +1,68 @@
-import { HttpStatus } from '@nestjs/common';
-import {
-  ExceptionFilter,
-  Catch,
-  ArgumentsHost,
-  HttpException,
-  Logger,
-} from '@nestjs/common';
+import { HttpStatus, ExceptionFilter, Catch, ArgumentsHost, HttpException } from '@nestjs/common';
 import { Response, Request } from 'express';
 import { ResponseError } from './response-error';
 import { logger } from '../common/logger/logger';
 
-/**
- * 全局 ResponseError 异常过滤器
- * 统一处理 ResponseError 异常并返回结构化响应
- * 确保正确的错误代码、类别和HTTP状态码返回
- */
+// Helper: map ResponseError to proper HTTP status
+function mapToHttpStatus(error: ResponseError): HttpStatus {
+  if (error.httpStatus) return error.httpStatus;
+
+  const statusMap: Record<number, HttpStatus> = {
+    // Equipment
+    8000: HttpStatus.NOT_FOUND,
+    8001: HttpStatus.CONFLICT,
+    8002: HttpStatus.CONFLICT,
+    8003: HttpStatus.BAD_REQUEST,
+    8004: HttpStatus.BAD_REQUEST,
+    8005: HttpStatus.BAD_REQUEST,
+    8006: HttpStatus.INTERNAL_SERVER_ERROR,
+    8009: HttpStatus.BAD_REQUEST,
+    8010: HttpStatus.BAD_REQUEST,
+
+    // Scenario
+    7000: HttpStatus.NOT_FOUND,
+    7001: HttpStatus.CONFLICT,
+    7002: HttpStatus.CONFLICT,
+
+    // Exercise
+    11000: HttpStatus.NOT_FOUND,
+    11001: HttpStatus.INTERNAL_SERVER_ERROR,
+
+    // Common
+    1003: HttpStatus.NOT_FOUND,
+    1000: HttpStatus.BAD_REQUEST,
+    1001: HttpStatus.UNAUTHORIZED,
+    1002: HttpStatus.FORBIDDEN,
+    1005: HttpStatus.BAD_REQUEST,
+  };
+
+  if (statusMap[error.code]) return statusMap[error.code];
+
+  // Fallback by category string to avoid importing enums here
+  if ((error as any).category === 'VALIDATION') return HttpStatus.BAD_REQUEST;
+  if ((error as any).category === 'AUTH') return HttpStatus.UNAUTHORIZED;
+  if ((error as any).category === 'BUSINESS') return HttpStatus.BAD_REQUEST;
+
+  return HttpStatus.INTERNAL_SERVER_ERROR;
+}
+
+// Helper: drop sensitive fields from context
+function safeContext(ctx: any): Record<string, unknown> | undefined {
+  if (!ctx) return undefined;
+  const { userId, ...rest } = ctx;
+  return Object.keys(rest).length ? rest : undefined;
+}
+
 @Catch(ResponseError)
 export class ResponseErrorFilter implements ExceptionFilter {
-  // private readonly logger = new Logger(ResponseErrorFilter.name);
-
   catch(exception: ResponseError, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
     const request = ctx.getRequest<Request>();
 
-    // 添加调试日志来确认过滤器被调用
-    logger.debug('🔥 ResponseErrorFilter caught ResponseError:', {
-      code: exception.code,
-      message: exception.message,
-      category: exception.category,
-      httpStatus: exception.httpStatus,
-    });
+    const httpStatus = mapToHttpStatus(exception);
 
-    // 根据错误类别映射HTTP状态码
-    const httpStatus = this.mapToHttpStatus(exception);
-
-    // 构建错误响应
-    const errorResponse = {
+    const body: any = {
       success: false,
       error: {
         code: exception.code,
@@ -49,158 +75,68 @@ export class ResponseErrorFilter implements ExceptionFilter {
       statusCode: httpStatus,
     };
 
-    // 如果有上下文信息且不包含敏感数据，添加到响应中
-    if (exception.context) {
-      const { userId, ...safeContext } = exception.context;
-      if (Object.keys(safeContext).length > 0) {
-        errorResponse.error['context'] = safeContext;
-      }
-    }
+    const ctxOut = safeContext((exception as any).context);
+    if (ctxOut) body.error.context = ctxOut;
 
-    // 记录错误日志
-    logger.error(
-      `ResponseError caught: ${exception.message}`,
-      {
-        code: exception.code,
-        path: request.url,
-        method: request.method,
-        statusCode: httpStatus,
-        category: exception.category,
-        context: exception.context,
-        stack: exception.stack,
-      }
-    );
+    logger.error('ResponseError caught', {
+      code: exception.code,
+      path: request.url,
+      method: request.method,
+      statusCode: httpStatus,
+      category: (exception as any).category,
+      context: (exception as any).context,
+      stack: exception.stack,
+    });
 
-    // 返回结构化错误响应
-    response.status(httpStatus).json(errorResponse);
-  }
-
-  /**
-   * 根据错误类别映射到HTTP状态码
-   */
-  private mapToHttpStatus(error: ResponseError): HttpStatus {
-    // 优先使用 ResponseError 实例中的 httpStatus
-    if (error.httpStatus) {
-      return error.httpStatus;
-    }
-
-    // 如果没有，根据错误代码使用映射表
-    const statusMap: Record<number, HttpStatus> = {
-      // Equipment errors
-      8000: HttpStatus.NOT_FOUND,     // EQUIPMENT_NOT_FOUND
-      8001: HttpStatus.CONFLICT,      // EQUIPMENT_ALREADY_EXISTS
-      8002: HttpStatus.CONFLICT,      // EQUIPMENT_CODE_EXISTS
-      8003: HttpStatus.BAD_REQUEST,   // EQUIPMENT_CREATE_FAILED
-      8004: HttpStatus.BAD_REQUEST,   // EQUIPMENT_UPDATE_FAILED
-      8005: HttpStatus.BAD_REQUEST,   // EQUIPMENT_DELETE_FAILED
-      8006: HttpStatus.INTERNAL_SERVER_ERROR, // EQUIPMENT_FETCH_FAILED
-      8009: HttpStatus.BAD_REQUEST,   // EQUIPMENT_INVALID_CODE
-      8010: HttpStatus.BAD_REQUEST,   // EQUIPMENT_INACTIVE_EQUIPMENT
-
-      // Scenario errors
-      7000: HttpStatus.NOT_FOUND,     // SCENARIO_NOT_FOUND
-      7001: HttpStatus.CONFLICT,      // SCENARIO_ALREADY_EXISTS
-      7002: HttpStatus.CONFLICT,      // SCENARIO_CODE_EXISTS
-
-      // Exercise errors
-      11000: HttpStatus.NOT_FOUND,    // EXERCISE_NOT_FOUND
-      11001: HttpStatus.INTERNAL_SERVER_ERROR, // EXERCISE_FETCH_FAILED
-
-      // Common errors
-      1003: HttpStatus.NOT_FOUND,     // COMMON_NOT_FOUND
-      1000: HttpStatus.BAD_REQUEST,   // COMMON_BAD_REQUEST
-      1001: HttpStatus.UNAUTHORIZED,  // COMMON_UNAUTHORIZED
-      1002: HttpStatus.FORBIDDEN,     // COMMON_FORBIDDEN
-      1005: HttpStatus.BAD_REQUEST,   // COMMON_VALIDATION_ERROR
-    };
-
-    if (statusMap[error.code]) {
-      return statusMap[error.code];
-    }
-
-    // 根据错误类别进行通用映射
-    if (error.category) {
-      if (error.category === 'VALIDATION') {
-        return HttpStatus.BAD_REQUEST;
-      }
-      if (error.category === 'AUTH') {
-        return HttpStatus.UNAUTHORIZED;
-      }
-      if (error.category === 'BUSINESS') {
-        return HttpStatus.BAD_REQUEST;
-      }
-    }
-
-    // 默认为服务器内部错误
-    return HttpStatus.INTERNAL_SERVER_ERROR;
+    response.status(httpStatus).json(body);
   }
 }
 
-/**
- * 全局异常过滤器 - 处理除 ResponseError 外的其他类型异常
- */
 @Catch(HttpException, Error)
 export class GlobalExceptionFilter implements ExceptionFilter {
-  private readonly logger = new Logger(GlobalExceptionFilter.name);
-
   catch(exception: any, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
     const request = ctx.getRequest<Request>();
 
-    // 🔥 关键修复：如果是 ResponseError，直接在这里处理，不要交给 GlobalExceptionFilter
-    if (exception instanceof ResponseError) {
-      logger.debug('🔥 GlobalExceptionFilter 拦截到 ResponseError，直接处理，避免重复处理');
+    // Short-circuit: if it is (or looks like) a ResponseError, return as-is
+    const isResponseErrorShape = exception instanceof ResponseError ||
+      (exception?.name === 'ResponseError' && typeof exception?.code === 'number');
 
-      // 直接按照 ResponseErrorFilter 的逻辑处理
-      const httpStatus = this.mapToHttpStatus(exception);
+    if (isResponseErrorShape) {
+      const err = exception as ResponseError;
+      const httpStatus = mapToHttpStatus(err);
 
-      const errorResponse = {
+      const body: any = {
         success: false,
         error: {
-          code: exception.code,
-          message: exception.message,
-          category: exception.category || 'BUSINESS',
-          timestamp: exception.timestamp,
+          code: err.code,
+          message: err.message,
+          category: (err as any).category || 'BUSINESS',
+          timestamp: err.timestamp,
         },
         path: request.url,
         method: request.method,
         statusCode: httpStatus,
       };
 
-      // 如果有上下文信息且不包含敏感数据，添加到响应中
-      if (exception.context) {
-        const { userId, ...safeContext } = exception.context;
-        if (Object.keys(safeContext).length > 0) {
-          errorResponse.error['context'] = safeContext;
-        }
-      }
+      const ctxOut = safeContext((err as any).context);
+      if (ctxOut) body.error.context = ctxOut;
 
-      // 记录错误日志
-      logger.error(
-        `GlobalExceptionFilter 处理 ResponseError: ${exception.message}`,
-        {
-          code: exception.code,
-          path: request.url,
-          method: request.method,
-          statusCode: httpStatus,
-          category: exception.category,
-          context: exception.context,
-        }
-      );
+      logger.error('GlobalExceptionFilter handled ResponseError', {
+        code: err.code,
+        path: request.url,
+        method: request.method,
+        statusCode: httpStatus,
+        category: (err as any).category,
+        context: (err as any).context,
+      });
 
-      response.status(httpStatus).json(errorResponse);
+      response.status(httpStatus).json(body);
       return;
     }
 
-    // 添加调试日志
-    logger.debug('🌍 GlobalExceptionFilter caught exception:', {
-      type: exception.constructor?.name || typeof exception,
-      message: exception.message,
-    });
-
-    // 处理非 ResponseError 类型的异常
-
+    // Non-ResponseError exceptions
     let httpStatus: HttpStatus;
     let message: string;
     let errorCode: number;
@@ -208,10 +144,8 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     if (exception instanceof HttpException) {
       httpStatus = exception.getStatus();
       const errorResponse = exception.getResponse();
-      message = typeof errorResponse === 'string'
-        ? errorResponse
-        : (errorResponse as any)?.message || 'HTTP Exception';
-      errorCode = httpStatus;
+      message = typeof errorResponse === 'string' ? errorResponse : (errorResponse as any)?.message || 'HTTP Exception';
+      errorCode = httpStatus; // keep http status code as error code for plain HttpException
     } else if (exception instanceof Error) {
       httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
       message = exception.message || 'Internal Server Error';
@@ -222,11 +156,11 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       errorCode = 1004;
     }
 
-    const errorResponse = {
+    const body = {
       success: false,
       error: {
         code: errorCode,
-        message: message,
+        message,
         category: 'SYSTEM',
         timestamp: new Date().toISOString(),
       },
@@ -235,78 +169,14 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       statusCode: httpStatus,
     };
 
-    // 记录错误日志
-    logger.error(
-      `Global exception caught: ${message}`,
-      {
-        path: request.url,
-        method: request.method,
-        statusCode: httpStatus,
-        exceptionType: exception.constructor.name,
-        stack: exception instanceof Error ? exception.stack : undefined,
-      }
-    );
+    logger.error(`Global exception caught: ${message}`, {
+      path: request.url,
+      method: request.method,
+      statusCode: httpStatus,
+      exceptionType: exception?.constructor?.name,
+      stack: exception instanceof Error ? exception.stack : undefined,
+    });
 
-    response.status(httpStatus).json(errorResponse);
-  }
-
-  /**
-   * 根据错误类别映射到HTTP状态码 - 复制自 ResponseErrorFilter
-   */
-  private mapToHttpStatus(error: ResponseError): HttpStatus {
-    // 优先使用 ResponseError 实例中的 httpStatus
-    if (error.httpStatus) {
-      return error.httpStatus;
-    }
-
-    // 如果没有，根据错误代码使用映射表
-    const statusMap: Record<number, HttpStatus> = {
-      // Equipment errors
-      8000: HttpStatus.NOT_FOUND,     // EQUIPMENT_NOT_FOUND
-      8001: HttpStatus.CONFLICT,      // EQUIPMENT_ALREADY_EXISTS
-      8002: HttpStatus.CONFLICT,      // EQUIPMENT_CODE_EXISTS
-      8003: HttpStatus.BAD_REQUEST,   // EQUIPMENT_CREATE_FAILED
-      8004: HttpStatus.BAD_REQUEST,   // EQUIPMENT_UPDATE_FAILED
-      8005: HttpStatus.BAD_REQUEST,   // EQUIPMENT_DELETE_FAILED
-      8006: HttpStatus.INTERNAL_SERVER_ERROR, // EQUIPMENT_FETCH_FAILED
-      8009: HttpStatus.BAD_REQUEST,   // EQUIPMENT_INVALID_CODE
-      8010: HttpStatus.BAD_REQUEST,   // EQUIPMENT_INACTIVE_EQUIPMENT
-
-      // Scenario errors
-      7000: HttpStatus.NOT_FOUND,     // SCENARIO_NOT_FOUND
-      7001: HttpStatus.CONFLICT,      // SCENARIO_ALREADY_EXISTS
-      7002: HttpStatus.CONFLICT,      // SCENARIO_CODE_EXISTS
-
-      // Exercise errors
-      11000: HttpStatus.NOT_FOUND,    // EXERCISE_NOT_FOUND
-      11001: HttpStatus.INTERNAL_SERVER_ERROR, // EXERCISE_FETCH_FAILED
-
-      // Common errors
-      1003: HttpStatus.NOT_FOUND,     // COMMON_NOT_FOUND
-      1000: HttpStatus.BAD_REQUEST,   // COMMON_BAD_REQUEST
-      1001: HttpStatus.UNAUTHORIZED,  // COMMON_UNAUTHORIZED
-      1002: HttpStatus.FORBIDDEN,     // COMMON_FORBIDDEN
-      1005: HttpStatus.BAD_REQUEST,   // COMMON_VALIDATION_ERROR
-    };
-
-    if (statusMap[error.code]) {
-      return statusMap[error.code];
-    }
-
-    // 根据错误类别进行通用映射
-    if (error.category) {
-      if (error.category === 'VALIDATION') {
-        return HttpStatus.BAD_REQUEST;
-      }
-      if (error.category === 'AUTH') {
-        return HttpStatus.UNAUTHORIZED;
-      }
-      if (error.category === 'BUSINESS') {
-        return HttpStatus.BAD_REQUEST;
-      }
-    }
-
-    // 默认为服务器内部错误
-    return HttpStatus.INTERNAL_SERVER_ERROR;
+    response.status(httpStatus).json(body);
   }
 }

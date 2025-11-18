@@ -7,6 +7,7 @@ import '../widgets/hero_section.dart';
 import '../widgets/horizontal_scroll_section.dart';
 import '../widgets/theme_week_section.dart';
 import '../../../shared/widgets/bottom_navigation_bar.dart';
+import '../../../routes/app_routes.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -52,7 +53,7 @@ class _HomePageState extends State<HomePage> {
 
                     // Choose Your Space (Scenarios)
                     HorizontalScrollSection<Scenario>(
-                      title: 'Choose Your Space',
+                      title: 'Scenarios',
                       items: homeProvider.scenarios,
                       getTitle: (scenario) => scenario.name,
                       getImageUrl: (scenario) => _getScenarioImageUrl(scenario.code),
@@ -64,7 +65,7 @@ class _HomePageState extends State<HomePage> {
 
                     // Equipment
                     HorizontalScrollSection<Equipment>(
-                      title: 'Equipment',
+                      title: 'Equipments',
                       items: homeProvider.equipment,
                       getTitle: (equipment) => equipment.name,
                       getImageUrl: (equipment) => _getEquipmentImageUrl(equipment.code),
@@ -103,34 +104,22 @@ class _HomePageState extends State<HomePage> {
   void _onQuickStartPressed() {
     // Navigate to workout result page with quick recommendation
     debugPrint('Quick start pressed - navigating to workout result');
-    // TODO: Implement navigation to workout result page
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Quick start - generating workout recommendations...'),
-        duration: Duration(seconds: 2),
-      ),
-    );
+    AppRoutes.quickStartWorkout(context);
   }
 
   void _onScenarioPressed(Scenario scenario) {
     debugPrint('Scenario pressed: ${scenario.name}');
-    // TODO: Navigate to workout guide page with pre-selected scenario
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Selected scenario: ${scenario.name}'),
-        duration: const Duration(seconds: 2),
-      ),
+    AppRoutes.scenarioQuickSelect(
+      context,
+      scenarioCode: scenario.code,
     );
   }
 
   void _onEquipmentPressed(Equipment equipment) {
     debugPrint('Equipment pressed: ${equipment.name}');
-    // TODO: Navigate to workout guide page with pre-selected equipment
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Selected equipment: ${equipment.name}'),
-        duration: const Duration(seconds: 2),
-      ),
+    AppRoutes.equipmentPreselect(
+      context,
+      equipmentCode: equipment.code,
     );
   }
 
@@ -157,12 +146,10 @@ class _HomePageState extends State<HomePage> {
     final themeWeek = context.read<HomeProvider>().currentThemeWeek;
     if (themeWeek != null) {
       debugPrint('Starting theme week workout: ${themeWeek.title}');
-      // TODO: Navigate to workout result page with theme week equipment
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Starting ${themeWeek.title} workout...'),
-          duration: const Duration(seconds: 2),
-        ),
+      AppRoutes.themeWeekQuickJoin(
+        context,
+        themeWeekId: themeWeek.id,
+        equipmentCode: themeWeek.equipmentCode,
       );
     }
   }
@@ -177,24 +164,14 @@ class _HomePageState extends State<HomePage> {
         // Already on home page
         break;
       case 1:
-        // Navigate to camera page
-        debugPrint('Navigate to camera page');
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Camera feature - AI equipment recognition'),
-            duration: Duration(seconds: 2),
-          ),
-        );
+        // Navigate to camera page (AI scene detection)
+        debugPrint('Navigate to AI camera detection page');
+        AppRoutes.navigateTo(context, AppRoutes.cameraDetection);
         break;
       case 2:
         // Navigate to profile page
         debugPrint('Navigate to profile page');
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Profile page - cards & history'),
-            duration: Duration(seconds: 2),
-          ),
-        );
+        AppRoutes.navigateToMyPage(context);
         break;
     }
   }

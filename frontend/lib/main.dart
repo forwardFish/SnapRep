@@ -1,9 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'core/services/supabase_service.dart';
+import 'core/services/google_auth_service.dart';
 import 'core/providers/home_provider.dart';
+import 'core/providers/workout_guide_provider.dart';
+import 'core/providers/workout_result_provider.dart';
+import 'core/providers/result_card_provider.dart';
+import 'core/providers/my_page_provider.dart';
 import 'features/home/screens/home_page.dart';
-import 'features/splash/splash_screen.dart';
+import 'routes/app_routes.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -14,6 +19,15 @@ void main() async {
     debugPrint('✅ Supabase initialized successfully');
   } catch (e) {
     debugPrint('❌ Supabase initialization failed: $e');
+  }
+
+  // Initialize Google Auth Service
+  try {
+    GoogleAuthService().initialize();
+    debugPrint('✅ Google Auth Service initialized successfully');
+  } catch (e) {
+    debugPrint('❌ Google Auth Service initialization failed: $e');
+    // Continue anyway - Google Sign-In will show appropriate error
   }
 
   runApp(const SnapRepApp());
@@ -27,6 +41,10 @@ class SnapRepApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => HomeProvider()),
+        ChangeNotifierProvider(create: (_) => WorkoutGuideProvider()),
+        ChangeNotifierProvider(create: (_) => WorkoutResultProvider()),
+        ChangeNotifierProvider(create: (_) => ResultCardProvider()),
+        ChangeNotifierProvider(create: (_) => MyPageProvider()),
       ],
       child: MaterialApp(
         title: 'SnapRep',
@@ -46,10 +64,9 @@ class SnapRepApp extends StatelessWidget {
             ),
           ),
         ),
-        home: const SplashScreen(),
-        routes: {
-          '/home': (context) => const AuthWrapper(),
-        },
+        initialRoute: AppRoutes.splash,
+        routes: AppRoutes.getRoutes(),
+        navigatorObservers: [AppRouteObserver()],
         debugShowCheckedModeBanner: false,
       ),
     );

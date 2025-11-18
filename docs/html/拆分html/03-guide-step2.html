@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SnapRep - Workout Guide Step 2 | Choose Scene & Objects</title>
+    <title>SnapRep - Environment Setup | Fitness Anywhere</title>
     <style>
         /* ========== GLOBAL RESET & PREMIUM TYPOGRAPHY ========== */
         * {
@@ -28,11 +28,17 @@
             --yellow-cta-hover: #FFC107;
             --yellow-shadow: 0 8px 24px rgba(255, 215, 0, 0.25);
             --premium-black: #1a1a1a;
+
+            /* Mode-specific colors */
+            --home-color: #3498DB;
+            --office-color: #9B59B6;
+            --travel-color: #E67E22;
+            --gym-color: #27AE60;
         }
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Helvetica Neue', 'Roboto', 'Segoe UI', system-ui, sans-serif;
-            background: radial-gradient(ellipse at top, #f8fafc 0%, #ffffff 50%, #f1f5f9 100%);
+            background: #ffffff;
             color: var(--text-primary);
             line-height: 1.6;
             overflow-x: auto;
@@ -89,56 +95,11 @@
             background: #ffffff;
         }
 
-        .scrollable-content {
-            height: calc(100% - 80px);
-            overflow-y: auto;
-            padding-bottom: 20px;
-        }
-
-        /* ========== PREMIUM CARD SYSTEM ========== */
-        .premium-card {
-            background: var(--crystal-white);
-            backdrop-filter: blur(24px) saturate(1.2);
-            border: 1px solid rgba(255, 255, 255, 0.8);
-            border-radius: 20px;
-            box-shadow: var(--shadow-soft);
-            transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
-            overflow: hidden;
-        }
-
-        .premium-card:hover {
-            transform: translateY(-4px);
-            box-shadow: var(--shadow-medium);
-        }
-
-        .premium-card.selected {
-            border-color: var(--yellow-cta);
-            box-shadow: 0 0 0 2px rgba(255, 215, 0, 0.3), var(--shadow-medium);
-        }
-
-        /* ========== CHIP SYSTEM ========== */
-        .chip {
-            display: inline-block;
-            padding: 8px 16px;
-            margin: 4px;
-            background: var(--glass-effect);
-            border: 2px solid transparent;
-            border-radius: 20px;
-            font-size: 14px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .chip:hover {
-            background: var(--crystal-white);
-            transform: translateY(-1px);
-        }
-
-        .chip.selected {
-            background: var(--yellow-cta);
-            color: var(--premium-black);
-            border-color: var(--yellow-cta);
+        .full-height-content {
+            min-height: 100%;
+            display: flex;
+            flex-direction: column;
+            padding: 24px;
         }
 
         /* ========== TYPOGRAPHY SYSTEM ========== */
@@ -154,29 +115,167 @@
         }
 
         .section-title {
-            font-size: 24px;
+            font-size: 18px;
             font-weight: 700;
             color: var(--text-primary);
             margin-bottom: 16px;
         }
 
-        .card-title {
-            font-size: 18px;
-            font-weight: 600;
-            color: var(--text-primary);
-            margin-bottom: 8px;
-        }
-
-        .body-text {
+        .description-text {
             font-size: 16px;
             color: var(--text-secondary);
-            line-height: 1.5;
+            line-height: 1.6;
+            margin-bottom: 32px;
         }
 
-        .caption-text {
+        /* ========== SCENARIO & EQUIPMENT CARDS ========== */
+        .card-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 40px;
+        }
+
+        /* ========== HORIZONTAL SCROLLING SYSTEM ========== */
+        .horizontal-scroll {
+            display: flex;
+            overflow-x: auto;
+            scroll-behavior: smooth;
+            gap: 16px;
+            padding: 0 0 16px 0;
+            margin-bottom: 20px;
+            -webkit-overflow-scrolling: touch;
+            cursor: grab;
+            user-select: none;
+        }
+
+        .horizontal-scroll:active {
+            cursor: grabbing;
+        }
+
+        .horizontal-scroll::-webkit-scrollbar {
+            display: none;
+        }
+
+        .scroll-card {
+            flex: 0 0 160px;
+            height: 180px;
+            position: relative;
+            border-radius: 20px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+            border: 3px solid transparent;
+        }
+
+        .scroll-card:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+        }
+
+        .scroll-card.selected {
+            border-color: var(--yellow-cta);
+            box-shadow: 0 12px 40px rgba(255, 215, 0, 0.3);
+        }
+
+        .scroll-card .card-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-size: cover;
+            background-position: center;
+        }
+
+        .scroll-card .card-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0.6) 100%);
+        }
+
+        .scroll-card .card-content {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 20px 12px;
+            color: white;
+            z-index: 1;
+        }
+
+        .scroll-card .card-badge {
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            color: white;
+            padding: 6px 10px;
+            border-radius: 12px;
+            font-size: 9px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            display: inline-block;
+            letter-spacing: 0.5px;
+        }
+
+        .scroll-card .card-title {
             font-size: 14px;
-            color: var(--text-caption);
-            line-height: 1.4;
+            font-weight: 700;
+            margin-bottom: 4px;
+            text-shadow: 0 2px 8px rgba(0,0,0,0.5);
+            line-height: 1.2;
+        }
+
+        .scroll-card .card-description {
+            font-size: 10px;
+            opacity: 0.9;
+            text-shadow: 0 1px 4px rgba(0,0,0,0.5);
+            line-height: 1.3;
+        }
+
+        /* Scenario-specific styling */
+        .home .card-badge { background: rgba(52, 152, 219, 0.8); }
+        .office .card-badge { background: rgba(155, 89, 182, 0.8); }
+        .travel .card-badge { background: rgba(230, 126, 34, 0.8); }
+        .gym .card-badge { background: rgba(39, 174, 96, 0.8); }
+
+        /* Equipment-specific styling */
+        .bodyweight .card-badge { background: rgba(52, 152, 219, 0.8); }
+        .chair .card-badge { background: rgba(155, 89, 182, 0.8); }
+        .bottle .card-badge { background: rgba(230, 126, 34, 0.8); }
+        .none .card-badge { background: rgba(149, 165, 166, 0.8); }
+
+        /* ========== YELLOW CTA BUTTON ========== */
+        .yellow-cta-button {
+            background: var(--yellow-cta);
+            color: var(--premium-black);
+            border: none;
+            border-radius: 16px;
+            padding: 16px 32px;
+            font-size: 18px;
+            font-weight: 700;
+            text-align: center;
+            box-shadow: var(--yellow-shadow);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+            width: 100%;
+            margin-top: 20px;
+        }
+
+        .yellow-cta-button:hover {
+            background: var(--yellow-cta-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 12px 32px rgba(255, 215, 0, 0.35);
+        }
+
+        .yellow-cta-button:disabled {
+            background: #E0E0E0;
+            color: #9E9E9E;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
         }
 
         /* ========== PROGRESS INDICATOR ========== */
@@ -198,46 +297,24 @@
             background: var(--yellow-cta);
         }
 
-        /* ========== BOTTOM NAVIGATION ========== */
-        .bottom-nav {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: var(--crystal-white);
-            backdrop-filter: blur(20px);
-            border-top: 1px solid rgba(255, 255, 255, 0.8);
-            padding: 12px 0 24px;
-        }
-
-        .nav-items {
-            display: flex;
-            justify-content: space-around;
-            align-items: center;
-        }
-
-        .nav-item {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 4px;
-            padding: 8px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            color: var(--text-caption);
-        }
-
-        .nav-item.active {
-            color: var(--yellow-cta);
-        }
-
         /* ========== ANIMATIONS ========== */
-        @keyframes premiumGlow {
-            0%, 100% { box-shadow: var(--shadow-soft); }
-            50% { box-shadow: var(--shadow-medium), 0 0 40px rgba(255, 127, 80, 0.3); }
+        @keyframes premiumFloat {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-8px); }
         }
 
-        .glow { animation: premiumGlow 3s ease-in-out infinite; }
+        .float { animation: premiumFloat 4s ease-in-out infinite; }
+
+        /* ========== SELECTION ANIMATION ========== */
+        @keyframes pulseSelection {
+            0% { box-shadow: 0 0 0 0 rgba(255, 215, 0, 0.4); }
+            70% { box-shadow: 0 0 0 20px rgba(255, 215, 0, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(255, 215, 0, 0); }
+        }
+
+        .scroll-card.selected {
+            animation: pulseSelection 1.5s infinite;
+        }
 
         /* ========== CUSTOM SCROLLBAR ========== */
         .page-content::-webkit-scrollbar,
@@ -253,134 +330,208 @@
     </style>
 </head>
 <body>
-    <div class="phone-frame glow">
+    <div class="phone-frame float">
         <div class="phone-screen">
             <div class="status-bar">
-                <span>9:43</span>
+                <span>9:41</span>
                 <span>📶 🔋</span>
             </div>
 
             <div class="page-content">
-                <div class="scrollable-content">
-                    <div style="padding: 24px;">
-                        <!-- Header with Back Button -->
-                        <div style="display: flex; align-items: center; margin-bottom: 32px;">
-                            <button style="border: none; background: none; font-size: 20px; cursor: pointer; margin-right: 16px;">←</button>
-                            <div style="flex: 1; text-align: center;">
-                                <h1 class="hero-title">Choose Scene & Objects</h1>
-                                <p class="body-text">No equipment? No problem.</p>
-                            </div>
-                            <button style="border: none; background: none; color: var(--text-caption); font-size: 14px; cursor: pointer;">Skip</button>
-                        </div>
+                <div class="full-height-content">
+                    <!-- Header Section -->
+                    <div style="margin-bottom: 40px;">
+                        <h1 style="font-size: 28px; font-weight: 600; color: var(--text-primary); margin-bottom: 8px; letter-spacing: -0.5px;">Training Environment</h1>
+                        <p style="font-size: 16px; color: var(--text-secondary); line-height: 1.5;">
+                            Select your location and available equipment
+                        </p>
+                    </div>
 
-                        <!-- Scene Selection -->
-                        <div style="margin-bottom: 32px;">
-                            <h3 class="section-title">Where are you working out? (Single choice)</h3>
-                            <div style="display: flex; gap: 12px; overflow-x: auto; padding-bottom: 8px;">
-                                <div class="premium-card selected" style="min-width: 120px; padding: 20px; text-align: center; cursor: pointer;" onclick="selectScene(this)">
-                                    <div style="font-size: 32px; margin-bottom: 8px;">🏠</div>
-                                    <p class="card-title">Home</p>
-                                    <div style="color: var(--yellow-cta); font-size: 18px; margin-top: 4px;">✓</div>
-                                </div>
-                                <div class="premium-card" style="min-width: 120px; padding: 20px; text-align: center; cursor: pointer;" onclick="selectScene(this)">
-                                    <div style="font-size: 32px; margin-bottom: 8px;">🏢</div>
-                                    <p class="card-title">Office</p>
-                                </div>
-                                <div class="premium-card" style="min-width: 120px; padding: 20px; text-align: center; cursor: pointer;" onclick="selectScene(this)">
-                                    <div style="font-size: 32px; margin-bottom: 8px;">✈️</div>
-                                    <p class="card-title">Travel</p>
+                    <!-- Scenario Selection -->
+                    <div style="margin-bottom: 40px;">
+                        <h3 class="section-title">Scenarios</h3>
+                        <div class="horizontal-scroll" id="scenarioScroll">
+                            <!-- HOME Scenario -->
+                            <div class="scroll-card home" data-scenario="home" onclick="selectScenario(this)">
+                                <div class="card-bg" style="background-image: url('https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80');"></div>
+                                <div class="card-overlay"></div>
+                                <div class="card-content">
+                                    <div class="card-badge">HOME</div>
+                                    <div class="card-title">Living Space</div>
+                                    <div class="card-description">Comfortable environment<br>Personal space workout</div>
                                 </div>
                             </div>
-                        </div>
 
-                        <!-- Object Selection -->
-                        <div style="margin-bottom: 32px;">
-                            <h3 class="section-title">What objects do you have? (Multiple choice)</h3>
-                            <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px;">
-                                <div class="chip selected" onclick="toggleChip(this)">Chair</div>
-                                <div class="chip" onclick="toggleChip(this)">Wall</div>
-                                <div class="chip" onclick="toggleChip(this)">Backpack/Bottle</div>
-                                <div class="chip" onclick="toggleChip(this)">Towel</div>
-                                <div class="chip selected" onclick="toggleChip(this)">None ✓</div>
+                            <!-- OFFICE Scenario -->
+                            <div class="scroll-card office" data-scenario="office" onclick="selectScenario(this)">
+                                <div class="card-bg" style="background-image: url('https://images.unsplash.com/photo-1497366216548-37526070297c?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80');"></div>
+                                <div class="card-overlay"></div>
+                                <div class="card-content">
+                                    <div class="card-badge">OFFICE</div>
+                                    <div class="card-title">Workplace</div>
+                                    <div class="card-description">Professional setting<br>Quick desk exercises</div>
+                                </div>
                             </div>
 
-                            <!-- Camera Option -->
-                            <div style="text-align: center; padding: 20px; background: rgba(255, 215, 0, 0.1); border-radius: 16px;">
-                                <p class="body-text" style="margin-bottom: 12px;">Don't know?</p>
-                                <button style="background: var(--yellow-cta); color: var(--premium-black); border: none; border-radius: 12px; padding: 12px 24px; font-weight: 600;">
-                                    📷 Take Photo to Identify Later
-                                </button>
+                            <!-- GYM Scenario -->
+                            <div class="scroll-card gym" data-scenario="gym" onclick="selectScenario(this)">
+                                <div class="card-bg" style="background-image: url('https://images.unsplash.com/photo-1534438327276-14e5300c3a48?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80');"></div>
+                                <div class="card-overlay"></div>
+                                <div class="card-content">
+                                    <div class="card-badge">GYM</div>
+                                    <div class="card-title">Fitness Center</div>
+                                    <div class="card-description">Full equipment access<br>Professional setting</div>
+                                </div>
+                            </div>
+
+                            <!-- TRAVEL Scenario -->
+                            <div class="scroll-card travel" data-scenario="travel" onclick="selectScenario(this)">
+                                <div class="card-bg" style="background-image: url('https://images.unsplash.com/photo-1441974231531-c6227db76b6e?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80');"></div>
+                                <div class="card-overlay"></div>
+                                <div class="card-content">
+                                    <div class="card-badge">TRAVEL</div>
+                                    <div class="card-title">On the Go</div>
+                                    <div class="card-description">Hotel room workouts<br>Portable exercises</div>
+                                </div>
                             </div>
                         </div>
+                    </div>
 
-                        <!-- Current Selection Summary -->
-                        <div style="background: var(--glass-effect); padding: 16px; border-radius: 16px; margin-bottom: 32px;">
-                            <h4 class="card-title">Current Selection:</h4>
-                            <p class="body-text">Home • Chair, None</p>
-                        </div>
-
-                        <!-- Progress Indicator -->
-                        <div style="text-align: center; margin: 32px 0;">
-                            <div class="progress-indicator">
-                                <div class="progress-step"></div>
-                                <div class="progress-step active"></div>
-                                <div class="progress-step"></div>
+                    <!-- Equipment Selection -->
+                    <div style="margin-bottom: 40px;">
+                        <h3 class="section-title">Equipment</h3>
+                        <div class="horizontal-scroll" id="equipmentScroll">
+                            <!-- BODYWEIGHT Equipment -->
+                            <div class="scroll-card bodyweight" data-equipment="bodyweight" onclick="selectEquipment(this)">
+                                <div class="card-bg" style="background-image: url('https://images.unsplash.com/photo-1583454110551-21f2fa2afe61?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80');"></div>
+                                <div class="card-overlay"></div>
+                                <div class="card-content">
+                                    <div class="card-badge">BODYWEIGHT</div>
+                                    <div class="card-title">No Equipment</div>
+                                    <div class="card-description">Pure bodyweight<br>Anywhere, anytime</div>
+                                </div>
                             </div>
-                            <p class="caption-text">Step 2 of 3</p>
-                        </div>
 
-                        <!-- Next Button -->
-                        <div style="margin-bottom: 80px;">
-                            <button style="width: 100%; background: var(--yellow-cta); color: var(--premium-black); border: none; border-radius: 16px; padding: 16px; font-size: 18px; font-weight: 700;">
-                                Next: Choose Target Areas
-                            </button>
+                            <!-- CHAIR Equipment -->
+                            <div class="scroll-card chair" data-equipment="chair" onclick="selectEquipment(this)">
+                                <div class="card-bg" style="background-image: url('https://images.unsplash.com/photo-1586023492125-27b2c045efd7?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80');"></div>
+                                <div class="card-overlay"></div>
+                                <div class="card-content">
+                                    <div class="card-badge">CHAIR</div>
+                                    <div class="card-title">Office Chair</div>
+                                    <div class="card-description">Seated exercises<br>Support & stability</div>
+                                </div>
+                            </div>
+
+                            <!-- BOTTLE Equipment -->
+                            <div class="scroll-card bottle" data-equipment="bottle" onclick="selectEquipment(this)">
+                                <div class="card-bg" style="background-image: url('https://images.unsplash.com/photo-1523362628745-0c100150b504?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80');"></div>
+                                <div class="card-overlay"></div>
+                                <div class="card-content">
+                                    <div class="card-badge">BOTTLE</div>
+                                    <div class="card-title">Water Bottle</div>
+                                    <div class="card-description">Light weights<br>Resistance training</div>
+                                </div>
+                            </div>
+
+                            <!-- AI SCAN Equipment -->
+                            <div class="scroll-card none selected" data-equipment="none" onclick="selectEquipment(this)">
+                                <div class="card-bg" style="background-image: url('https://images.unsplash.com/photo-1485827404703-89b55fcc595e?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80');"></div>
+                                <div class="card-overlay"></div>
+                                <div class="card-content">
+                                    <div class="card-badge">AI SCAN</div>
+                                    <div class="card-title">Auto Detect</div>
+                                    <div class="card-description">AI environment scan<br>Smart detection</div>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                </div>
-            </div>
 
-            <div class="bottom-nav">
-                <div class="nav-items">
-                    <div class="nav-item">
-                        <span style="font-size: 20px;">🏠</span>
-                        <span style="font-size: 11px;">Home</span>
-                    </div>
-                    <div class="nav-item active">
-                        <span style="font-size: 20px;">📷</span>
-                        <span style="font-size: 11px;">Camera</span>
-                    </div>
-                    <div class="nav-item">
-                        <span style="font-size: 20px;">👤</span>
-                        <span style="font-size: 11px;">My</span>
-                    </div>
+                    <!-- Continue Button -->
+                    <button id="continueBtn" class="yellow-cta-button" disabled onclick="continueToNext()">
+                        Continue
+                    </button>
+
+                    <div style="margin-bottom: 40px;"></div>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
-        function selectScene(selectedScene) {
-            // Remove selected class from all scene cards
-            document.querySelectorAll('.premium-card').forEach(card => {
+        let selectedScenario = null;
+        let selectedEquipment = 'none'; // Default to AI Scan
+
+        function selectScenario(element) {
+            // Remove previous selection from scenarios
+            document.querySelectorAll('[data-scenario]').forEach(card => {
                 card.classList.remove('selected');
-                // Remove checkmark
-                const checkmark = card.querySelector('div[style*="color: var(--yellow-cta)"]');
-                if (checkmark) checkmark.remove();
             });
 
-            // Add selected class to clicked scene
-            selectedScene.classList.add('selected');
+            // Add selection to clicked scenario card
+            element.classList.add('selected');
 
-            // Add checkmark
-            const checkmark = document.createElement('div');
-            checkmark.style.cssText = 'color: var(--yellow-cta); font-size: 18px; margin-top: 4px;';
-            checkmark.textContent = '✓';
-            selectedScene.appendChild(checkmark);
+            // Store selected scenario
+            selectedScenario = element.dataset.scenario;
+
+            // Update continue button state
+            updateContinueButton();
         }
 
-        function toggleChip(chip) {
-            chip.classList.toggle('selected');
+        function selectEquipment(element) {
+            // Remove previous selection from equipment
+            document.querySelectorAll('[data-equipment]').forEach(card => {
+                card.classList.remove('selected');
+            });
+
+            // Add selection to clicked equipment card
+            element.classList.add('selected');
+
+            // Store selected equipment
+            selectedEquipment = element.dataset.equipment;
+
+            // Update continue button state
+            updateContinueButton();
         }
+
+        function updateContinueButton() {
+            const continueBtn = document.getElementById('continueBtn');
+            // Enable button if both scenario and equipment are selected
+            continueBtn.disabled = !(selectedScenario && selectedEquipment);
+        }
+
+        function continueToNext() {
+            if (selectedScenario && selectedEquipment) {
+                // Store selections in localStorage for next page
+                localStorage.setItem('selectedScenario', selectedScenario);
+                localStorage.setItem('selectedEquipment', selectedEquipment);
+
+                // Navigate to next step (you can implement actual navigation here)
+                alert(`Selected: ${selectedScenario.toUpperCase()} + ${selectedEquipment.toUpperCase()}`);
+
+                // Example: window.location.href = '04-guide-step3.html';
+            }
+        }
+
+        // Add interactive feedback
+        document.querySelectorAll('.scroll-card').forEach(card => {
+            card.addEventListener('mouseenter', function() {
+                this.style.transform = 'translateY(-4px) scale(1.01)';
+            });
+
+            card.addEventListener('mouseleave', function() {
+                if (!this.classList.contains('selected')) {
+                    this.style.transform = '';
+                }
+            });
+        });
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Environment setup page loaded');
+            // Update button state on load (equipment is pre-selected)
+            updateContinueButton();
+        });
     </script>
 </body>
 </html>

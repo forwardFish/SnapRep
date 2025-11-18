@@ -45,9 +45,12 @@ export class WorkoutRecommendationService {
       // 1. 获取用户偏好
       const userPrefs = await this.getUserPreferences(dto.userId);
 
+      // 处理前端发送的 intents 数组，取第一个作为主要意图
+      const primaryIntent = dto.intents?.[0] || dto.intent;
+
       // 2. 筛选可用动作
       const availableExercises = await this.exercisesDao.findBySmartCriteria({
-        intent: dto.intent || undefined,
+        intent: primaryIntent || undefined,
         equipment: dto.equipment || ['none'],
         scenario: dto.scenario,
         targetMuscles: dto.targetMuscles,
@@ -287,8 +290,11 @@ export class WorkoutRecommendationService {
    * @returns 格式化的响应
    */
   private formatRecommendationResponse(exercises: any[], alternatives: any[], dto: QuickRecommendationDto) {
+    // 处理前端发送的 intents 数组，取第一个作为主要意图
+    const primaryIntent = dto.intents?.[0] || dto.intent;
+
     return {
-      intent: dto.intent || 'STRETCH',
+      intent: primaryIntent || 'STRETCH',
       totalDuration: dto.duration || 60,
       difficulty: dto.difficulty || 'GREEN',
       exercises: exercises.map((exercise, index) => ({

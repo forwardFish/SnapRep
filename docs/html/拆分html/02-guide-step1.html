@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SnapRep - Workout Guide Step 1 | Choose Your Intention</title>
+    <title>SnapRep - Choose Workout Mode | Fitness Anywhere</title>
     <style>
         /* ========== GLOBAL RESET & PREMIUM TYPOGRAPHY ========== */
         * {
@@ -28,11 +28,17 @@
             --yellow-cta-hover: #FFC107;
             --yellow-shadow: 0 8px 24px rgba(255, 215, 0, 0.25);
             --premium-black: #1a1a1a;
+
+            /* Mode-specific colors */
+            --relax-color: #9B59B6;
+            --stretch-color: #2ECC71;
+            --moderate-color: #F39C12;
+            --strength-color: #E74C3C;
         }
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Helvetica Neue', 'Roboto', 'Segoe UI', system-ui, sans-serif;
-            background: radial-gradient(ellipse at top, #f8fafc 0%, #ffffff 50%, #f1f5f9 100%);
+            background: #ffffff;
             color: var(--text-primary);
             line-height: 1.6;
             overflow-x: auto;
@@ -96,27 +102,6 @@
             padding: 24px;
         }
 
-        /* ========== PREMIUM CARD SYSTEM ========== */
-        .premium-card {
-            background: var(--crystal-white);
-            backdrop-filter: blur(24px) saturate(1.2);
-            border: 1px solid rgba(255, 255, 255, 0.8);
-            border-radius: 20px;
-            box-shadow: var(--shadow-soft);
-            transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
-            overflow: hidden;
-        }
-
-        .premium-card:hover {
-            transform: translateY(-4px);
-            box-shadow: var(--shadow-medium);
-        }
-
-        .premium-card.selected {
-            border-color: var(--yellow-cta);
-            box-shadow: 0 0 0 2px rgba(255, 215, 0, 0.3), var(--shadow-medium);
-        }
-
         /* ========== TYPOGRAPHY SYSTEM ========== */
         .hero-title {
             font-size: 32px;
@@ -130,98 +115,139 @@
         }
 
         .section-title {
-            font-size: 24px;
+            font-size: 18px;
             font-weight: 700;
             color: var(--text-primary);
             margin-bottom: 16px;
         }
 
-        .card-title {
-            font-size: 18px;
-            font-weight: 600;
-            color: var(--text-primary);
-            margin-bottom: 8px;
-        }
-
-        .body-text {
+        .description-text {
             font-size: 16px;
             color: var(--text-secondary);
-            line-height: 1.5;
+            line-height: 1.6;
+            margin-bottom: 32px;
         }
 
-        .caption-text {
-            font-size: 14px;
-            color: var(--text-caption);
-            line-height: 1.4;
-        }
-
-        /* ========== GRID SYSTEMS ========== */
-        .grid-2x2 {
+        /* ========== WORKOUT MODE CARDS ========== */
+        .mode-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 16px;
-            margin: 20px 0;
+            margin-bottom: 40px;
         }
 
-        /* ========== PROGRESS INDICATOR ========== */
-        .progress-indicator {
-            display: flex;
-            justify-content: center;
-            gap: 8px;
-            margin: 16px 0;
+        .mode-card {
+            position: relative;
+            height: 180px;
+            border-radius: 20px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+            border: 3px solid transparent;
         }
 
-        .progress-step {
-            width: 32px;
-            height: 4px;
-            border-radius: 2px;
-            background: rgba(0,0,0,0.2);
+        .mode-card:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
         }
 
-        .progress-step.active {
-            background: var(--yellow-cta);
+        .mode-card.selected {
+            border-color: var(--yellow-cta);
+            box-shadow: 0 12px 40px rgba(255, 215, 0, 0.3);
         }
 
-        /* ========== BOTTOM NAVIGATION ========== */
-        .bottom-nav {
+        .mode-card .mode-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-size: cover;
+            background-position: center;
+        }
+
+        .mode-card .mode-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0.6) 100%);
+        }
+
+        .mode-card .mode-content {
             position: absolute;
             bottom: 0;
             left: 0;
             right: 0;
-            background: var(--crystal-white);
-            backdrop-filter: blur(20px);
-            border-top: 1px solid rgba(255, 255, 255, 0.8);
-            padding: 12px 0 24px;
+            padding: 20px 16px;
+            color: white;
+            z-index: 1;
         }
 
-        .nav-items {
-            display: flex;
-            justify-content: space-around;
-            align-items: center;
+        .mode-card .mode-badge {
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 12px;
+            font-size: 10px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            display: inline-block;
+            letter-spacing: 0.5px;
         }
 
-        .nav-item {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 4px;
-            padding: 8px;
+        .mode-card .mode-title {
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 4px;
+            text-shadow: 0 2px 8px rgba(0,0,0,0.5);
+        }
+
+        .mode-card .mode-description {
+            font-size: 12px;
+            opacity: 0.9;
+            text-shadow: 0 1px 4px rgba(0,0,0,0.5);
+            line-height: 1.4;
+        }
+
+        /* Mode-specific styling */
+        .relax .mode-badge { background: rgba(155, 89, 182, 0.8); }
+        .stretch .mode-badge { background: rgba(46, 204, 113, 0.8); }
+        .moderate .mode-badge { background: rgba(243, 156, 18, 0.8); }
+        .strength .mode-badge { background: rgba(231, 76, 60, 0.8); }
+
+        /* ========== YELLOW CTA BUTTON ========== */
+        .yellow-cta-button {
+            background: var(--yellow-cta);
+            color: var(--premium-black);
+            border: none;
+            border-radius: 16px;
+            padding: 16px 32px;
+            font-size: 18px;
+            font-weight: 700;
+            text-align: center;
+            box-shadow: var(--yellow-shadow);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             cursor: pointer;
-            transition: all 0.3s ease;
-            color: var(--text-caption);
+            width: 100%;
+            margin-top: 20px;
         }
 
-        .nav-item.active {
-            color: var(--yellow-cta);
+        .yellow-cta-button:hover {
+            background: var(--yellow-cta-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 12px 32px rgba(255, 215, 0, 0.35);
         }
 
-        /* ========== ANIMATIONS ========== */
-        @keyframes premiumGlow {
-            0%, 100% { box-shadow: var(--shadow-soft); }
-            50% { box-shadow: var(--shadow-medium), 0 0 40px rgba(255, 127, 80, 0.3); }
+        .yellow-cta-button:disabled {
+            background: #E0E0E0;
+            color: #9E9E9E;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
         }
-
-        .glow { animation: premiumGlow 3s ease-in-out infinite; }
 
         /* ========== CUSTOM SCROLLBAR ========== */
         .page-content::-webkit-scrollbar {
@@ -232,111 +258,151 @@
             background: var(--yellow-cta);
             border-radius: 2px;
         }
+
+        /* ========== ANIMATIONS ========== */
+        @keyframes premiumFloat {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-8px); }
+        }
+
+        .float { animation: premiumFloat 4s ease-in-out infinite; }
+
+        /* ========== SELECTION ANIMATION ========== */
+        @keyframes pulseSelection {
+            0% { box-shadow: 0 0 0 0 rgba(255, 215, 0, 0.4); }
+            70% { box-shadow: 0 0 0 20px rgba(255, 215, 0, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(255, 215, 0, 0); }
+        }
+
+        .mode-card.selected {
+            animation: pulseSelection 1.5s infinite;
+        }
     </style>
 </head>
 <body>
-    <div class="phone-frame glow">
+    <div class="phone-frame float">
         <div class="phone-screen">
             <div class="status-bar">
-                <span>9:42</span>
+                <span>9:41</span>
                 <span>📶 🔋</span>
             </div>
 
             <div class="page-content">
                 <div class="full-height-content">
-                    <!-- Header with Back Button -->
-                    <div style="display: flex; align-items: center; margin-bottom: 32px;">
-                        <button style="border: none; background: none; font-size: 20px; cursor: pointer; margin-right: 16px;">←</button>
-                        <div style="flex: 1; text-align: center;">
-                            <h1 class="hero-title">How Do You Want to Move?</h1>
-                            <p class="body-text">Don't overthink it, just choose what feels right</p>
-                        </div>
-                        <button style="border: none; background: none; color: var(--text-caption); font-size: 14px; cursor: pointer;">Skip</button>
+                    <!-- Header Section -->
+                    <div style="margin-bottom: 40px;">
+                        <h1 style="font-size: 28px; font-weight: 600; color: var(--text-primary); margin-bottom: 8px; letter-spacing: -0.5px;">Workout Mode</h1>
+                        <p style="font-size: 16px; color: var(--text-secondary); line-height: 1.5;">
+                            Select your preferred training intensity
+                        </p>
                     </div>
 
-                    <!-- Workout Intention Cards -->
-                    <div class="grid-2x2" style="flex: 1;">
-                        <div class="premium-card" style="padding: 24px; text-align: center; cursor: pointer;" onclick="selectCard(this)">
-                            <div style="font-size: 48px; margin-bottom: 16px;">🧘</div>
-                            <h3 class="card-title">Relax</h3>
-                            <p class="caption-text">Reduce tension<br>Gentle movements</p>
-                        </div>
-
-                        <div class="premium-card selected" style="padding: 24px; text-align: center; cursor: pointer;" onclick="selectCard(this)">
-                            <div style="font-size: 48px; margin-bottom: 16px;">🤸</div>
-                            <h3 class="card-title">Stretch</h3>
-                            <p class="caption-text">Flexibility focus<br>Muscle extension</p>
+                    <!-- Workout Modes Grid -->
+                    <div class="mode-grid">
+                        <!-- RELAX Mode -->
+                        <div class="mode-card relax" data-mode="relax" onclick="selectMode(this)">
+                            <div class="mode-bg" style="background-image: url('https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80');"></div>
+                            <div class="mode-overlay"></div>
+                            <div class="mode-content">
+                                <div class="mode-badge">RELAX</div>
+                                <div class="mode-title">Relaxation</div>
+                                <div class="mode-description">Reduce muscle tension<br>Gentle movements</div>
+                            </div>
                         </div>
 
-                        <div class="premium-card" style="padding: 24px; text-align: center; cursor: pointer;" onclick="selectCard(this)">
-                            <div style="font-size: 48px; margin-bottom: 16px;">🏃</div>
-                            <h3 class="card-title">Cardio</h3>
-                            <p class="caption-text">Light sweat<br>Moderate heart rate</p>
+                        <!-- STRETCH Mode -->
+                        <div class="mode-card stretch" data-mode="stretch" onclick="selectMode(this)">
+                            <div class="mode-bg" style="background-image: url('https://images.unsplash.com/photo-1588286840104-8957b019727f?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80');"></div>
+                            <div class="mode-overlay"></div>
+                            <div class="mode-content">
+                                <div class="mode-badge">STRETCH</div>
+                                <div class="mode-title">Flexibility</div>
+                                <div class="mode-description">Improve mobility<br>Increase range of motion</div>
+                            </div>
                         </div>
 
-                        <div class="premium-card" style="padding: 24px; text-align: center; cursor: pointer;" onclick="selectCard(this)">
-                            <div style="font-size: 48px; margin-bottom: 16px;">💪</div>
-                            <h3 class="card-title">Strength</h3>
-                            <p class="caption-text">Build muscle<br>Light resistance</p>
+                        <!-- MODERATE Mode -->
+                        <div class="mode-card moderate" data-mode="moderate" onclick="selectMode(this)">
+                            <div class="mode-bg" style="background-image: url('https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80');"></div>
+                            <div class="mode-overlay"></div>
+                            <div class="mode-content">
+                                <div class="mode-badge">MODERATE</div>
+                                <div class="mode-title">Cardio</div>
+                                <div class="mode-description">Light sweat session<br>Moderate heart rate</div>
+                            </div>
+                        </div>
+
+                        <!-- STRENGTH Mode -->
+                        <div class="mode-card strength" data-mode="strength" onclick="selectMode(this)">
+                            <div class="mode-bg" style="background-image: url('https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80');"></div>
+                            <div class="mode-overlay"></div>
+                            <div class="mode-content">
+                                <div class="mode-badge">STRENGTH</div>
+                                <div class="mode-title">Power Training</div>
+                                <div class="mode-description">Build muscle strength<br>Resistance exercises</div>
+                            </div>
                         </div>
                     </div>
 
-                    <!-- Quick Option -->
-                    <div style="text-align: center; margin: 24px 0;">
-                        <button style="background: transparent; border: 2px solid var(--yellow-cta); color: var(--yellow-cta); border-radius: 16px; padding: 12px 24px; font-weight: 600;">
-                            Or Just Start 60-Second Workout ✨
-                        </button>
-                        <p class="caption-text" style="margin-top: 8px;">(Default template: Stretch → Active → Strength)</p>
-                    </div>
+                    <!-- Continue Button -->
+                    <button id="continueBtn" class="yellow-cta-button" disabled onclick="continueToNext()">
+                        Continue
+                    </button>
 
-                    <!-- Progress Indicator -->
-                    <div style="text-align: center; margin-top: 32px;">
-                        <div class="progress-indicator">
-                            <div class="progress-step active"></div>
-                            <div class="progress-step"></div>
-                            <div class="progress-step"></div>
-                        </div>
-                        <p class="caption-text">Step 1 of 3</p>
-                    </div>
-
-                    <!-- Next Button -->
-                    <div style="margin-top: 32px; margin-bottom: 80px;">
-                        <button style="width: 100%; background: var(--yellow-cta); color: var(--premium-black); border: none; border-radius: 16px; padding: 16px; font-size: 18px; font-weight: 700;">
-                            Next: Choose Scene & Objects
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <div class="bottom-nav">
-                <div class="nav-items">
-                    <div class="nav-item">
-                        <span style="font-size: 20px;">🏠</span>
-                        <span style="font-size: 11px;">Home</span>
-                    </div>
-                    <div class="nav-item active">
-                        <span style="font-size: 20px;">📷</span>
-                        <span style="font-size: 11px;">Camera</span>
-                    </div>
-                    <div class="nav-item">
-                        <span style="font-size: 20px;">👤</span>
-                        <span style="font-size: 11px;">My</span>
-                    </div>
+                    <div style="margin-bottom: 40px;"></div>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
-        function selectCard(selectedCard) {
-            // Remove selected class from all cards
-            document.querySelectorAll('.premium-card').forEach(card => {
+        let selectedMode = null;
+
+        function selectMode(element) {
+            // Remove previous selection
+            document.querySelectorAll('.mode-card').forEach(card => {
                 card.classList.remove('selected');
             });
 
-            // Add selected class to clicked card
-            selectedCard.classList.add('selected');
+            // Add selection to clicked card
+            element.classList.add('selected');
+
+            // Store selected mode
+            selectedMode = element.dataset.mode;
+
+            // Enable continue button
+            document.getElementById('continueBtn').disabled = false;
         }
+
+        function continueToNext() {
+            if (selectedMode) {
+                // Store selected mode in localStorage for next page
+                localStorage.setItem('selectedWorkoutMode', selectedMode);
+
+                // Navigate to next step (you can implement actual navigation here)
+                alert(`Selected mode: ${selectedMode.toUpperCase()}`);
+
+                // Example: window.location.href = '03-guide-step2.html';
+            }
+        }
+
+        // Add some interactive feedback
+        document.querySelectorAll('.mode-card').forEach(card => {
+            card.addEventListener('mouseenter', function() {
+                this.style.transform = 'translateY(-4px) scale(1.01)';
+            });
+
+            card.addEventListener('mouseleave', function() {
+                if (!this.classList.contains('selected')) {
+                    this.style.transform = '';
+                }
+            });
+        });
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Workout mode selection page loaded');
+        });
     </script>
 </body>
 </html>

@@ -14,6 +14,12 @@ export class QuickRecommendationDto {
   @IsEnum(IntentType)
   intent?: IntentType;
 
+  // 支持前端发送的复数形式 intents 数组
+  @IsOptional()
+  @IsArray()
+  @IsEnum(IntentType, { each: true })
+  intents?: IntentType[];
+
   @IsOptional()
   @IsArray()
   @IsString({ each: true })
@@ -51,6 +57,13 @@ export class QuickRecommendationDto {
 
   @IsOptional()
   isOffline?: boolean = false;
+
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Max(4)
+  @Type(() => Number)
+  currentStep?: number;
 }
 
 export class ReplaceExerciseDto {
