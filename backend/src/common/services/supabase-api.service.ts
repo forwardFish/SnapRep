@@ -337,4 +337,22 @@ export class SupabaseApiService {
       throw error;
     }
   }
+
+  // ==========================================
+  // 便捷方法别名 (为了兼容性)
+  // ==========================================
+
+  /**
+   * create - post 方法的别名
+   */
+  async create<T = any>(table: string, data: Record<string, any>): Promise<T> {
+    return this.post<T>(table, data);
+  }
+
+  /**
+   * update - patch 方法的别名
+   */
+  async update<T = any>(table: string, id: string, data: Record<string, any>): Promise<T> {
+    return this.patch<T>(table, id, data);
+  }
 }

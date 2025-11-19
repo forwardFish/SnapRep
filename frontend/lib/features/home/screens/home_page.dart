@@ -5,7 +5,7 @@ import '../../../core/models/scenario.dart';
 import '../../../core/models/equipment.dart';
 import '../widgets/hero_section.dart';
 import '../widgets/horizontal_scroll_section.dart';
-import '../widgets/theme_week_section.dart';
+import '../widgets/challenge_hero_section.dart';
 import '../../../shared/widgets/bottom_navigation_bar.dart';
 import '../../../routes/app_routes.dart';
 
@@ -75,15 +75,26 @@ class _HomePageState extends State<HomePage> {
                       onRetry: () => homeProvider.loadEquipment(),
                     ),
 
-                    // Theme Week
-                    ThemeWeekSection(
-                      currentThemeWeek: homeProvider.currentThemeWeek,
-                      isLoading: homeProvider.isLoadingThemeWeek,
-                      isJoining: homeProvider.isJoiningThemeWeek,
-                      error: homeProvider.themeWeekError,
-                      onJoinPressed: _onJoinThemeWeek,
-                      onStartPressed: _onStartThemeWeekWorkout,
-                      onRetry: () => homeProvider.loadCurrentThemeWeek(),
+                    // Item Challenge Section Title
+                    const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 24),
+                      child: Text(
+                        'Item Challenge',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFF1A1A1A),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Item Challenge Hero Section
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 24),
+                      child: ChallengeHeroSection(
+                        onPressed: _onChallengesPressed,
+                      ),
                     ),
                   ],
                 );
@@ -123,35 +134,10 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Future<void> _onJoinThemeWeek() async {
-    final homeProvider = context.read<HomeProvider>();
-    final success = await homeProvider.joinThemeWeek();
 
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            success
-                ? 'Successfully joined theme week!'
-                : 'Failed to join theme week',
-          ),
-          backgroundColor: success ? Colors.green : Colors.red,
-          duration: const Duration(seconds: 2),
-        ),
-      );
-    }
-  }
-
-  void _onStartThemeWeekWorkout() {
-    final themeWeek = context.read<HomeProvider>().currentThemeWeek;
-    if (themeWeek != null) {
-      debugPrint('Starting theme week workout: ${themeWeek.title}');
-      AppRoutes.themeWeekQuickJoin(
-        context,
-        themeWeekId: themeWeek.id,
-        equipmentCode: themeWeek.equipmentCode,
-      );
-    }
+  void _onChallengesPressed() {
+    debugPrint('Navigate to challenges page');
+    AppRoutes.navigateTo(context, AppRoutes.challenges);
   }
 
   void _onNavTap(int index) {

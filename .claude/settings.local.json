@@ -1,7 +1,14 @@
 {
   "permissions": {
     "allow": [
-      "Bash(nc:*)"
+      "Bash(nc:*)",
+      "Bash(powershell -Command \"Get-Process -Name node | Stop-Process -Force\")",
+      "Bash(flutter clean:*)",
+      "Bash(flutter pub:*)",
+      "Bash(flutter doctor:*)",
+      "Bash(flutter run:*)",
+      "Bash(taskkill:*)",
+      "Bash(tee:*)"
     ],
     "deny": [],
     "ask": []

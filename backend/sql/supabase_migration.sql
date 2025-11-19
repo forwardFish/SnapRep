@@ -954,3 +954,203 @@ END$$;
 -- 若你的系统不会存特别长的文本，建议做；否则可跳过
 ALTER TABLE public.share_cards ALTER COLUMN share_text TYPE varchar(500);
 ALTER TABLE public.theme_weeks ALTER COLUMN description TYPE varchar(500);
+
+-- ============================================================================
+-- 5. CHALLENGE SYSTEM - 挑战系统表 (v3.1 - Simplified Design)
+-- ============================================================================
+
+-- 挑战状态枚举（兼容写法）
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'ChallengeStatus') THEN
+    CREATE TYPE "ChallengeStatus" AS ENUM (
+      'STARTED',     -- 已开始 - 用户已接受挑战但尚未完成
+      'IN_PROGRESS', -- 进行中 - 正在进行挑战
+      'COMPLETED',   -- 已完成 - 成功完成挑战
+      'ABANDONED'    -- 已放弃 - 中途退出或取消挑战
+    );
+  END IF;
+END$$;
+
+-- 5.1) 创建挑战表（简化设计）
+CREATE TABLE IF NOT EXISTS public.challenge_items (
+  id text NOT NULL DEFAULT gen_random_uuid()::text,
+  code text NOT NULL,
+  title text NOT NULL,
+
+  -- 关联器材信息
+  equipment_id text NOT NULL,
+
+  -- 挑战配置
+  time_limit integer,  -- 时间限制（分钟数，null表示无限制）
+  target_count integer NOT NULL DEFAULT 3,  -- 目标完成次数
+
+  -- 描述和说明
+  description varchar(500) NOT NULL,
+  instructions varchar(1000),
+
+  -- 热度和推荐
+  is_popular boolean DEFAULT false,
+  trending_score double precision DEFAULT 0.0,
+
+  -- 状态管理
+  is_active boolean NOT NULL DEFAULT true,
+  display_order integer NOT NULL DEFAULT 0,
+
+  -- 元数据
+  created_at timestamptz(6) NOT NULL DEFAULT now(),
+  updated_at timestamptz(6) NOT NULL DEFAULT now(),
+
+  CONSTRAINT challenge_items_pkey PRIMARY KEY (id),
+  CONSTRAINT challenge_items_code_key UNIQUE (code),
+  CONSTRAINT challenge_items_equipment_id_fkey
+    FOREIGN KEY (equipment_id) REFERENCES public.equipment(id)
+    ON DELETE RESTRICT ON UPDATE CASCADE
+);
+
+-- 5.2) 创建挑战完成记录表（简化设计）
+CREATE TABLE IF NOT EXISTS public.challenge_completions (
+  id text NOT NULL DEFAULT gen_random_uuid()::text,
+
+  -- 关联信息
+  user_id uuid NOT NULL,  -- 修改为 uuid 类型以匹配 users 表
+  challenge_item_id text NOT NULL,
+  workout_session_id text,  -- 关联训练会话（可选）
+
+  -- 挑战状态
+  status "ChallengeStatus" NOT NULL DEFAULT 'STARTED',
+  started_at timestamptz(6) NOT NULL DEFAULT now(),
+  completed_at timestamptz(6),
+  abandoned_at timestamptz(6),
+
+  -- 完成详情
+  actual_duration integer,  -- 实际完成时长（秒数）
+  completed_count integer NOT NULL DEFAULT 0,  -- 完成次数
+  progress_percent double precision NOT NULL DEFAULT 0.0,  -- 完成百分比
+
+  -- 用户反馈和评价
+  difficulty_felt integer,  -- 实际感受难度（1-5分）
+  enjoyment_rating integer,  -- 享受度评分（1-5分）
+  feedback varchar(500),  -- 用户反馈
+
+  -- 奖励系统
+  badge_earned "RarityLevel",  -- 获得徽章稀有度
+  xp_earned integer NOT NULL DEFAULT 0,  -- 获得经验值
+  bonus_rewards jsonb,  -- 额外奖励
+
+  -- 元数据
+  created_at timestamptz(6) NOT NULL DEFAULT now(),
+  updated_at timestamptz(6) NOT NULL DEFAULT now(),
+
+  CONSTRAINT challenge_completions_pkey PRIMARY KEY (id),
+  CONSTRAINT challenge_completions_user_id_fkey
+    FOREIGN KEY (user_id) REFERENCES public.users(id)
+    ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT challenge_completions_challenge_item_id_fkey
+    FOREIGN KEY (challenge_item_id) REFERENCES public.challenge_items(id)
+    ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT challenge_completions_workout_session_id_fkey
+    FOREIGN KEY (workout_session_id) REFERENCES public.workout_sessions(id)
+    ON DELETE SET NULL ON UPDATE CASCADE
+);
+
+-- 5.3) 创建索引优化查询性能
+CREATE INDEX IF NOT EXISTS idx_challenge_items_code ON public.challenge_items(code);
+CREATE INDEX IF NOT EXISTS idx_challenge_items_equipment_id ON public.challenge_items(equipment_id);
+CREATE INDEX IF NOT EXISTS idx_challenge_items_is_active_display_order ON public.challenge_items(is_active, display_order);
+CREATE INDEX IF NOT EXISTS idx_challenge_items_trending_score_desc ON public.challenge_items(trending_score DESC);
+
+CREATE INDEX IF NOT EXISTS idx_challenge_completions_user_id_status ON public.challenge_completions(user_id, status);
+CREATE INDEX IF NOT EXISTS idx_challenge_completions_challenge_item_id_status ON public.challenge_completions(challenge_item_id, status);
+CREATE INDEX IF NOT EXISTS idx_challenge_completions_user_id_completed_at_desc ON public.challenge_completions(user_id, completed_at DESC);
+CREATE INDEX IF NOT EXISTS idx_challenge_completions_status_started_at ON public.challenge_completions(status, started_at);
+
+-- 5.4) 添加自动更新时间戳触发器
+CREATE TRIGGER update_challenge_items_updated_at BEFORE UPDATE ON public.challenge_items FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_challenge_completions_updated_at BEFORE UPDATE ON public.challenge_completions FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- 5.5) 启用 RLS 安全策略
+ALTER TABLE public.challenge_items ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.challenge_completions ENABLE ROW LEVEL SECURITY;
+
+-- 5.6) 创建 RLS 策略
+DO $$
+BEGIN
+  -- 挑战表 - 公共只读（仅启用的挑战）
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies
+    WHERE schemaname = 'public'
+      AND tablename = 'challenge_items'
+      AND policyname = 'Public challenge_items readable'
+  ) THEN
+    CREATE POLICY "Public challenge_items readable"
+    ON public.challenge_items FOR SELECT
+    TO anon, authenticated
+    USING (is_active = true);
+  END IF;
+
+  -- 挑战完成记录表 - 用户只能查看自己的记录
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies
+    WHERE schemaname = 'public'
+      AND tablename = 'challenge_completions'
+      AND policyname = 'Users can view own challenge completions'
+  ) THEN
+    CREATE POLICY "Users can view own challenge completions"
+    ON public.challenge_completions FOR SELECT
+    TO authenticated
+    USING (auth.uid() = user_id);
+  END IF;
+
+  -- 用户可以插入自己的挑战完成记录
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies
+    WHERE schemaname = 'public'
+      AND tablename = 'challenge_completions'
+      AND policyname = 'Users can insert own challenge completions'
+  ) THEN
+    CREATE POLICY "Users can insert own challenge completions"
+    ON public.challenge_completions FOR INSERT
+    TO authenticated
+    WITH CHECK (auth.uid() = user_id);
+  END IF;
+
+  -- 用户可以更新自己的挑战完成记录
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies
+    WHERE schemaname = 'public'
+      AND tablename = 'challenge_completions'
+      AND policyname = 'Users can update own challenge completions'
+  ) THEN
+    CREATE POLICY "Users can update own challenge completions"
+    ON public.challenge_completions FOR UPDATE
+    TO authenticated
+    USING (auth.uid() = user_id);
+  END IF;
+END$$;
+
+-- 5.7) 添加表注释
+COMMENT ON TABLE public.challenge_items IS '挑战表 - 存储挑战信息，专注于挑战本身而非统计数据（简化设计）';
+COMMENT ON TABLE public.challenge_completions IS '挑战完成记录表 - 记录用户挑战的参与、进度和完成状态';
+
+COMMENT ON COLUMN public.challenge_items.code IS '业务标识符，如：umbrella_challenge, book_challenge';
+COMMENT ON COLUMN public.challenge_items.title IS '挑战标题，如：Umbrella Fitness Challenge, Book Balance Challenge';
+COMMENT ON COLUMN public.challenge_items.equipment_id IS '关联器材ID，从equipment表获取物品属性';
+COMMENT ON COLUMN public.challenge_items.time_limit IS '时间限制（分钟数，null表示无限制）';
+COMMENT ON COLUMN public.challenge_items.target_count IS '目标完成次数（需要完成的练习动作数量）';
+COMMENT ON COLUMN public.challenge_items.description IS '挑战描述';
+COMMENT ON COLUMN public.challenge_items.instructions IS '详细说明（可选，挑战的具体要求）';
+COMMENT ON COLUMN public.challenge_items.trending_score IS '趋势分数（用于排序推荐）';
+
+COMMENT ON COLUMN public.challenge_completions.user_id IS '用户ID';
+COMMENT ON COLUMN public.challenge_completions.challenge_item_id IS '挑战ID';
+COMMENT ON COLUMN public.challenge_completions.workout_session_id IS '关联训练会话ID（可选）';
+COMMENT ON COLUMN public.challenge_completions.status IS '挑战状态：STARTED, IN_PROGRESS, COMPLETED, ABANDONED';
+COMMENT ON COLUMN public.challenge_completions.actual_duration IS '实际完成时长（秒数）';
+COMMENT ON COLUMN public.challenge_completions.completed_count IS '完成次数（完成的练习动作数量）';
+COMMENT ON COLUMN public.challenge_completions.progress_percent IS '完成百分比（0.0-1.0）';
+COMMENT ON COLUMN public.challenge_completions.difficulty_felt IS '实际感受难度（1-5分，用户主观感受）';
+COMMENT ON COLUMN public.challenge_completions.enjoyment_rating IS '享受度评分（1-5分，挑战趣味性）';
+COMMENT ON COLUMN public.challenge_completions.badge_earned IS '获得徽章稀有度（使用现有枚举）';
+COMMENT ON COLUMN public.challenge_completions.xp_earned IS '获得经验值（基于难度和完成质量）';
+COMMENT ON COLUMN public.challenge_completions.bonus_rewards IS '额外奖励（JSON格式，特殊成就等）';

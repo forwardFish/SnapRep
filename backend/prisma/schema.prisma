@@ -181,6 +181,7 @@ model Equipment {
   exerciseEquipment ExerciseEquipment[]
   scenarioEquipment ScenarioEquipment[] // 器材可用场景关联
   rarityTable       RarityTable[] // v3.0: 重命名自 equipmentFrequencies
+  challengeItems    ChallengeItem[] // 挑战物品关联
 
   @@index([code])
   @@index([category])
@@ -339,6 +340,7 @@ model User {
   userPreferences         UserPreference[]
   themeWeekParticipations ThemeWeekParticipation[]
   posts                   Post[] // 临时保留Post关系
+  challengeCompletions    ChallengeCompletion[] // 挑战完成记录
 
   @@index([email])
   @@map("users")
@@ -409,8 +411,9 @@ model WorkoutSession {
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
 
   // 关系
-  sessionExercises SessionExercise[]
-  shareCard        ShareCard?
+  sessionExercises     SessionExercise[]
+  shareCard            ShareCard?
+  challengeCompletions ChallengeCompletion[] // 挑战完成记录
 
   @@index([userId, completedAt(sort: Desc)])
   @@index([status])
@@ -697,6 +700,98 @@ model ThemeWeekParticipation {
   @@index([themeWeekId, status])
   @@index([userId, status])
   @@map("theme_week_participations")
+}
+
+// =============================================================================
+// 16. CHALLENGE ITEMS - 挑战物品表（物品挑战赛功能）
+// =============================================================================
+
+model ChallengeItem {
+  id   String @id @default(cuid())
+  code String @unique // 业务标识: "umbrella", "bottle", "guitar"
+  name String // 名称: "雨伞", "水瓶", "吉他"
+  emoji String // 物品emoji: "🌂", "🧃", "🎸"
+
+  // 挑战配置
+  difficulty      Int         @default(3) // 难度星级（1-5颗星）
+  baseRarity      RarityLevel @default(COMMON) @map("base_rarity") // 基础稀有度等级
+  exerciseCount   Int         @default(3) @map("exercise_count") // 挑战动作数量
+  estimatedMinutes Int         @default(5) @map("estimated_minutes") // 预计完成时间（分钟）
+
+  // 关联器材（可选，用于训练时自动匹配）
+  equipmentId String?    @map("equipment_id")
+  equipment   Equipment? @relation(fields: [equipmentId], references: [id])
+
+  // 显示配置
+  displayOrder Int     @default(0) @map("display_order") // 显示顺序
+  isActive     Boolean @default(true) @map("is_active")
+  isPopular    Boolean @default(false) @map("is_popular") // 是否为热门挑战
+
+  // 描述信息
+  description String? @db.VarChar(200) // 挑战描述
+
+  // 统计字段（冗余字段，提升查询性能）
+  totalParticipants Int   @default(0) @map("total_participants") // 总参与人数
+  totalCompletions  Int   @default(0) @map("total_completions") // 总完成人数
+  completionRate    Float @default(0.0) @map("completion_rate") // 完成率
+
+  // 元数据
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  // 关系
+  challengeCompletions ChallengeCompletion[]
+
+  @@index([code])
+  @@index([isActive])
+  @@index([displayOrder])
+  @@index([totalParticipants(sort: Desc)]) // 按参与人数排序
+  @@index([baseRarity, totalParticipants]) // 稀有度和参与人数复合索引
+  @@map("challenge_items")
+}
+
+// =============================================================================
+// 17. CHALLENGE COMPLETIONS - 挑战完成记录表
+// =============================================================================
+
+model ChallengeCompletion {
+  id String @id @default(cuid())
+
+  userId String @map("user_id")
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  challengeItemId String        @map("challenge_item_id")
+  challengeItem   ChallengeItem @relation(fields: [challengeItemId], references: [id], onDelete: Cascade)
+
+  // 完成状态
+  status      String    @default("STARTED") // "STARTED", "COMPLETED", "ABANDONED"
+  startedAt   DateTime  @default(now()) @map("started_at") @db.Timestamptz(6)
+  completedAt DateTime? @map("completed_at") @db.Timestamptz(6)
+
+  // 完成详情
+  actualDuration   Int?    @map("actual_duration") // 实际完成时间（秒）
+  completedCount   Int     @default(0) @map("completed_count") // 完成的动作数量
+  difficultyFelt   Int?    @map("difficulty_felt") // 用户感受的难度（1-5星）
+  enjoymentRating  Int?    @map("enjoyment_rating") // 趣味性评分（1-5星）
+
+  // 奖励信息
+  badgeEarned  RarityLevel? @map("badge_earned") // 获得的徽章等级
+  badgeAwarded Boolean      @default(false) @map("badge_awarded") // 徽章是否已颁发
+  xpEarned     Int          @default(0) @map("xp_earned") // 获得的经验值
+
+  // 关联会话（可选）
+  sessionId String?         @map("session_id")
+  session   WorkoutSession? @relation(fields: [sessionId], references: [id])
+
+  // 元数据
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@unique([userId, challengeItemId]) // 每个用户每个挑战只能有一条记录
+  @@index([userId, completedAt(sort: Desc)])
+  @@index([challengeItemId, status])
+  @@index([status, completedAt])
+  @@map("challenge_completions")
 }
 
 // =============================================================================

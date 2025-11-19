@@ -16,6 +16,7 @@ import { WorkoutSessionsModule } from './workout-sessions/workout-sessions.modul
 import { CardsModule } from './cards/cards.module';
 import { AnalyticsModule } from './analytics/analytics.module';
 import { ThemeWeeksModule } from './theme-weeks/theme-weeks.module';
+import { ChallengesModule } from './challenges/challenges.module';
 import config from './common/configs/config';
 import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
 import { GqlConfigService } from './gql-config.service';
@@ -45,6 +46,7 @@ import { UsersModule } from './users/users.module';
     CardsModule,
     AnalyticsModule, // 新增 Analytics 模块
     ThemeWeeksModule, // 新增 ThemeWeeks 模块
+    ChallengesModule, // 新增 Challenges 模块
     // TEMPORARY: Comment out PrismaModule until client generation issue is resolved
     PrismaModule.forRoot({
       isGlobal: true,

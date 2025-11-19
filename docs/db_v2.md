@@ -895,26 +895,29 @@ const scenarioName = t(`scenarios.${scenario.code}`)
 | 版本 | 表数量 | 说明 |
 |------|--------|------|
 | v1.0 | 14张表 | 包含 CardSeries, UserStats, EquipmentFrequency 等 |
-| **v2.0** | **17张表** | 移除非 MVP 必需表，简化设计，增加分析功能表和场景器材关联表 |
+| v2.0 | 17张表 | 移除非 MVP 必需表，简化设计，增加分析功能表和场景器材关联表 |
+| **v2.1** | **19张表** | 在 v2.0 基础上增加挑战系统 (challenge_items 和 challenge_completions) |
 
-**MVP + 预留功能的 17 张表**:
+**MVP + 预留功能的 19 张表**:
 1. `scenarios` - 场景表
 2. `equipment` - 器材表
 3. `exercises` - 动作表
 4. `exercise_scenarios` - 动作-场景关联表
 5. `exercise_equipment` - 动作-器材关联表
-6. `scenario_equipment` - 场景-器材关联表 ⭐ 新增
+6. `scenario_equipment` - 场景-器材关联表 ⭐ v2.0 新增
 7. `users` - 用户表 (增加偏好设置、通知设置、隐私设置)
 8. `workout_sessions` - 训练会话表 (增加跟练模式、环境数据)
 9. `session_exercises` - 会话动作关联表 (增加详细跟练数据)
-10. `share_cards` - 分享成果卡表 (增加稀有度系统) ⭐ 新增
-11. `daily_trainings` - 每日训练记录表 ⭐ 新增
-12. `equipment_frequencies` - 器材使用频次统计表 ⭐ 新增 (稀有度计算)
-13. `user_preferences` - 用户偏好学习记录表 ⭐ 新增 (个性化推荐)
-14. `theme_weeks` - 主题周活动表 ⭐ 新增 (主题周管理)
-15. `theme_week_participations` - 主题周参与记录表 ⭐ 新增 (用户参与追踪)
-16. `user_analytics` - 用户行为分析表 ⭐ 新增 (KPI指标和行为漏斗)
-17. `user_daily_metrics` - 用户每日指标表 ⭐ 新增 (趋势分析)
+10. `share_cards` - 分享成果卡表 (增加稀有度系统) ⭐ v2.0 新增
+11. `daily_trainings` - 每日训练记录表 ⭐ v2.0 新增
+12. `equipment_frequencies` - 器材使用频次统计表 ⭐ v2.0 新增 (稀有度计算)
+13. `user_preferences` - 用户偏好学习记录表 ⭐ v2.0 新增 (个性化推荐)
+14. `theme_weeks` - 主题周活动表 ⭐ v2.0 新增 (主题周管理)
+15. `theme_week_participations` - 主题周参与记录表 ⭐ v2.0 新增 (用户参与追踪)
+16. `user_analytics` - 用户行为分析表 ⭐ v2.0 新增 (KPI指标和行为漏斗)
+17. `user_daily_metrics` - 用户每日指标表 ⭐ v2.0 新增 (趋势分析)
+18. **`challenge_items`** - 挑战物品表 ⭐ v2.1 新增 (Item Challenge Competition System)
+19. **`challenge_completions`** - 挑战完成记录表 ⭐ v2.1 新增 (Challenge Progress Tracking)
 
 ### 13. UserAnalytics 表 - 用户行为分析表 ⭐ 新增 (支持KPI指标和行为漏斗)
 
@@ -1076,15 +1079,280 @@ model User {
 
 ---
 
+### 15. ChallengeItem 表 - 挑战物品表 ⭐ 新增 (Item Challenge Competition System)
+
+**设计说明**：
+- 存储挑战信息，专注于挑战本身而非统计数据
+- 挑战标题、时间限制、状态管理
+- 物品的难度和稀有性通过关联Equipment表获得
+
+```prisma
+model ChallengeItem {
+  id          String   @id @default(cuid())         // 主键ID (挑战唯一标识符)
+  code        String   @unique                      // 业务标识符 (如 "umbrella_challenge", "book_challenge")
+  title       String                                // 挑战标题 (英文，如 "Umbrella Fitness Challenge", "Book Balance Challenge")
+
+  // 关联物品信息
+  equipmentId String   @map("equipment_id")         // 关联器材ID (外键，关联到Equipment表)
+  equipment   Equipment @relation(fields: [equipmentId], references: [id])
+
+  // 挑战配置
+  timeLimit   Int?     @map("time_limit")           // 时间限制 (分钟数，null表示无限制)
+  targetCount Int?     @default(3) @map("target_count")        // 目标完成次数 (需要完成的练习动作数量)
+
+  // 描述和说明
+  description String   @db.VarChar(500)             // 挑战描述 (英文，如 "Complete workouts using an umbrella")
+  instructions String? @db.VarChar(1000)            // 详细说明 (可选，挑战的具体要求)
+
+  // 热度和推荐
+  isPopular    Boolean? @default(false) @map("is_popular")         // 是否为热门挑战
+  trendingScore Float?  @default(0.0) @map("trending_score")       // 趋势分数 (用于排序推荐)
+
+  // 状态管理
+  isActive     Boolean @default(true) @map("is_active")           // 是否启用
+  displayOrder Int     @default(0) @map("display_order")          // 显示顺序 (数字越小越靠前)
+
+  // 元数据字段
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)  // 创建时间
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)       // 最后更新时间
+
+  // 数据库关系
+  challengeCompletions ChallengeCompletion[]       // 挑战完成记录 (一对多关系)
+
+  @@index([code])                                  // 索引：通过代码快速查询
+  @@index([equipmentId])                           // 索引：按关联器材查询
+  @@index([isActive, displayOrder])                // 索引：启用状态和显示顺序
+  @@index([trendingScore(sort: Desc)])             // 索引：热度排序
+  @@map("challenge_items")                         // 数据库表名
+}
+```
+
+**应用场景**：
+- 前端挑战页面展示挑战标题和相关物品信息
+- 通过关联Equipment表获取物品的emoji、难度、稀有度等属性
+- 支持动态统计：参与人数和完成率通过查询ChallengeCompletion表计算
+- 灵活的时间限制：支持限时挑战和无限时挑战
+
+---
+
+### 16. ChallengeCompletion 表 - 挑战完成记录表 ⭐ 新增 (Challenge Progress Tracking)
+
+**设计说明**：
+- 记录用户挑战的参与、进度和完成状态
+- 支持徽章奖励和 XP 经验值系统
+- 关联训练会话，实现挑战与实际锻炼的结合
+- 简化字段，专注于核心追踪功能
+
+```prisma
+model ChallengeCompletion {
+  id             String   @id @default(cuid())      // 主键ID (完成记录唯一标识符)
+
+  // 关联信息
+  userId         String   @map("user_id") @db.Uuid  // 用户ID (外键，关联到User表，类型为UUID)
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  challengeItemId String  @map("challenge_item_id") // 挑战物品ID (外键，关联到ChallengeItem表)
+  challengeItem   ChallengeItem @relation(fields: [challengeItemId], references: [id], onDelete: Cascade)
+
+  workoutSessionId String?       @map("workout_session_id") // 关联训练会话ID (可选，外键关联到WorkoutSession表)
+  workoutSession   WorkoutSession? @relation(fields: [workoutSessionId], references: [id])
+
+  // 挑战状态
+  status         ChallengeStatus @default(STARTED)   // 挑战状态 (已开始、进行中、已完成、已放弃)
+  startedAt      DateTime @default(now()) @map("started_at") @db.Timestamptz(6)   // 开始时间
+  completedAt    DateTime? @map("completed_at") @db.Timestamptz(6)                // 完成时间 (可选)
+  abandonedAt    DateTime? @map("abandoned_at") @db.Timestamptz(6)                // 放弃时间 (可选)
+
+  // 完成详情
+  actualDuration   Int?    @map("actual_duration")    // 实际完成时长 (秒数，实际花费时间)
+  completedCount   Int     @default(0) @map("completed_count")     // 完成次数 (完成的练习动作数量)
+  progressPercent  Float   @default(0.0) @map("progress_percent")  // 完成百分比 (0.0-1.0)
+
+  // 用户反馈和评价
+  difficultyFelt   Int?    @map("difficulty_felt")    // 实际感受难度 (1-5分，用户主观感受)
+  enjoymentRating  Int?    @map("enjoyment_rating")   // 享受度评分 (1-5分，挑战趣味性)
+  feedback         String? @map("feedback") @db.VarChar(500)  // 用户反馈 (可选，文字评价)
+
+  // 奖励系统
+  badgeEarned      RarityLevel? @map("badge_earned")  // 获得徽章稀有度 (使用现有枚举)
+  xpEarned         Int     @default(0) @map("xp_earned")       // 获得经验值 (基于难度和完成质量)
+  bonusRewards     Json?   @map("bonus_rewards")               // 额外奖励 (JSON格式，特殊成就等)
+                                                              // 格式: {"specialAchievement": "first_guitar_challenge", "bonusXP": 50}
+
+  // 元数据字段
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)  // 记录创建时间
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)       // 最后更新时间
+
+  @@index([userId, status])                            // 索引：用户挑战状态查询
+  @@index([challengeItemId, status])                   // 索引：挑战物品完成情况统计
+  @@index([userId, completedAt(sort: Desc)])           // 索引：用户完成历史查询
+  @@index([status, startedAt])                         // 索引：状态和开始时间查询
+  @@map("challenge_completions")                       // 数据库表名
+}
+
+// 挑战状态枚举 (定义挑战的进行状态)
+enum ChallengeStatus {
+  STARTED       // 已开始 - 用户已接受挑战但尚未完成
+  IN_PROGRESS   // 进行中 - 正在进行挑战
+  COMPLETED     // 已完成 - 成功完成挑战
+  ABANDONED     // 已放弃 - 中途退出或取消挑战
+}
+```
+
+**应用场景**：
+- 用户点击挑战后创建完成记录，状态为 STARTED
+- 关联实际的训练会话，记录挑战完成的详细过程
+- 完成后根据关联Equipment的难度和表现颁发相应稀有度的徽章
+- 支持用户查看自己的挑战历史和成就收集
+- 动态统计：通过查询此表计算挑战的参与人数、完成率等数据
+
+---
+
+### 更新现有表关系
+
+需要在现有表中添加挑战系统的关系字段：
+
+#### Equipment 表更新
+```prisma
+model Equipment {
+  // ... 现有字段保持不变 ...
+
+  // 新增挑战系统关系
+  challengeItems ChallengeItem[] // 关联的挑战列表 (一对多关系)
+
+  // ... 其他现有关系保持不变 ...
+}
+```
+
+#### User 表更新
+```prisma
+model User {
+  // ... 现有字段保持不变 ...
+
+  // 新增挑战系统关系
+  challengeCompletions ChallengeCompletion[] // 用户挑战完成记录 (一对多关系)
+
+  // ... 其他现有关系保持不变 ...
+}
+```
+
+#### WorkoutSession 表更新
+```prisma
+model WorkoutSession {
+  // ... 现有字段保持不变 ...
+
+  // 新增挑战系统关系
+  challengeCompletions ChallengeCompletion[] // 关联的挑战完成记录 (一对多关系)
+
+  // ... 其他现有关系保持不变 ...
+}
+```
+
+---
+
+### RarityLevel 枚举 - 稀有度等级系统 (Challenge System Integration)
+
+挑战系统使用现有的 `RarityLevel` 枚举确保系统一致性：
+
+```prisma
+// 稀有度等级枚举 (用于徽章、奖励和收集系统)
+enum RarityLevel {
+  COMMON      // 普通 - 最常见的奖励等级 (绿色)
+  UNCOMMON    // 非凡 - 稍有价值的奖励 (蓝色)
+  FINE        // 精良 - 中等价值的奖励 (紫色)
+  RARE        // 稀有 - 较高价值的奖励 (橙色)
+  ELITE       // 精英 - 高价值奖励 (红色)
+  EPIC        // 史诗 - 非常高价值的奖励 (粉色)
+  MYTHIC      // 神话 - 极高价值的奖励 (金色)
+  LEGENDARY   // 传说 - 最高价值的奖励 (彩虹色)
+  APEX        // 至尊 - 终极稀有度奖励 (特殊效果)
+}
+```
+
+**在挑战系统中的应用**：
+- `ChallengeItem.baseRarity` - 挑战的基础稀有度等级
+- `ChallengeCompletion.badgeEarned` - 完成挑战后获得的徽章等级
+- 与分享卡片系统 (`ShareCard.rarity`) 保持一致
+- 支持动态稀有度计算和奖励分配
+
+---
+
+## 📊 挑战系统设计特点
+
+### 1. **简化的表结构设计**
+- **ChallengeItem表专注于挑战信息**：标题、时间限制、目标次数
+- **关联Equipment表获取属性**：物品emoji、难度、稀有度等从Equipment表获取
+- **移除冗余统计字段**：参与人数、完成率通过动态查询ChallengeCompletion表计算
+- **灵活的时间限制**：支持限时挑战和无限制挑战
+
+### 2. **动态统计与性能优化**
+- **实时统计计算**：参与人数和完成率通过SQL查询实时计算，避免数据同步问题
+- **减少数据冗余**：移除预计算字段，确保数据一致性
+- **智能索引设计**：优化查询性能，支持高效的统计计算
+
+### 3. **完整追踪系统**
+- **状态管理**：记录从开始到完成/放弃的全过程
+- **进度追踪**：支持完成百分比和详细进度记录
+- **训练会话关联**：确保挑战与实际锻炼的真实关联
+
+### 4. **奖励与激励机制**
+- **统一稀有度系统**：使用现有 RarityLevel 枚举保持系统一致性
+- **XP 经验值系统**：基于挑战难度和完成质量的奖励机制
+- **特殊成就支持**：JSON格式的额外奖励和成就记录
+
+### 5. **简洁的用户体验**
+- **核心功能专注**：移除不必要的环境记录字段
+- **用户反馈机制**：支持难度评价和享受度评分
+- **灵活的挑战管理**：支持放弃和重新开始机制
+
+### 6. **架构优势**
+- **数据一致性**：通过关联表获取属性，避免数据重复和不一致
+- **扩展性良好**：新增Equipment自动支持挑战创建
+- **维护成本低**：简化的表结构降低维护复杂度
+- **查询效率高**：合理的索引设计支持高效的统计查询
+
+---
+
+## 📊 更新表数量统计
+
+| 版本 | 表数量 | 说明 |
+|------|--------|------|
+| v1.0 | 14张表 | 包含 CardSeries, UserStats, EquipmentFrequency 等 |
+| **v2.0** | **19张表** | 移除非 MVP 必需表，简化设计，增加分析功能表、场景器材关联表和挑战系统 |
+
+**MVP + 预留功能的 19 张表**:
+1. `scenarios` - 场景表
+2. `equipment` - 器材表
+3. `exercises` - 动作表
+4. `exercise_scenarios` - 动作-场景关联表
+5. `exercise_equipment` - 动作-器材关联表
+6. `scenario_equipment` - 场景-器材关联表 ⭐ 新增
+7. `users` - 用户表 (增加偏好设置、通知设置、隐私设置)
+8. `workout_sessions` - 训练会话表 (增加跟练模式、环境数据)
+9. `session_exercises` - 会话动作关联表 (增加详细跟练数据)
+10. `share_cards` - 分享成果卡表 (增加稀有度系统) ⭐ 新增
+11. `daily_trainings` - 每日训练记录表 ⭐ 新增
+12. `equipment_frequencies` - 器材使用频次统计表 ⭐ 新增 (稀有度计算)
+13. `user_preferences` - 用户偏好学习记录表 ⭐ 新增 (个性化推荐)
+14. `theme_weeks` - 主题周活动表 ⭐ 新增 (主题周管理)
+15. `theme_week_participations` - 主题周参与记录表 ⭐ 新增 (用户参与追踪)
+16. `user_analytics` - 用户行为分析表 ⭐ 新增 (KPI指标和行为漏斗)
+17. `user_daily_metrics` - 用户每日指标表 ⭐ 新增 (趋势分析)
+18. **`challenge_items`** - 挑战物品表 ⭐ 新增 (Item Challenge Competition System)
+19. **`challenge_completions`** - 挑战完成记录表 ⭐ 新增 (Challenge Progress Tracking)
+
+---
+
 ## 🚀 下一步
 
 1. ✅ 更新 `backend/prisma/schema.prisma`
 2. ✅ 运行迁移创建表
 3. ✅ 创建种子数据
-4. 🔄 实现 API 端点
-5. 🔄 前端接入
+4. ✅ 实现挑战系统 API 端点
+5. ✅ 前端挑战页面接入
+6. ✅ 挑战系统数据库文档完善
 
 ---
 
-*SnapRep 数据库设计 v2.0 - 专业简化版*
-*设计原则: 从 MVP 出发，避免过度设计*
+*SnapRep 数据库设计 v2.1 - 专业简化版 + 挑战系统*
+*设计原则: 从 MVP 出发，避免过度设计，支持 Item Challenge Competition 功能*

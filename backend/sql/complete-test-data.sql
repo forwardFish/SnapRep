@@ -945,12 +945,170 @@ END $$;
 -- ON CONFLICT (id) DO NOTHING;
 
 -- ==========================================
+-- 18. 挑战系统测试数据 (v3.1 简化设计)
+-- ==========================================
+
+-- 清理旧的挑战数据
+DELETE FROM challenge_completions;
+DELETE FROM challenge_items;
+
+-- 18.1) 挑战数据 (12个挑战，使用3x4网格展示，英文界面，简化设计)
+INSERT INTO challenge_items (
+  id, code, title,
+  equipment_id, time_limit, target_count,
+  description, instructions,
+  is_popular, trending_score, is_active, display_order,
+  created_at, updated_at
+)
+VALUES
+  -- Row 1 (Easy challenges)
+  ('cuid_challenge_umbrella', 'umbrella_challenge', 'Umbrella Fitness Challenge',
+   'cuid_equipment_umbrella', NULL, 3,
+   'Complete workouts using an umbrella as your fitness tool', 'Use the umbrella for resistance training and balance exercises. Focus on proper posture and controlled movements.',
+   true, 0.85, true, 1, NOW(), NOW()),
+
+  ('cuid_challenge_book', 'book_challenge', 'Book Balance Challenge',
+   'cuid_equipment_book', 10, 3,
+   'Use a book as workout equipment for strength training', 'Hold the book for resistance exercises. Perfect for office or study room workouts.',
+   false, 0.72, true, 2, NOW(), NOW()),
+
+  ('cuid_challenge_chair', 'chair_challenge', 'Chair Power Workout',
+   'cuid_equipment_chair', NULL, 3,
+   'Transform your chair into a complete fitness station', 'Use the chair for support, resistance, and strength training. Great for office workers.',
+   true, 0.89, true, 3, NOW(), NOW()),
+
+  ('cuid_challenge_bottle', 'bottle_challenge', 'Water Bottle Strength',
+   'cuid_equipment_water_bottle', 15, 3,
+   'Turn your water bottle into a weight for strength training', 'Use filled water bottle as resistance for arm and shoulder exercises.',
+   true, 0.76, true, 4, NOW(), NOW()),
+
+  -- Row 2 (Medium challenges)
+  ('cuid_challenge_backpack', 'backpack_challenge', 'Backpack Adventure Workout',
+   'cuid_equipment_backpack', 20, 4,
+   'Use your backpack for a traveling fitness routine', 'Perfect for travelers. Use the backpack weight for full body exercises.',
+   false, 0.65, true, 5, NOW(), NOW()),
+
+  ('cuid_challenge_towel', 'towel_challenge', 'Towel Flexibility Flow',
+   'cuid_equipment_towel', NULL, 3,
+   'Enhance your flexibility using a simple towel', 'Great for stretching and resistance exercises. Focus on flexibility and mobility.',
+   false, 0.58, true, 6, NOW(), NOW()),
+
+  ('cuid_challenge_wall', 'wall_challenge', 'Wall Warrior Training',
+   'cuid_equipment_wall', NULL, 4,
+   'Master wall-based exercises for strength and flexibility', 'Use the wall for support, resistance, and handstand preparation.',
+   true, 0.82, true, 7, NOW(), NOW()),
+
+  ('cuid_challenge_stairs', 'stairs_challenge', 'Stair Climbing Power',
+   'cuid_equipment_stairs', 12, 4,
+   'High-intensity stair climbing and step exercises', 'Cardio and leg strength focused. Use stairs for explosive movements.',
+   true, 0.73, true, 8, NOW(), NOW()),
+
+  -- Row 3 (Hard challenges)
+  ('cuid_challenge_tree', 'tree_challenge', 'Nature Tree Workout',
+   'cuid_equipment_tree', NULL, 5,
+   'Outdoor fitness using tree branches and trunk', 'Connect with nature while building strength. Perfect for park workouts.',
+   false, 0.34, true, 9, NOW(), NOW()),
+
+  ('cuid_challenge_sofa', 'sofa_challenge', 'Couch Crusher Challenge',
+   'cuid_equipment_sofa', 25, 4,
+   'Transform couch time into productive fitness time', 'No more excuses! Turn your sofa into a fitness equipment.',
+   false, 0.45, true, 10, NOW(), NOW()),
+
+  ('cuid_challenge_desk', 'desk_challenge', 'Desktop Fitness Revolution',
+   'cuid_equipment_desk', 18, 4,
+   'Professional desk-based workout routine', 'Perfect for office workers. Combat sitting all day with active movements.',
+   false, 0.67, true, 11, NOW(), NOW()),
+
+  ('cuid_challenge_none', 'none_challenge', 'Pure Body Challenge',
+   'cuid_equipment_none', NULL, 5,
+   'Ultimate bodyweight-only fitness challenge', 'No equipment needed. Pure bodyweight mastery. The ultimate minimalist challenge.',
+   true, 0.91, true, 12, NOW(), NOW())
+ON CONFLICT (code) DO NOTHING;
+
+-- 18.2) 挑战完成记录测试数据 (简化设计)
+INSERT INTO challenge_completions (
+  id, user_id, challenge_item_id, workout_session_id,
+  status, started_at, completed_at, abandoned_at,
+  actual_duration, completed_count, progress_percent,
+  difficulty_felt, enjoyment_rating, feedback,
+  badge_earned, xp_earned, bonus_rewards,
+  created_at, updated_at
+)
+VALUES
+  -- Test user 完成记录
+  ('cuid_completion_001', '550e8400-e29b-41d4-a716-446655440002', 'cuid_challenge_umbrella', 'cuid_session_001',
+   'COMPLETED', NOW() - INTERVAL '2 hours', NOW() - INTERVAL '1 hour 55 minutes', NULL,
+   320, 3, 100.0, 3, 5, 'Great workout! Really enjoyed using the umbrella for resistance.',
+   'COMMON', 150, '{"specialAchievement": "first_umbrella_challenge", "bonusXP": 50}',
+   NOW() - INTERVAL '2 hours', NOW() - INTERVAL '1 hour 55 minutes'),
+
+  ('cuid_completion_002', '550e8400-e29b-41d4-a716-446655440002', 'cuid_challenge_book', NULL,
+   'COMPLETED', NOW() - INTERVAL '1 day', NOW() - INTERVAL '23 hours 56 minutes', NULL,
+   240, 3, 100.0, 2, 4, 'Simple but effective. Good for beginners.',
+   'COMMON', 120, NULL,
+   NOW() - INTERVAL '1 day', NOW() - INTERVAL '23 hours 56 minutes'),
+
+  ('cuid_completion_003', '550e8400-e29b-41d4-a716-446655440002', 'cuid_challenge_none', 'cuid_session_003',
+   'IN_PROGRESS', NOW() - INTERVAL '30 minutes', NULL, NULL,
+   NULL, 2, 40.0, NULL, NULL, NULL,
+   NULL, 0, NULL,
+   NOW() - INTERVAL '30 minutes', NOW()),
+
+  -- Alice 完成记录
+  ('cuid_completion_004', '550e8400-e29b-41d4-a716-446655440003', 'cuid_challenge_chair', 'cuid_session_002',
+   'COMPLETED', NOW() - INTERVAL '3 hours', NOW() - INTERVAL '2 hours 56 minutes', NULL,
+   240, 3, 100.0, 1, 5, 'Perfect for office breaks! Highly recommend.',
+   'COMMON', 140, '{"specialAchievement": "office_warrior"}',
+   NOW() - INTERVAL '3 hours', NOW() - INTERVAL '2 hours 56 minutes'),
+
+  ('cuid_completion_005', '550e8400-e29b-41d4-a716-446655440003', 'cuid_challenge_bottle', NULL,
+   'COMPLETED', NOW() - INTERVAL '2 days', NOW() - INTERVAL '2 days' + INTERVAL '15 minutes', NULL,
+   900, 3, 100.0, 2, 4, 'Good hydration reminder too!',
+   'COMMON', 130, NULL,
+   NOW() - INTERVAL '2 days', NOW() - INTERVAL '2 days' + INTERVAL '15 minutes'),
+
+  -- Bob 完成记录
+  ('cuid_completion_006', '550e8400-e29b-41d4-a716-446655440004', 'cuid_challenge_backpack', NULL,
+   'COMPLETED', NOW() - INTERVAL '5 hours', NOW() - INTERVAL '4 hours 55 minutes', NULL,
+   1200, 4, 100.0, 4, 3, 'Challenging but rewarding. Good for travel.',
+   'FINE', 200, '{"specialAchievement": "travel_fitness_expert", "bonusXP": 75}',
+   NOW() - INTERVAL '5 hours', NOW() - INTERVAL '4 hours 55 minutes'),
+
+  ('cuid_completion_007', '550e8400-e29b-41d4-a716-446655440004', 'cuid_challenge_wall', NULL,
+   'COMPLETED', NOW() - INTERVAL '1 day 2 hours', NOW() - INTERVAL '1 day 1 hour 45 minutes', NULL,
+   900, 4, 100.0, 3, 4, 'Wall exercises are underrated. Great workout!',
+   'UNCOMMON', 180, NULL,
+   NOW() - INTERVAL '1 day 2 hours', NOW() - INTERVAL '1 day 1 hour 45 minutes'),
+
+  -- Premium user 高难度挑战
+  ('cuid_completion_008', '550e8400-e29b-41d4-a716-446655440008', 'cuid_challenge_tree', NULL,
+   'COMPLETED', NOW() - INTERVAL '3 days', NOW() - INTERVAL '3 days' + INTERVAL '25 minutes', NULL,
+   1500, 5, 100.0, 5, 5, 'Amazing outdoor experience! Nature workout is the best.',
+   'RARE', 300, '{"specialAchievement": "nature_warrior", "bonusXP": 100}',
+   NOW() - INTERVAL '3 days', NOW() - INTERVAL '3 days' + INTERVAL '25 minutes'),
+
+  -- Abandoned challenge example
+  ('cuid_completion_009', '550e8400-e29b-41d4-a716-446655440003', 'cuid_challenge_stairs', NULL,
+   'ABANDONED', NOW() - INTERVAL '6 hours', NULL, NOW() - INTERVAL '5 hours 30 minutes',
+   1800, 2, 50.0, 5, 2, 'Too intense for me right now. Will try again later.',
+   NULL, 0, NULL,
+   NOW() - INTERVAL '6 hours', NOW() - INTERVAL '5 hours 30 minutes'),
+
+  -- Recent completion
+  ('cuid_completion_010', '550e8400-e29b-41d4-a716-446655440002', 'cuid_challenge_towel', NULL,
+   'COMPLETED', NOW() - INTERVAL '4 days', NOW() - INTERVAL '4 days' + INTERVAL '12 minutes', NULL,
+   720, 3, 100.0, 2, 5, 'Great for flexibility. Feel much better!',
+   'UNCOMMON', 160, '{"specialAchievement": "flexibility_master"}',
+   NOW() - INTERVAL '4 days', NOW() - INTERVAL '4 days' + INTERVAL '12 minutes')
+ON CONFLICT (user_id, challenge_item_id) DO NOTHING;
+
+-- ==========================================
 -- 数据插入完成 - 验证统计
 -- ==========================================
 
 -- 基础数据统计
 SELECT
-  'SnapRep v3.0 测试数据统计' as category,
+  'SnapRep v3.1 测试数据统计' as category,
   (SELECT COUNT(*) FROM scenarios) as scenarios_count,
   (SELECT COUNT(*) FROM equipment) as equipment_count,
   (SELECT COUNT(*) FROM exercises) as exercises_count,
@@ -974,20 +1132,32 @@ SELECT
   (SELECT COUNT(*) FROM theme_weeks) as theme_weeks_count,
   (SELECT COUNT(*) FROM theme_week_participations) as participations_count,
   (SELECT COUNT(*) FROM rarity_table) as rarity_entries_count,
-  (SELECT COUNT(*) FROM deeplinks) as deeplinks_count;
+  (SELECT COUNT(*) FROM deeplinks) as deeplinks_count
+
+UNION ALL
+
+-- 挑战系统数据统计 (v3.1 新增)
+SELECT
+  '挑战系统数据统计' as category,
+  (SELECT COUNT(*) FROM challenge_items) as challenge_items_count,
+  (SELECT COUNT(*) FROM challenge_completions) as challenge_completions_count,
+  (SELECT COUNT(*) FROM challenge_completions WHERE status = 'COMPLETED') as completed_challenges_count,
+  (SELECT COUNT(*) FROM challenge_completions WHERE status IN ('STARTED', 'IN_PROGRESS')) as active_challenges_count;
 
 -- 关键业务数据验证
 SELECT
   '关键业务数据验证' as check_name,
   '成功' as status,
-  '所有表数据已按schema.prisma格式正确插入' as description
+  '所有表数据已按schema.prisma格式正确插入（包含挑战系统）' as description
 WHERE EXISTS (SELECT 1 FROM scenarios)
   AND EXISTS (SELECT 1 FROM equipment)
   AND EXISTS (SELECT 1 FROM scenario_equipment)
   AND EXISTS (SELECT 1 FROM exercises)
   AND EXISTS (SELECT 1 FROM users)
   AND EXISTS (SELECT 1 FROM workout_sessions)
-  AND EXISTS (SELECT 1 FROM share_cards);
+  AND EXISTS (SELECT 1 FROM share_cards)
+  AND EXISTS (SELECT 1 FROM challenge_items)
+  AND EXISTS (SELECT 1 FROM challenge_completions);
 
 -- 验证ScenarioEquipment关联数据
 SELECT
@@ -999,5 +1169,21 @@ FROM scenarios s
 LEFT JOIN scenario_equipment se ON s.id = se.scenario_id
 GROUP BY s.id, s.name
 ORDER BY equipment_count DESC;
+
+-- 验证挑战系统关联数据 (v3.1 新增)
+SELECT
+  '挑战系统关联验证' as check_name,
+  ci.title as challenge_title,
+  e.name as equipment_name,
+  e.category as equipment_category,
+  ci.time_limit as time_limit_minutes,
+  ci.target_count as target_exercises,
+  COUNT(cc.id) as completion_count,
+  COUNT(CASE WHEN cc.status = 'COMPLETED' THEN 1 END) as completed_count
+FROM challenge_items ci
+LEFT JOIN equipment e ON ci.equipment_id = e.id
+LEFT JOIN challenge_completions cc ON ci.id = cc.challenge_item_id
+GROUP BY ci.id, ci.title, e.name, e.category, ci.time_limit, ci.target_count
+ORDER BY ci.display_order;
 
 COMMIT;

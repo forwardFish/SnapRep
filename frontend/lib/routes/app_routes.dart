@@ -15,6 +15,12 @@ import '../features/profile/screens/workout_details_page.dart';
 import '../features/profile/screens/workout_calendar_page.dart';
 import '../features/profile/screens/achievement_details_page.dart';
 import '../features/auth/screens/google_login_page.dart';
+import '../features/challenges/screens/challenges_page.dart';
+import '../features/onboarding/screens/scenario_selection_page.dart';
+import '../features/onboarding/screens/equipment_selection_page.dart';
+import '../features/onboarding/screens/intent_selection_page.dart';
+import '../features/onboarding/screens/muscle_target_page.dart';
+import '../features/onboarding/screens/ai_recognition_page.dart';
 import '../core/models/exercise.dart';
 
 /// 应用路由配置类
@@ -23,12 +29,13 @@ class AppRoutes {
   // 路由名称常量
   static const String splash = '/';
   static const String home = '/home';
-  static const String cameraDetection = '/camera-detection'; // New Step 1
-  static const String workoutModeSelection = '/workout-mode-selection'; // New Step 2
-  static const String environmentConfirmation = '/environment-confirmation'; // New Step 3
-  static const String workoutGuideStep1 = '/camera-detection'; // Alias for backward compatibility
-  static const String workoutGuideStep2 = '/workout-mode-selection'; // Alias for backward compatibility
-  static const String workoutGuideStep3 = '/environment-confirmation'; // Alias for backward compatibility
+  // 核心业务流程路由 (Core business flow routes)
+  static const String cameraDetection = '/camera-detection'; // Step 1: 场景选择和物品选择
+  static const String workoutModeSelection = '/workout-mode-selection'; // Step 2: 运动意图选择
+  static const String environmentConfirmation = '/environment-confirmation'; // Alternative flow
+  static const String workoutGuideStep1 = '/camera-detection'; // Step1: 场景选择和物品选择
+  static const String workoutGuideStep2 = '/workout-mode-selection'; // Step2: 运动意图选择
+  static const String workoutGuideStep3 = '/workout-guide-step3'; // Step3: 重点部位选择
   static const String workoutResult = '/workout-result';
   static const String modernWorkoutResult = '/modern-workout-result';
   static const String resultCard = '/result-card';
@@ -39,6 +46,14 @@ class AppRoutes {
   static const String achievementDetails = '/achievement-details';
   static const String googleLogin = '/google-login';
   static const String professionalWorkoutVideo = '/professional-workout-video';
+  static const String challenges = '/challenges';
+
+  // New onboarding flow routes
+  static const String scenarioSelection = '/scenario-selection';
+  static const String equipmentSelection = '/equipment-selection';
+  static const String intentSelection = '/intent-selection';
+  static const String muscleSelection = '/muscle-selection';
+  static const String aiRecognition = '/ai-recognition';
 
   /// 生成路由配置
   static Map<String, WidgetBuilder> getRoutes() {
@@ -52,8 +67,9 @@ class AppRoutes {
       },
       environmentConfirmation: (context) {
         final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
-        return EnvironmentConfirmationPage(guideData: args); // New Step 3: Environment Confirmation
+        return EnvironmentConfirmationPage(guideData: args); // Environment Confirmation
       },
+      workoutGuideStep3: (context) => const WorkoutGuideStep3Page(), // Step 3: Target Muscle Selection
       workoutResult: (context) {
         final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
         return ModernWorkoutResultPage(recommendationParams: args);
@@ -69,6 +85,19 @@ class AppRoutes {
       workoutCalendar: (context) => const WorkoutCalendarPage(),
       achievementDetails: (context) => const AchievementDetailsPage(),
       googleLogin: (context) => const GoogleLoginPage(),
+      challenges: (context) => const ChallengesPage(),
+
+      // New onboarding flow routes
+      scenarioSelection: (context) => const ScenarioSelectionPage(),
+      equipmentSelection: (context) {
+        final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+        return EquipmentSelectionPage(
+          scenarioCode: args?['scenarioCode'],
+        );
+      },
+      intentSelection: (context) => const IntentSelectionPage(),
+      muscleSelection: (context) => const MuscleTargetPage(),
+      aiRecognition: (context) => const AIRecognitionPage(),
     };
   }
 
@@ -306,6 +335,95 @@ class AppRoutes {
     );
   }
 
+  // New onboarding flow navigation methods
+
+  /// 启动完整引导流程（场景选择开始）
+  static Future<T?> startCompleteOnboardingFlow<T>(BuildContext context) {
+    return navigateTo<T>(context, scenarioSelection);
+  }
+
+  /// 启动AI识别流程
+  static Future<T?> startAIRecognitionFlow<T>(BuildContext context) {
+    return navigateTo<T>(context, aiRecognition);
+  }
+
+  /// 从场景选择导航到器材选择
+  static Future<T?> navigateToEquipmentSelection<T>(
+    BuildContext context, {
+    String? scenarioCode,
+  }) {
+    return navigateTo<T>(
+      context,
+      equipmentSelection,
+      arguments: {'scenarioCode': scenarioCode},
+    );
+  }
+
+  /// 从器材选择导航到意图选择
+  static Future<T?> navigateToIntentSelection<T>(BuildContext context) {
+    return navigateTo<T>(context, intentSelection);
+  }
+
+  /// 从意图选择导航到肌肉目标选择
+  static Future<T?> navigateToMuscleSelection<T>(BuildContext context) {
+    return navigateTo<T>(context, muscleSelection);
+  }
+
+  // === 业务流程导航方法 (Business Flow Navigation) ===
+
+  /// 路径1: 最快路径 - "给我60秒"
+  static Future<void> quickStart60Seconds(BuildContext context) async {
+    await navigateToWorkoutResult(
+      context,
+      recommendationParams: {
+        'intent': 'STRETCH',
+        'equipment': ['hands_free'],
+        'duration': 60,
+        'isQuickStart': true,
+      },
+    );
+  }
+
+  /// 路径2: 完整引导路径 - Step1 → Step2 → Step3
+  static Future<T?> startCompleteGuidedFlow<T>(BuildContext context) {
+    return navigateTo<T>(context, workoutGuideStep1); // 开始Step1: 场景选择和物品选择
+  }
+
+  /// 路径3: AI识别路径 - 拍照 → Step1 → Step2 → Step3
+  static Future<T?> startAIFlow<T>(BuildContext context) {
+    return navigateTo<T>(context, workoutGuideStep1, arguments: {'mode': 'ai_camera'});
+  }
+
+  /// 路径4: 点击物品直接跳转动作结果页
+  static Future<void> equipmentQuickSelect(
+    BuildContext context, {
+    required String equipmentCode,
+  }) async {
+    // 根据物品获取预设配置直接生成推荐
+    final equipmentPresets = _getEquipmentPresets(equipmentCode);
+    await navigateToWorkoutResult(
+      context,
+      recommendationParams: equipmentPresets,
+    );
+  }
+
+  /// 路径5: 物品挑战路径
+  static Future<void> challengeQuickJoin(
+    BuildContext context, {
+    required String challengeId,
+    required String equipmentCode,
+  }) async {
+    // 物品挑战直接生成推荐
+    await navigateToWorkoutResult(
+      context,
+      recommendationParams: {
+        'equipment': [equipmentCode],
+        'challengeId': challengeId,
+        'isChallenge': true,
+      },
+    );
+  }
+
   /// 获取场景预设配置
   static Map<String, dynamic> _getScenarioPresets(String scenarioCode) {
     switch (scenarioCode) {
@@ -340,6 +458,55 @@ class AppRoutes {
           'equipment': ['hands_free'],
           'intent': 'STRETCH',
           'scenario': scenarioCode,
+        };
+    }
+  }
+
+  /// 获取器材预设配置
+  static Map<String, dynamic> _getEquipmentPresets(String equipmentCode) {
+    switch (equipmentCode) {
+      case 'chair':
+        return {
+          'equipment': ['chair'],
+          'intent': 'STRETCH',
+          'scenario': 'office',
+          'tags': ['silent', 'sitting'],
+        };
+      case 'wall':
+        return {
+          'equipment': ['wall'],
+          'intent': 'STRETCH',
+          'scenario': 'office',
+          'tags': ['standing', 'silent'],
+        };
+      case 'sofa':
+        return {
+          'equipment': ['sofa'],
+          'intent': 'RELAX',
+          'scenario': 'living_room',
+          'tags': ['comfortable'],
+        };
+      case 'bottle':
+        return {
+          'equipment': ['bottle'],
+          'intent': 'STRENGTH',
+          'scenario': 'office',
+          'tags': ['lightweight'],
+        };
+      case 'stairs':
+        return {
+          'equipment': ['stairs'],
+          'intent': 'LIGHT_CARDIO',
+          'scenario': 'outdoor',
+          'tags': ['cardio'],
+        };
+      case 'hands_free':
+      default:
+        return {
+          'equipment': ['hands_free'],
+          'intent': 'STRETCH',
+          'scenario': 'home',
+          'tags': ['bodyweight'],
         };
     }
   }

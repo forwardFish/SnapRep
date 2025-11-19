@@ -7,6 +7,7 @@ import 'core/providers/workout_guide_provider.dart';
 import 'core/providers/workout_result_provider.dart';
 import 'core/providers/result_card_provider.dart';
 import 'core/providers/my_page_provider.dart';
+import 'core/providers/workout_config_provider.dart';
 import 'features/home/screens/home_page.dart';
 import 'routes/app_routes.dart';
 
@@ -45,6 +46,7 @@ class SnapRepApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => WorkoutResultProvider()),
         ChangeNotifierProvider(create: (_) => ResultCardProvider()),
         ChangeNotifierProvider(create: (_) => MyPageProvider()),
+        ChangeNotifierProvider(create: (_) => WorkoutConfigProvider()),
       ],
       child: MaterialApp(
         title: 'SnapRep',
