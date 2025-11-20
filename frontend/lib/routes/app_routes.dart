@@ -8,6 +8,7 @@ import '../features/workout_guide/screens/workout_guide_step3_page.dart';
 import '../features/workout_result/screens/workout_result_page.dart';
 import '../features/workout_result/screens/modern_workout_result_page.dart';
 import '../features/workout_execution/screens/professional_workout_video_page_v2.dart';
+import '../features/workout_execution/screens/reference_workout_page.dart';
 import '../features/result_card/screens/result_card_page.dart';
 import '../features/profile/screens/my_page.dart';
 import '../features/profile/screens/collection_details_page.dart';
@@ -326,7 +327,7 @@ class AppRoutes {
     return Navigator.push<T>(
       context,
       MaterialPageRoute(
-        builder: (context) => ProfessionalWorkoutVideoPageV2(
+        builder: (context) => ReferenceWorkoutPage(
           exercise: exercise,
           exercises: exercises,
           currentExerciseIndex: currentExerciseIndex,

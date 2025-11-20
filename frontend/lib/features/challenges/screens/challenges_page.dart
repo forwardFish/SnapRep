@@ -2,7 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../../core/models/challenge_item.dart';
+import '../../../core/models/exercise.dart';
+import '../../../core/models/target_muscle.dart';
+import '../../../core/models/workout_intent.dart';
 import '../../../core/services/challenges_service.dart';
+import '../../../routes/app_routes.dart';
 
 class ChallengesPage extends StatefulWidget {
   const ChallengesPage({super.key});
@@ -915,18 +919,120 @@ class _ChallengesPageState extends State<ChallengesPage> {
 
   void _onChallengePressed(ChallengeItem challenge) {
     debugPrint('Challenge pressed: ${challenge.title}');
-    // TODO: Navigate to challenge detail or start challenge
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Starting ${challenge.title}!'),
-        backgroundColor: const Color(0xFF10B981),
-        duration: const Duration(seconds: 2),
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
+
+    // 为挑战创建模拟的动作训练数据
+    final exercises = _createMockExercisesForChallenge(challenge);
+
+    if (exercises.isNotEmpty) {
+      // 直接跳转到动作训练页面
+      AppRoutes.navigateToProfessionalWorkoutVideo(
+        context,
+        exercise: exercises.first,
+        exercises: exercises,
+        currentExerciseIndex: 0,
+      );
+    } else {
+      // 如果没有找到对应的动作，显示提示
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('${challenge.title} training exercises are under development'),
+          backgroundColor: Colors.orange,
+          duration: const Duration(seconds: 2),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
         ),
-      ),
-    );
+      );
+    }
+  }
+
+  // 为挑战创建模拟动作数据
+  List<Exercise> _createMockExercisesForChallenge(ChallengeItem challenge) {
+    final exerciseTemplates = {
+      'towel_challenge': [
+        {
+          'name': 'Towel Rowing',
+          'description': 'Back muscle training using towel resistance',
+          'videoUrl': 'https://sample-videos.com/zip/10/mp4/SampleVideo_1280x720_1mb.mp4',
+          'duration': 45,
+          'reps': 12,
+        },
+        {
+          'name': 'Towel Stretching',
+          'description': 'Shoulder stretching exercise with towel assistance',
+          'videoUrl': 'https://sample-videos.com/zip/10/mp4/SampleVideo_1280x720_2mb.mp4',
+          'duration': 30,
+          'reps': 8,
+        },
+      ],
+      'water_bottle_challenge': [
+        {
+          'name': 'Water Bottle Press',
+          'description': 'Arm strength training using water bottles as weights',
+          'videoUrl': 'https://sample-videos.com/zip/10/mp4/SampleVideo_1280x720_1mb.mp4',
+          'duration': 40,
+          'reps': 15,
+        },
+        {
+          'name': 'Water Bottle Squats',
+          'description': 'Weighted squats for leg muscle development',
+          'videoUrl': 'https://sample-videos.com/zip/10/mp4/SampleVideo_1280x720_2mb.mp4',
+          'duration': 50,
+          'reps': 12,
+        },
+      ],
+      'chair_challenge': [
+        {
+          'name': 'Chair Dips',
+          'description': 'Upper body strength training using chair support',
+          'videoUrl': 'https://sample-videos.com/zip/10/mp4/SampleVideo_1280x720_1mb.mp4',
+          'duration': 35,
+          'reps': 10,
+        },
+        {
+          'name': 'Chair Squats',
+          'description': 'Chair-assisted squats for leg strength',
+          'videoUrl': 'https://sample-videos.com/zip/10/mp4/SampleVideo_1280x720_2mb.mp4',
+          'duration': 45,
+          'reps': 15,
+        },
+      ],
+    };
+
+    final templates = exerciseTemplates[challenge.code] ?? [
+      {
+        'name': '${challenge.title} Basic Training',
+        'description': '${challenge.description}',
+        'videoUrl': 'https://sample-videos.com/zip/10/mp4/SampleVideo_1280x720_1mb.mp4',
+        'duration': 45,
+        'reps': 10,
+      }
+    ];
+
+    return templates.asMap().entries.map<Exercise>((entry) {
+      final index = entry.key;
+      final template = entry.value;
+      return Exercise(
+        id: '${challenge.id}_exercise_$index',
+        code: '${challenge.code}_ex_$index',
+        name: template['name'] as String,
+        description: template['description'] as String,
+        primaryMuscle: TargetMuscle.fullBody,
+        secondaryMuscles: const [TargetMuscle.core],
+        intentType: WorkoutIntent.strength,
+        difficulty: ExerciseDifficulty.intermediate,
+        durationSeconds: template['duration'] as int,
+        sets: challenge.targetCount,
+        repetitions: template['reps'] as int,
+        demoVideoUrl: template['videoUrl'] as String,
+        thumbnailUrl: 'https://via.placeholder.com/400x300/6366F1/FFFFFF?text=${Uri.encodeComponent(template['name'] as String)}',
+        keyPoints: const ['Prepare related items', 'Follow movement demonstration', 'Maintain proper form', 'Control breathing rhythm'],
+        safetyWarnings: const ['Ensure safe surroundings', 'Be mindful of range of motion', 'Stop immediately if you feel discomfort'],
+        benefits: 'Improve physical fitness and exercise skills through challenge training',
+        tags: const [ExerciseTag.strength],
+      );
+    }).toList();
   }
 }
 

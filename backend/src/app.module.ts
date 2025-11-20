@@ -1,6 +1,7 @@
 import { GraphQLModule } from '@nestjs/graphql';
 import { forwardRef, Logger, Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { ScheduleModule } from '@nestjs/schedule';
 // import { PrismaModule, loggingMiddleware } from 'nestjs-prisma';
 // import { AppController } from './app.controller';
 // import { AppService } from './app.service';
@@ -23,12 +24,13 @@ import { GqlConfigService } from './gql-config.service';
 import { loggingMiddleware, PrismaModule } from 'nestjs-prisma';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
+import { SubscriptionModule } from './subscription/subscription.module';
 
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true, load: [config] }),
-
+    ScheduleModule.forRoot(), // Enable scheduling for subscription background tasks
 
     GraphQLModule.forRootAsync<ApolloDriverConfig>({
       driver: ApolloDriver,
@@ -44,6 +46,7 @@ import { UsersModule } from './users/users.module';
     ExercisesModule,
     WorkoutSessionsModule,
     CardsModule,
+    SubscriptionModule,
     AnalyticsModule, // 新增 Analytics 模块
     ThemeWeeksModule, // 新增 ThemeWeeks 模块
     ChallengesModule, // 新增 Challenges 模块

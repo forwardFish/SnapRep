@@ -3,6 +3,9 @@ import 'package:provider/provider.dart';
 import '../../../core/providers/home_provider.dart';
 import '../../../core/models/scenario.dart';
 import '../../../core/models/equipment.dart';
+import '../../../core/models/exercise.dart';
+import '../../../core/models/target_muscle.dart';
+import '../../../core/models/workout_intent.dart';
 import '../widgets/hero_section.dart';
 import '../widgets/horizontal_scroll_section.dart';
 import '../widgets/challenge_hero_section.dart';
@@ -128,10 +131,27 @@ class _HomePageState extends State<HomePage> {
 
   void _onEquipmentPressed(Equipment equipment) {
     debugPrint('Equipment pressed: ${equipment.name}');
-    AppRoutes.equipmentPreselect(
-      context,
-      equipmentCode: equipment.code,
-    );
+
+    // 为每个器材创建模拟的动作训练数据
+    final exercises = _createMockExercisesForEquipment(equipment);
+
+    if (exercises.isNotEmpty) {
+      // 直接跳转到动作训练页面
+      AppRoutes.navigateToProfessionalWorkoutVideo(
+        context,
+        exercise: exercises.first,
+        exercises: exercises,
+        currentExerciseIndex: 0,
+      );
+    } else {
+      // 如果没有找到对应的动作，显示提示
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('${equipment.name} 的训练动作正在开发中'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+    }
   }
 
 
@@ -207,5 +227,107 @@ class _HomePageState extends State<HomePage> {
       default:
         return null;
     }
+  }
+
+  // 为器材创建模拟动作数据
+  List<Exercise> _createMockExercisesForEquipment(Equipment equipment) {
+    final exerciseTemplates = {
+      '5kg Dumbbell': [
+        {
+          'name': 'Dumbbell Bicep Curls',
+          'description': 'Classic exercise to build arm bicep muscles',
+          'videoUrl': 'https://sample-videos.com/zip/10/mp4/SampleVideo_1280x720_1mb.mp4',
+          'duration': 60,
+          'reps': 12,
+        },
+        {
+          'name': 'Dumbbell Shoulder Press',
+          'description': 'Essential exercise for shoulder muscle development',
+          'videoUrl': 'https://sample-videos.com/zip/10/mp4/SampleVideo_1280x720_2mb.mp4',
+          'duration': 45,
+          'reps': 10,
+        },
+        {
+          'name': 'Dumbbell Squats',
+          'description': 'Full-body strength training with dumbbell support',
+          'videoUrl': 'https://sample-videos.com/zip/10/mp4/SampleVideo_1280x720_5mb.mp4',
+          'duration': 50,
+          'reps': 15,
+        },
+      ],
+      'Yoga Mat': [
+        {
+          'name': 'Plank Hold',
+          'description': 'Core muscle group foundation training exercise',
+          'videoUrl': 'https://sample-videos.com/zip/10/mp4/SampleVideo_1280x720_1mb.mp4',
+          'duration': 60,
+          'reps': 1,
+        },
+        {
+          'name': 'Crunches',
+          'description': 'Classic abdominal muscle strengthening exercise',
+          'videoUrl': 'https://sample-videos.com/zip/10/mp4/SampleVideo_1280x720_2mb.mp4',
+          'duration': 45,
+          'reps': 20,
+        },
+        {
+          'name': 'Russian Twists',
+          'description': 'Exercise for obliques and core stability',
+          'videoUrl': 'https://sample-videos.com/zip/10/mp4/SampleVideo_1280x720_5mb.mp4',
+          'duration': 40,
+          'reps': 16,
+        },
+      ],
+      'Resistance Band': [
+        {
+          'name': 'Resistance Band Rows',
+          'description': 'Effective exercise for back muscle development',
+          'videoUrl': 'https://sample-videos.com/zip/10/mp4/SampleVideo_1280x720_1mb.mp4',
+          'duration': 50,
+          'reps': 12,
+        },
+        {
+          'name': 'Resistance Band Squats',
+          'description': 'Enhanced leg training with added resistance',
+          'videoUrl': 'https://sample-videos.com/zip/10/mp4/SampleVideo_1280x720_2mb.mp4',
+          'duration': 60,
+          'reps': 15,
+        },
+      ],
+    };
+
+    final templates = exerciseTemplates[equipment.name] ?? [
+      {
+        'name': '${equipment.name} Basic Training',
+        'description': 'Basic fitness exercise using ${equipment.name}',
+        'videoUrl': 'https://sample-videos.com/zip/10/mp4/SampleVideo_1280x720_1mb.mp4',
+        'duration': 45,
+        'reps': 10,
+      }
+    ];
+
+    return templates.asMap().entries.map<Exercise>((entry) {
+      final index = entry.key;
+      final template = entry.value;
+      return Exercise(
+        id: '${equipment.id}_exercise_$index',
+        code: '${equipment.code}_ex_$index',
+        name: template['name'] as String,
+        description: template['description'] as String,
+        primaryMuscle: TargetMuscle.fullBody,
+        secondaryMuscles: const [TargetMuscle.core],
+        intentType: WorkoutIntent.strength,
+        difficulty: ExerciseDifficulty.intermediate,
+        durationSeconds: template['duration'] as int,
+        sets: 3,
+        repetitions: template['reps'] as int,
+        demoVideoUrl: template['videoUrl'] as String,
+        thumbnailUrl: 'https://via.placeholder.com/400x300/4CAF50/FFFFFF?text=${Uri.encodeComponent(template['name'] as String)}',
+        keyPoints: ['Prepare your ${equipment.name}', 'Maintain proper posture', 'Control movement tempo', 'Focus on breathing rhythm'],
+        safetyWarnings: const ['Ensure equipment is stable', 'Be mindful of range of motion', 'Stop immediately if you feel discomfort'],
+        benefits: 'Effective training using ${equipment.name} to improve muscle strength and endurance',
+        tags: const [ExerciseTag.strength],
+      );
+    }).toList();
   }
 }

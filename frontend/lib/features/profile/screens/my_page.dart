@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../../../core/providers/my_page_provider.dart';
 import '../../../shared/widgets/bottom_navigation_bar.dart';
 import '../../../routes/app_routes.dart';
@@ -139,54 +140,56 @@ class _MyPageState extends State<MyPage> {
       builder: (context, provider, child) {
         return Column(
           children: [
-            // Login prompt banner
-            Container(
-              margin: const EdgeInsets.only(bottom: 16),
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: const Color(0xFF4A4A4A),
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      'To avoid losing your personal data, please login',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  GestureDetector(
-                    onTap: () {
-                      Navigator.pushNamed(context, AppRoutes.googleLogin);
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFFFD700),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
+            // 根据登录状态显示不同内容
+            if (!provider.isUserLoggedIn) ...[
+              // Login prompt banner - 只在未登录时显示
+              Container(
+                margin: const EdgeInsets.only(bottom: 16),
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF4A4A4A),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
                       child: Text(
-                        'Login',
+                        'To avoid losing your personal data, please login',
                         style: TextStyle(
-                          color: Colors.black,
+                          color: Colors.white,
                           fontSize: 14,
-                          fontWeight: FontWeight.w600,
+                          fontWeight: FontWeight.w500,
                         ),
                       ),
                     ),
-                  ),
-                ],
+                    const SizedBox(width: 12),
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.pushNamed(context, AppRoutes.googleLogin);
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFFD700),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Text(
+                          'Login',
+                          style: TextStyle(
+                            color: Colors.black,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
-
-            // User profile card
-            Container(
-              padding: const EdgeInsets.all(20),
+            ] else ...[
+              // User profile card - 只在已登录时显示
+              Container(
+                padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(16),
@@ -200,7 +203,7 @@ class _MyPageState extends State<MyPage> {
               ),
               child: Row(
                 children: [
-                  // Avatar
+                  // Avatar with real user avatar or default
                   Container(
                     width: 60,
                     height: 60,
@@ -208,33 +211,56 @@ class _MyPageState extends State<MyPage> {
                       shape: BoxShape.circle,
                       color: const Color(0xFF2C2C2C),
                     ),
-                    child: const Center(
-                      child: Icon(
-                        Icons.play_arrow_rounded,
-                        color: Color(0xFFFFD700),
-                        size: 32,
-                      ),
+                    child: ClipOval(
+                      child: provider.avatarUrl != null && provider.avatarUrl!.isNotEmpty
+                          ? CachedNetworkImage(
+                              imageUrl: provider.avatarUrl!,
+                              fit: BoxFit.cover,
+                              placeholder: (context, url) => const Center(
+                                child: Icon(
+                                  Icons.person,
+                                  color: Color(0xFFFFD700),
+                                  size: 32,
+                                ),
+                              ),
+                              errorWidget: (context, url, error) => const Center(
+                                child: Icon(
+                                  Icons.person,
+                                  color: Color(0xFFFFD700),
+                                  size: 32,
+                                ),
+                              ),
+                            )
+                          : const Center(
+                              child: Icon(
+                                Icons.person,
+                                color: Color(0xFFFFD700),
+                                size: 32,
+                              ),
+                            ),
                     ),
                   ),
 
                   const SizedBox(width: 16),
 
-                  // User Info
+                  // User Info - 显示真实的用户数据
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        // User Name
                         Text(
-                          provider.userName ?? 'User_1763296083',
-                          style: TextStyle(
+                          provider.userName ?? provider.userEmail?.split('@').first ?? 'Anonymous User',
+                          style: const TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.w600,
                             color: Colors.black,
                           ),
                         ),
                         const SizedBox(height: 4),
+                        // User Email or fitness journey info
                         Text(
-                          'Day 1 of your fitness journey',
+                          provider.userEmail ?? 'Day 1 of your fitness journey',
                           style: TextStyle(
                             fontSize: 14,
                             color: Colors.grey[600],
@@ -269,6 +295,7 @@ class _MyPageState extends State<MyPage> {
                 ],
               ),
             ),
+            ], // <- 添加缺失的关闭方括号
           ],
         );
       },

@@ -8,7 +8,13 @@
       "Bash(flutter doctor:*)",
       "Bash(flutter run:*)",
       "Bash(taskkill:*)",
-      "Bash(tee:*)"
+      "Bash(tee:*)",
+      "Bash(flutter build:*)",
+      "Bash(dir:*)",
+      "Bash(ls:*)",
+      "Bash(npm install:*)",
+      "Bash(npx prisma:*)",
+      "Bash(npm run start:dev:*)"
     ],
     "deny": [],
     "ask": []

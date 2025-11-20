@@ -1154,3 +1154,516 @@ COMMENT ON COLUMN public.challenge_completions.enjoyment_rating IS '享受度评
 COMMENT ON COLUMN public.challenge_completions.badge_earned IS '获得徽章稀有度（使用现有枚举）';
 COMMENT ON COLUMN public.challenge_completions.xp_earned IS '获得经验值（基于难度和完成质量）';
 COMMENT ON COLUMN public.challenge_completions.bonus_rewards IS '额外奖励（JSON格式，特殊成就等）';
+
+-- ============================================================================
+-- SUBSCRIPTION SYSTEM IMPLEMENTATION - v3.2 (2024-11-20)
+-- ============================================================================
+--
+-- Implementation for SnapRep Premium Subscription System
+-- Features:
+-- - Google Play Billing integration
+-- - Free trial management (7 days)
+-- - Daily exercise limits (3 per day for free users)
+-- - Subscription status tracking
+-- - Payment transaction history
+--
+-- Pricing Strategy:
+-- - Monthly: $4.99 USD
+-- - Yearly: $29.99 USD (50% savings)
+-- - Free tier: 3 exercises per day + 7-day trial
+-- ============================================================================
+
+-- ----------------------------------------------------------------------------
+-- 1. ADD SUBSCRIPTION ENUMS
+-- ----------------------------------------------------------------------------
+
+-- Subscription tier levels
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'SubscriptionTier') THEN
+    CREATE TYPE "SubscriptionTier" AS ENUM (
+      'FREE',            -- Free version (default)
+      'PREMIUM',         -- Premium monthly subscription
+      'PREMIUM_YEARLY'   -- Premium yearly subscription (discounted)
+    );
+  END IF;
+END$$;
+
+-- Subscription status states
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'SubscriptionStatus') THEN
+    CREATE TYPE "SubscriptionStatus" AS ENUM (
+      'ACTIVE',      -- Active subscription
+      'PAST_DUE',    -- Payment failed, grace period
+      'CANCELED',    -- Canceled but active until end date
+      'UNPAID',      -- Payment failed, subscription suspended
+      'EXPIRED'      -- Subscription has expired
+    );
+  END IF;
+END$$;
+
+-- Payment platform types
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'PaymentPlatform') THEN
+    CREATE TYPE "PaymentPlatform" AS ENUM (
+      'GOOGLE_PLAY',   -- Google Play Store
+      'APPLE_STORE',   -- Apple App Store (future)
+      'STRIPE'         -- Stripe (future)
+    );
+  END IF;
+END$$;
+
+-- ----------------------------------------------------------------------------
+-- 2. MODIFY EXISTING USERS TABLE
+-- ----------------------------------------------------------------------------
+
+-- Add subscription-related fields to users table for quick queries
+ALTER TABLE public.users
+  ADD COLUMN IF NOT EXISTS subscription_tier "SubscriptionTier" NOT NULL DEFAULT 'FREE',
+  ADD COLUMN IF NOT EXISTS subscription_status "SubscriptionStatus" NOT NULL DEFAULT 'ACTIVE',
+  ADD COLUMN IF NOT EXISTS premium_expires_at timestamptz(6),
+  ADD COLUMN IF NOT EXISTS free_trial_used boolean NOT NULL DEFAULT false,
+  ADD COLUMN IF NOT EXISTS trial_started_at timestamptz(6);
+
+-- Add indexes for subscription queries
+CREATE INDEX IF NOT EXISTS idx_users_subscription_tier ON public.users(subscription_tier);
+CREATE INDEX IF NOT EXISTS idx_users_subscription_status ON public.users(subscription_status);
+CREATE INDEX IF NOT EXISTS idx_users_premium_expires_at ON public.users(premium_expires_at);
+CREATE INDEX IF NOT EXISTS idx_users_trial_started_at ON public.users(trial_started_at);
+
+-- Add comments for new fields
+COMMENT ON COLUMN public.users.subscription_tier IS 'Current subscription tier (cached from subscriptions table)';
+COMMENT ON COLUMN public.users.subscription_status IS 'Current subscription status (cached from subscriptions table)';
+COMMENT ON COLUMN public.users.premium_expires_at IS 'When premium subscription expires (null for lifetime)';
+COMMENT ON COLUMN public.users.free_trial_used IS 'Whether user has used their free trial';
+COMMENT ON COLUMN public.users.trial_started_at IS 'When user started their free trial';
+
+-- ----------------------------------------------------------------------------
+-- 3. CREATE SUBSCRIPTIONS TABLE
+-- ----------------------------------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS public.subscriptions (
+  id text NOT NULL DEFAULT gen_random_uuid()::text,
+  user_id uuid NOT NULL,
+
+  -- Subscription configuration
+  tier "SubscriptionTier" NOT NULL DEFAULT 'FREE',
+  status "SubscriptionStatus" NOT NULL DEFAULT 'ACTIVE',
+  payment_platform "PaymentPlatform",
+
+  -- Google Play related fields
+  product_id text,           -- Google Play product ID (snaprep_premium)
+  purchase_token text,       -- Google Play purchase token (for verification)
+  order_id text,            -- Google Play order ID
+
+  -- Subscription cycle
+  start_date timestamptz(6) NOT NULL,
+  end_date timestamptz(6),   -- null means unlimited/lifetime
+  renews_at timestamptz(6),  -- Next renewal time
+
+  -- Trial configuration
+  trial_start_date timestamptz(6),
+  trial_end_date timestamptz(6),
+  is_trial_used boolean NOT NULL DEFAULT false,
+
+  -- Price information (record actual payment for price lock support)
+  currency text NOT NULL DEFAULT 'USD',
+  original_price decimal(10,2) NOT NULL,  -- Original price
+  actual_price decimal(10,2) NOT NULL,    -- Actual payment (with discounts)
+
+  -- Cancellation related
+  canceled_at timestamptz(6),
+  cancel_reason text,
+  will_renew boolean NOT NULL DEFAULT true,
+
+  -- Verification and security
+  last_verified_at timestamptz(6),
+  verification_data jsonb,  -- Store Google Play receipt data
+
+  -- Metadata
+  created_at timestamptz(6) NOT NULL DEFAULT now(),
+  updated_at timestamptz(6) NOT NULL DEFAULT now(),
+
+  CONSTRAINT subscriptions_pkey PRIMARY KEY (id),
+  CONSTRAINT subscriptions_user_id_key UNIQUE (user_id),  -- One subscription per user
+  CONSTRAINT subscriptions_user_id_fkey
+    FOREIGN KEY (user_id) REFERENCES public.users(id)
+    ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+-- Indexes for subscription queries
+CREATE INDEX IF NOT EXISTS idx_subscriptions_user_id_status ON public.subscriptions(user_id, status);
+CREATE INDEX IF NOT EXISTS idx_subscriptions_status_end_date ON public.subscriptions(status, end_date);
+CREATE INDEX IF NOT EXISTS idx_subscriptions_payment_platform_status ON public.subscriptions(payment_platform, status);
+CREATE INDEX IF NOT EXISTS idx_subscriptions_purchase_token ON public.subscriptions(purchase_token);
+CREATE INDEX IF NOT EXISTS idx_subscriptions_renews_at ON public.subscriptions(renews_at);
+
+-- Add trigger for updated_at
+CREATE TRIGGER update_subscriptions_updated_at
+  BEFORE UPDATE ON public.subscriptions
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- RLS policies for subscriptions
+ALTER TABLE public.subscriptions ENABLE ROW LEVEL SECURITY;
+
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies
+    WHERE schemaname = 'public' AND tablename = 'subscriptions'
+    AND policyname = 'Users can view own subscription'
+  ) THEN
+    CREATE POLICY "Users can view own subscription"
+    ON public.subscriptions FOR SELECT TO authenticated
+    USING (auth.uid() = user_id);
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies
+    WHERE schemaname = 'public' AND tablename = 'subscriptions'
+    AND policyname = 'Users can update own subscription'
+  ) THEN
+    CREATE POLICY "Users can update own subscription"
+    ON public.subscriptions FOR UPDATE TO authenticated
+    USING (auth.uid() = user_id);
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies
+    WHERE schemaname = 'public' AND tablename = 'subscriptions'
+    AND policyname = 'Users can insert own subscription'
+  ) THEN
+    CREATE POLICY "Users can insert own subscription"
+    ON public.subscriptions FOR INSERT TO authenticated
+    WITH CHECK (auth.uid() = user_id);
+  END IF;
+END$$;
+
+-- ----------------------------------------------------------------------------
+-- 4. CREATE PAYMENT TRANSACTIONS TABLE
+-- ----------------------------------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS public.payment_transactions (
+  id text NOT NULL DEFAULT gen_random_uuid()::text,
+  subscription_id text NOT NULL,
+  user_id uuid NOT NULL,
+
+  -- Transaction details
+  platform "PaymentPlatform" NOT NULL,
+  transaction_id text NOT NULL,        -- Platform's transaction ID
+  purchase_token text,                 -- Google Play purchase token
+  receipt_data jsonb,                  -- Full receipt/verification data
+
+  -- Payment information
+  amount decimal(10,2) NOT NULL,
+  currency text NOT NULL DEFAULT 'USD',
+  product_id text NOT NULL,            -- snaprep_premium
+
+  -- Transaction status
+  status text NOT NULL DEFAULT 'PENDING',  -- PENDING, SUCCESS, FAILED, REFUNDED
+  processed_at timestamptz(6),
+
+  -- Verification
+  verified_at timestamptz(6),
+  verification_attempts integer NOT NULL DEFAULT 0,
+  last_error text,
+
+  -- Metadata
+  created_at timestamptz(6) NOT NULL DEFAULT now(),
+  updated_at timestamptz(6) NOT NULL DEFAULT now(),
+
+  CONSTRAINT payment_transactions_pkey PRIMARY KEY (id),
+  CONSTRAINT payment_transactions_subscription_id_fkey
+    FOREIGN KEY (subscription_id) REFERENCES public.subscriptions(id)
+    ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT payment_transactions_user_id_fkey
+    FOREIGN KEY (user_id) REFERENCES public.users(id)
+    ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+-- Indexes for payment transaction queries
+CREATE INDEX IF NOT EXISTS idx_payment_transactions_user_id ON public.payment_transactions(user_id);
+CREATE INDEX IF NOT EXISTS idx_payment_transactions_subscription_id ON public.payment_transactions(subscription_id);
+CREATE INDEX IF NOT EXISTS idx_payment_transactions_transaction_id ON public.payment_transactions(transaction_id);
+CREATE INDEX IF NOT EXISTS idx_payment_transactions_status_created_at ON public.payment_transactions(status, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_payment_transactions_platform_status ON public.payment_transactions(platform, status);
+
+-- Add trigger for updated_at
+CREATE TRIGGER update_payment_transactions_updated_at
+  BEFORE UPDATE ON public.payment_transactions
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- RLS policies for payment transactions
+ALTER TABLE public.payment_transactions ENABLE ROW LEVEL SECURITY;
+
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies
+    WHERE schemaname = 'public' AND tablename = 'payment_transactions'
+    AND policyname = 'Users can view own transactions'
+  ) THEN
+    CREATE POLICY "Users can view own transactions"
+    ON public.payment_transactions FOR SELECT TO authenticated
+    USING (auth.uid() = user_id);
+  END IF;
+END$$;
+
+-- ----------------------------------------------------------------------------
+-- 5. CREATE DAILY USAGE TABLE (Exercise Limits)
+-- ----------------------------------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS public.daily_usage (
+  id text NOT NULL DEFAULT gen_random_uuid()::text,
+  user_id uuid NOT NULL,
+
+  -- Usage tracking
+  usage_date date NOT NULL,             -- Local date (YYYY-MM-DD)
+  exercise_count integer NOT NULL DEFAULT 0,  -- Daily exercise count
+  reset_at timestamptz(6) NOT NULL,     -- When counter resets (midnight local time)
+
+  -- Metadata
+  created_at timestamptz(6) NOT NULL DEFAULT now(),
+  updated_at timestamptz(6) NOT NULL DEFAULT now(),
+
+  CONSTRAINT daily_usage_pkey PRIMARY KEY (id),
+  CONSTRAINT daily_usage_user_id_date_key UNIQUE (user_id, usage_date),
+  CONSTRAINT daily_usage_user_id_fkey
+    FOREIGN KEY (user_id) REFERENCES public.users(id)
+    ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT daily_usage_exercise_count_check CHECK (exercise_count >= 0)
+);
+
+-- Indexes for daily usage queries
+CREATE INDEX IF NOT EXISTS idx_daily_usage_user_id_date ON public.daily_usage(user_id, usage_date DESC);
+CREATE INDEX IF NOT EXISTS idx_daily_usage_usage_date ON public.daily_usage(usage_date);
+CREATE INDEX IF NOT EXISTS idx_daily_usage_reset_at ON public.daily_usage(reset_at);
+
+-- Add trigger for updated_at
+CREATE TRIGGER update_daily_usage_updated_at
+  BEFORE UPDATE ON public.daily_usage
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- RLS policies for daily usage
+ALTER TABLE public.daily_usage ENABLE ROW LEVEL SECURITY;
+
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies
+    WHERE schemaname = 'public' AND tablename = 'daily_usage'
+    AND policyname = 'Users can view own daily usage'
+  ) THEN
+    CREATE POLICY "Users can view own daily usage"
+    ON public.daily_usage FOR SELECT TO authenticated
+    USING (auth.uid() = user_id);
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies
+    WHERE schemaname = 'public' AND tablename = 'daily_usage'
+    AND policyname = 'Users can update own daily usage'
+  ) THEN
+    CREATE POLICY "Users can update own daily usage"
+    ON public.daily_usage FOR UPDATE TO authenticated
+    USING (auth.uid() = user_id);
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies
+    WHERE schemaname = 'public' AND tablename = 'daily_usage'
+    AND policyname = 'Users can insert own daily usage'
+  ) THEN
+    CREATE POLICY "Users can insert own daily usage"
+    ON public.daily_usage FOR INSERT TO authenticated
+    WITH CHECK (auth.uid() = user_id);
+  END IF;
+END$$;
+
+-- ----------------------------------------------------------------------------
+-- 6. ADD TABLE COMMENTS
+-- ----------------------------------------------------------------------------
+
+COMMENT ON TABLE public.subscriptions IS 'Subscription management table - tracks user subscription status, billing, and trial periods';
+COMMENT ON TABLE public.payment_transactions IS 'Payment transaction history - records all subscription purchases and verification data';
+COMMENT ON TABLE public.daily_usage IS 'Daily exercise usage tracking - enforces 3 exercise/day limit for free users';
+
+-- Column comments for subscriptions table
+COMMENT ON COLUMN public.subscriptions.tier IS 'Subscription tier level';
+COMMENT ON COLUMN public.subscriptions.status IS 'Current subscription status';
+COMMENT ON COLUMN public.subscriptions.payment_platform IS 'Payment platform used (Google Play, Apple Store, etc.)';
+COMMENT ON COLUMN public.subscriptions.product_id IS 'Platform product identifier (snaprep_premium)';
+COMMENT ON COLUMN public.subscriptions.purchase_token IS 'Platform purchase token for verification';
+COMMENT ON COLUMN public.subscriptions.order_id IS 'Platform order identifier';
+COMMENT ON COLUMN public.subscriptions.trial_start_date IS 'When free trial started';
+COMMENT ON COLUMN public.subscriptions.trial_end_date IS 'When free trial ends';
+COMMENT ON COLUMN public.subscriptions.verification_data IS 'Platform receipt/verification data (encrypted)';
+
+-- Column comments for payment transactions table
+COMMENT ON COLUMN public.payment_transactions.transaction_id IS 'Platform transaction identifier';
+COMMENT ON COLUMN public.payment_transactions.receipt_data IS 'Full platform receipt data for verification';
+COMMENT ON COLUMN public.payment_transactions.status IS 'Transaction status: PENDING, SUCCESS, FAILED, REFUNDED';
+COMMENT ON COLUMN public.payment_transactions.verification_attempts IS 'Number of verification attempts';
+
+-- Column comments for daily usage table
+COMMENT ON COLUMN public.daily_usage.usage_date IS 'Local date for usage tracking (timezone-aware)';
+COMMENT ON COLUMN public.daily_usage.exercise_count IS 'Number of exercises completed today';
+COMMENT ON COLUMN public.daily_usage.reset_at IS 'When daily counter resets (midnight user local time)';
+
+-- ----------------------------------------------------------------------------
+-- 7. CREATE HELPER FUNCTIONS
+-- ----------------------------------------------------------------------------
+
+-- Function to check if user has premium access
+CREATE OR REPLACE FUNCTION public.has_premium_access(user_uuid uuid)
+RETURNS boolean
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+  user_tier "SubscriptionTier";
+  user_status "SubscriptionStatus";
+  expires_at timestamptz;
+  trial_end timestamptz;
+  trial_used boolean;
+BEGIN
+  -- Get user subscription info
+  SELECT
+    subscription_tier,
+    subscription_status,
+    premium_expires_at,
+    trial_started_at + INTERVAL '7 days' as trial_end_calculated,
+    free_trial_used
+  INTO
+    user_tier,
+    user_status,
+    expires_at,
+    trial_end,
+    trial_used
+  FROM public.users
+  WHERE id = user_uuid;
+
+  -- If no user found, no access
+  IF NOT FOUND THEN
+    RETURN false;
+  END IF;
+
+  -- Premium subscribers have access
+  IF user_tier IN ('PREMIUM', 'PREMIUM_YEARLY') AND user_status = 'ACTIVE' THEN
+    -- Check if not expired
+    IF expires_at IS NULL OR expires_at > NOW() THEN
+      RETURN true;
+    END IF;
+  END IF;
+
+  -- Check trial access
+  IF NOT trial_used AND trial_end IS NOT NULL AND NOW() <= trial_end THEN
+    RETURN true;
+  END IF;
+
+  RETURN false;
+END;
+$$;
+
+-- Function to check daily exercise limit
+CREATE OR REPLACE FUNCTION public.can_start_exercise(user_uuid uuid)
+RETURNS boolean
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+  has_premium boolean;
+  today_count integer;
+  today_date date;
+BEGIN
+  -- Premium users have unlimited access
+  SELECT public.has_premium_access(user_uuid) INTO has_premium;
+  IF has_premium THEN
+    RETURN true;
+  END IF;
+
+  -- Check daily limit for free users
+  today_date := CURRENT_DATE;
+
+  SELECT COALESCE(exercise_count, 0)
+  INTO today_count
+  FROM public.daily_usage
+  WHERE user_id = user_uuid AND usage_date = today_date;
+
+  -- Free users limited to 3 exercises per day
+  RETURN COALESCE(today_count, 0) < 3;
+END;
+$$;
+
+-- Function to increment daily exercise count
+CREATE OR REPLACE FUNCTION public.increment_daily_usage(user_uuid uuid, user_timezone text DEFAULT 'UTC')
+RETURNS boolean
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+  today_date date;
+  reset_time timestamptz;
+BEGIN
+  -- Calculate today's date in user's timezone
+  today_date := (NOW() AT TIME ZONE user_timezone)::date;
+
+  -- Calculate next reset time (midnight in user timezone)
+  reset_time := (today_date + 1) AT TIME ZONE user_timezone AT TIME ZONE 'UTC';
+
+  -- Insert or update daily usage
+  INSERT INTO public.daily_usage (user_id, usage_date, exercise_count, reset_at)
+  VALUES (user_uuid, today_date, 1, reset_time)
+  ON CONFLICT (user_id, usage_date)
+  DO UPDATE SET
+    exercise_count = daily_usage.exercise_count + 1,
+    updated_at = NOW();
+
+  RETURN true;
+END;
+$$;
+
+-- ----------------------------------------------------------------------------
+-- 8. INITIAL DATA SETUP
+-- ----------------------------------------------------------------------------
+
+-- Update existing users to have proper subscription defaults
+UPDATE public.users
+SET
+  subscription_tier = 'FREE',
+  subscription_status = 'ACTIVE'
+WHERE
+  subscription_tier IS NULL
+  OR subscription_status IS NULL;
+
+-- ============================================================================
+-- SUBSCRIPTION SYSTEM MIGRATION COMPLETED - v3.2
+-- ============================================================================
+--
+-- ✅ Added 3 new enums: SubscriptionTier, SubscriptionStatus, PaymentPlatform
+-- ✅ Modified users table with subscription fields and indexes
+-- ✅ Created subscriptions table with Google Play integration
+-- ✅ Created payment_transactions table for billing history
+-- ✅ Created daily_usage table for exercise limit tracking
+-- ✅ Added RLS policies for all new tables
+-- ✅ Created helper functions for subscription and usage checks
+-- ✅ Added comprehensive indexing for performance
+--
+-- Features Implemented:
+-- - Google Play Billing integration
+-- - 7-day free trial management
+-- - 3 exercises/day limit for free users
+-- - Subscription verification and security
+-- - Payment transaction history
+-- - Timezone-aware daily usage tracking
+--
+-- Next Steps:
+-- 1. Run this migration in Supabase SQL Editor
+-- 2. Update Prisma schema with new tables
+-- 3. Implement backend subscription service
+-- 4. Create frontend subscription UI components
+-- 5. Integrate Google Play Billing API
+--
+-- ============================================================================

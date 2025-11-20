@@ -16,6 +16,7 @@ class MyPageProvider with ChangeNotifier {
   String? _userId;
   String? _userEmail;
   String? _userName;
+  String? _avatarUrl;
   int _totalWorkouts = 0;
   int _currentStreak = 0;
   int _totalCards = 0;
@@ -46,6 +47,7 @@ class MyPageProvider with ChangeNotifier {
   String? get userId => _userId;
   String? get userEmail => _userEmail;
   String? get userName => _userName;
+  String? get avatarUrl => _avatarUrl;
   int get totalWorkouts => _totalWorkouts;
   int get currentStreak => _currentStreak;
   int get totalCards => _totalCards;
@@ -69,6 +71,7 @@ class MyPageProvider with ChangeNotifier {
   // 计算属性
   bool get hasCards => _allCards.isNotEmpty;
   bool get hasHistory => _workoutHistory.isNotEmpty;
+  bool get isUserLoggedIn => _userId != null && _userId!.isNotEmpty;
 
   int get commonCards => _allCards.where((c) => c.rarity.level == RarityLevel.common).length;
   int get uncommonCards => _allCards.where((c) => c.rarity.level == RarityLevel.uncommon).length;

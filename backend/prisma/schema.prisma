@@ -121,6 +121,29 @@ enum DeeplinkTargetType {
   EXERCISE // 单个动作
 }
 
+// 订阅层级（v3.2 新增）
+enum SubscriptionTier {
+  FREE            // 免费版（默认）
+  PREMIUM         // 高级月订阅
+  PREMIUM_YEARLY  // 高级年订阅（折扣）
+}
+
+// 订阅状态（v3.2 新增）
+enum SubscriptionStatus {
+  ACTIVE      // 活跃订阅
+  PAST_DUE    // 支付失败，宽限期
+  CANCELED    // 已取消但在结束日期前有效
+  UNPAID      // 支付失败，订阅暂停
+  EXPIRED     // 订阅已过期
+}
+
+// 支付平台（v3.2 新增）
+enum PaymentPlatform {
+  GOOGLE_PLAY   // Google Play 商店
+  APPLE_STORE   // Apple App Store（未来）
+  STRIPE        // Stripe（未来）
+}
+
 // =============================================================================
 // 1. SCENARIOS - 场景表
 // =============================================================================
@@ -329,6 +352,15 @@ model User {
   language String @default("zh") @map("language") // zh/en
   theme    String @default("auto") @map("theme") // auto/light/dark
 
+  // 订阅状态（v3.2 新增，冗余字段用于快速查询）
+  subscriptionTier   SubscriptionTier   @default(FREE) @map("subscription_tier")
+  subscriptionStatus SubscriptionStatus @default(ACTIVE) @map("subscription_status")
+  premiumExpiresAt   DateTime?          @map("premium_expires_at") @db.Timestamptz(6)
+
+  // 试用相关（v3.2 新增）
+  freeTrialUsed   Boolean   @default(false) @map("free_trial_used")
+  trialStartedAt  DateTime? @map("trial_started_at") @db.Timestamptz(6)
+
   // 元数据
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
@@ -342,7 +374,15 @@ model User {
   posts                   Post[] // 临时保留Post关系
   challengeCompletions    ChallengeCompletion[] // 挑战完成记录
 
+  // 订阅系统关系（v3.2 新增）
+  subscription            Subscription? // 一对一订阅关系
+  paymentTransactions     PaymentTransaction[] // 支付交易历史
+  dailyUsage              DailyUsage[] // 日使用量记录
+
   @@index([email])
+  @@index([subscriptionTier]) // v3.2: 订阅层级索引
+  @@index([subscriptionStatus]) // v3.2: 订阅状态索引
+  @@index([premiumExpiresAt]) // v3.2: 订阅过期时间索引
   @@map("users")
 }
 
@@ -839,4 +879,126 @@ model DeeplinkClick {
 
   @@index([deeplinkId, clickedAt(sort: Desc)])
   @@map("deeplink_clicks")
+}
+
+// =============================================================================
+// 16. SUBSCRIPTION SYSTEM - 订阅系统（v3.2 新增）
+// =============================================================================
+
+// 订阅表
+model Subscription {
+  id     String @id @default(cuid())
+  userId String @unique @map("user_id") // 每个用户只能有一个活跃订阅
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // 订阅配置
+  tier            SubscriptionTier   @default(FREE)
+  status          SubscriptionStatus @default(ACTIVE)
+  paymentPlatform PaymentPlatform?   @map("payment_platform")
+
+  // Google Play 相关字段
+  productId     String? @map("product_id")     // Google Play 产品ID
+  purchaseToken String? @map("purchase_token") // Google Play 购买令牌
+  orderId       String? @map("order_id")       // Google Play 订单ID
+
+  // 订阅周期
+  startDate DateTime  @map("start_date") @db.Timestamptz(6)
+  endDate   DateTime? @map("end_date") @db.Timestamptz(6)   // null 表示无限制
+  renewsAt  DateTime? @map("renews_at") @db.Timestamptz(6) // 下次续费时间
+
+  // 试用配置
+  trialStartDate DateTime? @map("trial_start_date") @db.Timestamptz(6)
+  trialEndDate   DateTime? @map("trial_end_date") @db.Timestamptz(6)
+  isTrialUsed    Boolean   @default(false) @map("is_trial_used")
+
+  // 价格信息（记录实际用户付款，支持价格锁定）
+  currency      String  @default("USD")
+  originalPrice Decimal @map("original_price") @db.Decimal(10, 2) // 原价
+  actualPrice   Decimal @map("actual_price") @db.Decimal(10, 2)   // 实际付款价格
+
+  // 取消相关
+  canceledAt   DateTime? @map("canceled_at") @db.Timestamptz(6)
+  cancelReason String?   @map("cancel_reason") @db.VarChar(500)
+  willRenew    Boolean   @default(true) @map("will_renew")
+
+  // 验证相关
+  lastVerifiedAt   DateTime? @map("last_verified_at") @db.Timestamptz(6)
+  verificationData Json?     @map("verification_data")
+
+  // 元数据
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  // 关系
+  paymentTransactions PaymentTransaction[]
+
+  @@index([userId, status])
+  @@index([status, endDate])
+  @@index([paymentPlatform, status])
+  @@index([purchaseToken])
+  @@index([renewsAt])
+  @@map("subscriptions")
+}
+
+// 支付交易表
+model PaymentTransaction {
+  id             String @id @default(cuid())
+  subscriptionId String @map("subscription_id")
+  subscription   Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+
+  userId String @map("user_id")
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // 交易详情
+  platform      PaymentPlatform @map("payment_platform")
+  transactionId String          @map("transaction_id") // 平台交易ID
+  purchaseToken String?         @map("purchase_token") // Google Play 购买令牌
+  receiptData   Json?           @map("receipt_data")   // 完整收据/验证数据
+
+  // 支付信息
+  amount    Decimal @db.Decimal(10, 2)
+  currency  String  @default("USD")
+  productId String  @map("product_id") // snaprep_premium
+
+  // 交易状态
+  status      String    @default("PENDING") // PENDING, SUCCESS, FAILED, REFUNDED
+  processedAt DateTime? @map("processed_at") @db.Timestamptz(6)
+
+  // 验证
+  verifiedAt           DateTime? @map("verified_at") @db.Timestamptz(6)
+  verificationAttempts Int       @default(0) @map("verification_attempts")
+  lastError            String?   @map("last_error")
+
+  // 元数据
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@index([userId])
+  @@index([subscriptionId])
+  @@index([transactionId])
+  @@index([status, createdAt(sort: Desc)])
+  @@index([platform, status])
+  @@map("payment_transactions")
+}
+
+// 每日使用量表（用于运动限制跟踪）
+model DailyUsage {
+  id     String @id @default(cuid())
+  userId String @map("user_id")
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // 使用跟踪
+  usageDate     DateTime @map("usage_date") @db.Date
+  exerciseCount Int      @default(0) @map("exercise_count") // 每日运动计数
+  resetAt       DateTime @map("reset_at") @db.Timestamptz(6) // 重置时间（本地时间午夜）
+
+  // 元数据
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@unique([userId, usageDate])
+  @@index([userId, usageDate(sort: Desc)])
+  @@index([usageDate])
+  @@index([resetAt])
+  @@map("daily_usage")
 }
