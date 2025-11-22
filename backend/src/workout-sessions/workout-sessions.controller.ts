@@ -455,6 +455,69 @@ export class WorkoutSessionsController {
   }
 
   /**
+   * 获取用户最常训练的动作
+   * GET /api/v1/users/:userId/most-trained-exercises
+   */
+  @Get('users/:userId/most-trained-exercises')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({
+    summary: '获取用户最常训练的动作',
+    description: '获取用户训练次数最多的动作列表，用于推荐动作页面'
+  })
+  @ApiParam({
+    name: 'userId',
+    description: '用户ID',
+    example: 'user-uuid-123'
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: '用户最常训练动作获取成功',
+    schema: {
+      type: 'object',
+      properties: {
+        exercises: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              id: { type: 'string', example: 'exercise-123' },
+              code: { type: 'string', example: 'push_ups' },
+              name: { type: 'string', example: '俯卧撑' },
+              description: { type: 'string' },
+              primaryMuscle: { type: 'string', example: 'chest' },
+              difficulty: { type: 'string', example: 'INTERMEDIATE' },
+              durationSeconds: { type: 'number', example: 60 },
+              demoImageUrl: { type: 'string' },
+              thumbnailUrl: { type: 'string' },
+              trainedCount: { type: 'number', example: 15 },
+              lastTrainedAt: { type: 'string', format: 'date-time' }
+            }
+          }
+        }
+      }
+    }
+  })
+  async getUserMostTrainedExercises(
+    @Param('userId', ParseUUIDPipe) userId: string,
+    @Query('limit') limit: number = 6
+  ) {
+    logger.debug(`获取用户最常训练动作: userId=${userId}, limit=${limit}`);
+
+    try {
+      const exercises = await this.workoutSessionsService.getUserMostTrainedExercises(userId, limit);
+
+      return {
+        success: true,
+        data: { exercises }
+      };
+    } catch (error) {
+      logger.error(`获取用户最常训练动作失败: ${error.message}`);
+      this.handleError(error, 'getUserMostTrainedExercises', { userId, limit });
+    }
+  }
+
+  /**
    * 获取用户训练统计
    * GET /api/v1/users/:userId/stats
    */

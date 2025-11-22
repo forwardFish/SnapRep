@@ -69,7 +69,7 @@ export class ChallengesController {
       const challenges = await this.supabaseApi.get(
         'challenge_items',
         filter,
-        { orderBy: 'display_order.asc,total_participants.desc' }
+        { orderBy: 'display_order.asc,trending_score.desc' }
       );
 
       const { page = 1, pageSize = 12 } = queryDto;
@@ -81,17 +81,19 @@ export class ChallengesController {
         data: paginatedData.map((item: any) => ({
           id: item.id,
           code: item.code,
-          name: item.name,
-          emoji: item.emoji,
-          difficulty: item.difficulty,
-          baseRarity: item.base_rarity,
-          exerciseCount: item.exercise_count,
-          estimatedMinutes: item.estimated_minutes,
+          name: item.title, // Map title to name
+          emoji: this._getEmojiForChallenge(item.code), // Generate emoji from code
+          difficulty: this._calculateDifficulty(item.trending_score), // Calculate from trending_score
+          baseRarity: this._calculateRarity(item.trending_score), // Calculate from trending_score
+          exerciseCount: item.target_count || 3, // Use target_count
+          estimatedMinutes: Math.ceil((item.time_limit || 10) / 60) || 10, // Convert time_limit to minutes
           description: item.description,
-          totalParticipants: item.total_participants,
-          totalCompletions: item.total_completions,
-          completionRate: item.completion_rate,
-          isPopular: item.is_popular,
+          iconUrl: item.icon_url, // 卡片小图标URL
+          imageUrl: item.image_url, // 卡片背景大图URL
+          totalParticipants: 0, // TODO: Calculate from challenge_completions table
+          totalCompletions: 0, // TODO: Calculate from challenge_completions table
+          completionRate: 0, // TODO: Calculate from challenge_completions table
+          isPopular: item.is_popular || false,
           createdAt: item.created_at,
           updatedAt: item.updated_at,
         })),
@@ -108,6 +110,44 @@ export class ChallengesController {
       logger.error('Failed to fetch challenge items:', error);
       throw new InternalServerErrorException('Failed to fetch challenge items');
     }
+  }
+
+  /**
+   * Helper: Get emoji for challenge based on code
+   */
+  private _getEmojiForChallenge(code: string): string {
+    const emojiMap: Record<string, string> = {
+      'umbrella_challenge': '🌂',
+      'water_bottle_challenge': '🧃',
+      'chair_challenge': '🪑',
+      'backpack_challenge': '🎒',
+      'broom_challenge': '🧹',
+      'book_challenge': '📚',
+      'towel_challenge': '🧺',
+      'luggage_challenge': '🧳',
+      'guitar_challenge': '🎸',
+    };
+    return emojiMap[code] || '🏆';
+  }
+
+  /**
+   * Helper: Calculate difficulty from trending score
+   */
+  private _calculateDifficulty(trendingScore: number): number {
+    if (trendingScore >= 0.8) return 2;
+    if (trendingScore >= 0.6) return 3;
+    if (trendingScore >= 0.4) return 4;
+    return 5;
+  }
+
+  /**
+   * Helper: Calculate rarity from trending score
+   */
+  private _calculateRarity(trendingScore: number): string {
+    if (trendingScore >= 0.8) return 'COMMON';
+    if (trendingScore >= 0.5) return 'RARE';
+    if (trendingScore >= 0.2) return 'EPIC';
+    return 'LEGENDARY';
   }
 
   /**
@@ -148,17 +188,17 @@ export class ChallengesController {
       return {
         id: item.id,
         code: item.code,
-        name: item.name,
-        emoji: item.emoji,
-        difficulty: item.difficulty,
-        baseRarity: item.base_rarity,
-        exerciseCount: item.exercise_count,
-        estimatedMinutes: item.estimated_minutes,
+        name: item.title,
+        emoji: this._getEmojiForChallenge(item.code),
+        difficulty: this._calculateDifficulty(item.trending_score),
+        baseRarity: this._calculateRarity(item.trending_score),
+        exerciseCount: item.target_count || 3,
+        estimatedMinutes: Math.ceil((item.time_limit || 10) / 60) || 10,
         description: item.description,
-        totalParticipants: item.total_participants,
-        totalCompletions: item.total_completions,
-        completionRate: item.completion_rate,
-        isPopular: item.is_popular,
+        totalParticipants: 0, // TODO: Calculate from challenge_completions table
+        totalCompletions: 0, // TODO: Calculate from challenge_completions table
+        completionRate: 0, // TODO: Calculate from challenge_completions table
+        isPopular: item.is_popular || false,
         createdAt: item.created_at,
         updatedAt: item.updated_at,
       };
@@ -205,17 +245,17 @@ export class ChallengesController {
       return {
         id: item.id,
         code: item.code,
-        name: item.name,
-        emoji: item.emoji,
-        difficulty: item.difficulty,
-        baseRarity: item.base_rarity,
-        exerciseCount: item.exercise_count,
-        estimatedMinutes: item.estimated_minutes,
+        name: item.title,
+        emoji: this._getEmojiForChallenge(item.code),
+        difficulty: this._calculateDifficulty(item.trending_score),
+        baseRarity: this._calculateRarity(item.trending_score),
+        exerciseCount: item.target_count || 3,
+        estimatedMinutes: Math.ceil((item.time_limit || 10) / 60) || 10,
         description: item.description,
-        totalParticipants: item.total_participants,
-        totalCompletions: item.total_completions,
-        completionRate: item.completion_rate,
-        isPopular: item.is_popular,
+        totalParticipants: 0, // TODO: Calculate from challenge_completions table
+        totalCompletions: 0, // TODO: Calculate from challenge_completions table
+        completionRate: 0, // TODO: Calculate from challenge_completions table
+        isPopular: item.is_popular || false,
         createdAt: item.created_at,
         updatedAt: item.updated_at,
       };
@@ -308,13 +348,9 @@ export class ChallengesController {
         started_at: new Date().toISOString(),
       });
 
-      // Increment participant count
-      const challenge = await this.supabaseApi.getById('challenge_items', body.challengeItemId);
-      if (challenge) {
-        await this.supabaseApi.update('challenge_items', body.challengeItemId, {
-          total_participants: challenge.total_participants + 1,
-        });
-      }
+      // TODO: Increment participant count in challenge_completions tracking
+      // Note: total_participants doesn't exist in challenge_items table
+      // Should be calculated from challenge_completions table instead
 
       return {
         id: completion.id,
@@ -374,9 +410,9 @@ export class ChallengesController {
         throw new NotFoundException('Challenge completion not found');
       }
 
-      // Calculate badge based on participant count and rarity
+      // Calculate badge based on rarity
       const challenge = await this.supabaseApi.getById('challenge_items', completion.challenge_item_id);
-      let badgeEarned = challenge?.base_rarity || 'COMMON';
+      let badgeEarned = this._calculateRarity(challenge?.trending_score || 0.5);
 
       // Update completion record
       const updated = await this.supabaseApi.update('challenge_completions', id, {
@@ -391,15 +427,9 @@ export class ChallengesController {
         xp_earned: 100, // Base XP
       });
 
-      // Increment completion count
-      if (challenge) {
-        const newCompletions = challenge.total_completions + 1;
-        const completionRate = newCompletions / challenge.total_participants;
-        await this.supabaseApi.update('challenge_items', challenge.id, {
-          total_completions: newCompletions,
-          completion_rate: completionRate,
-        });
-      }
+      // TODO: Update completion statistics
+      // Note: total_completions and completion_rate don't exist in challenge_items table
+      // Should be calculated from challenge_completions table instead
 
       return {
         id: updated.id,

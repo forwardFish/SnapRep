@@ -7,6 +7,8 @@ class ChallengeItem {
   final int targetCount;
   final String description;
   final String? instructions;
+  final String? iconUrl;
+  final String? imageUrl;
   final bool isPopular;
   final double trendingScore;
   final bool isActive;
@@ -23,6 +25,8 @@ class ChallengeItem {
     required this.targetCount,
     required this.description,
     this.instructions,
+    this.iconUrl,
+    this.imageUrl,
     required this.isPopular,
     required this.trendingScore,
     required this.isActive,
@@ -41,6 +45,8 @@ class ChallengeItem {
       targetCount: json['target_count'] as int? ?? 3,
       description: json['description'] as String,
       instructions: json['instructions'] as String?,
+      iconUrl: json['icon_url'] as String?,
+      imageUrl: json['image_url'] as String?,
       isPopular: json['is_popular'] as bool? ?? false,
       trendingScore: (json['trending_score'] as num?)?.toDouble() ?? 0.0,
       isActive: json['is_active'] as bool? ?? true,
@@ -60,6 +66,8 @@ class ChallengeItem {
       'target_count': targetCount,
       'description': description,
       'instructions': instructions,
+      'icon_url': iconUrl,
+      'image_url': imageUrl,
       'is_popular': isPopular,
       'trending_score': trendingScore,
       'is_active': isActive,

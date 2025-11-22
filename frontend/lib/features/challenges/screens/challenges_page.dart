@@ -1,10 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import '../../../core/models/challenge_item.dart';
-import '../../../core/models/exercise.dart';
-import '../../../core/models/target_muscle.dart';
-import '../../../core/models/workout_intent.dart';
+import '../../../core/models/challenge_item_dto.dart';
 import '../../../core/services/challenges_service.dart';
 import '../../../routes/app_routes.dart';
 
@@ -16,7 +13,7 @@ class ChallengesPage extends StatefulWidget {
 }
 
 class _ChallengesPageState extends State<ChallengesPage> {
-  List<ChallengeItem> challenges = [];
+  List<ChallengeItemDto> challenges = [];
   bool isLoading = false;
   String? error;
 
@@ -33,168 +30,24 @@ class _ChallengesPageState extends State<ChallengesPage> {
     });
 
     try {
-      // TODO: Replace with actual API call
-      final mockChallenges = _generateMockChallenges();
+      final service = ChallengesService();
+      final challengeList = await service.getChallenges(
+        page: 1,
+        pageSize: 12,
+        isActive: true,
+      );
       setState(() {
-        challenges = mockChallenges;
+        challenges = challengeList;
         isLoading = false;
       });
+      debugPrint('✅ Challenges loaded from API: ${challengeList.length} items');
     } catch (e) {
+      debugPrint('❌ Failed to load challenges from API: $e');
       setState(() {
         error = 'Failed to load challenges: $e';
         isLoading = false;
       });
     }
-  }
-
-  List<ChallengeItem> _generateMockChallenges() {
-    final now = DateTime.now();
-    return [
-      ChallengeItem(
-        id: '1',
-        code: 'umbrella_challenge',
-        title: 'Umbrella Challenge',
-        equipmentId: 'umbrella_eq_id',
-        timeLimit: 10,
-        targetCount: 3,
-        description: 'Complete workouts using an umbrella as your fitness tool',
-        instructions: 'Use the umbrella for resistance training and balance exercises',
-        isPopular: true,
-        trendingScore: 0.85,
-        isActive: true,
-        displayOrder: 1,
-        createdAt: now,
-        updatedAt: now,
-      ),
-      ChallengeItem(
-        id: '2',
-        code: 'water_bottle_challenge',
-        title: 'Water Bottle Challenge',
-        equipmentId: 'bottle_eq_id',
-        timeLimit: 15,
-        targetCount: 3,
-        description: 'Turn your water bottle into a weight for strength training',
-        instructions: 'Use filled water bottle as resistance for arm and shoulder exercises',
-        isPopular: true,
-        trendingScore: 0.76,
-        isActive: true,
-        displayOrder: 2,
-        createdAt: now,
-        updatedAt: now,
-      ),
-      ChallengeItem(
-        id: '3',
-        code: 'chair_challenge',
-        title: 'Chair Challenge',
-        equipmentId: 'chair_eq_id',
-        timeLimit: 12,
-        targetCount: 3,
-        description: 'Transform your chair into a complete fitness station',
-        instructions: 'Use the chair for support, resistance, and strength training',
-        isPopular: true,
-        trendingScore: 0.89,
-        isActive: true,
-        displayOrder: 3,
-        createdAt: now,
-        updatedAt: now,
-      ),
-      ChallengeItem(
-        id: '4',
-        code: 'backpack_challenge',
-        title: 'Backpack Challenge',
-        equipmentId: 'backpack_eq_id',
-        timeLimit: 20,
-        targetCount: 4,
-        description: 'Use your backpack for a traveling fitness routine',
-        instructions: 'Perfect for travelers. Use the backpack weight for full body exercises',
-        isPopular: false,
-        trendingScore: 0.65,
-        isActive: true,
-        displayOrder: 4,
-        createdAt: now,
-        updatedAt: now,
-      ),
-      ChallengeItem(
-        id: '5',
-        code: 'broom_challenge',
-        title: 'Broom Challenge',
-        equipmentId: 'broom_eq_id',
-        timeLimit: 15,
-        targetCount: 3,
-        description: 'Creative workout using a household broom',
-        instructions: 'Use the broom as a balance bar and resistance tool',
-        isPopular: false,
-        trendingScore: 0.42,
-        isActive: true,
-        displayOrder: 5,
-        createdAt: now,
-        updatedAt: now,
-      ),
-      ChallengeItem(
-        id: '6',
-        code: 'book_challenge',
-        title: 'Book Challenge',
-        equipmentId: 'book_eq_id',
-        timeLimit: 8,
-        targetCount: 3,
-        description: 'Use a book as workout equipment for strength training',
-        instructions: 'Hold the book for resistance exercises. Perfect for office workouts',
-        isPopular: false,
-        trendingScore: 0.72,
-        isActive: true,
-        displayOrder: 6,
-        createdAt: now,
-        updatedAt: now,
-      ),
-      ChallengeItem(
-        id: '7',
-        code: 'towel_challenge',
-        title: 'Towel Challenge',
-        equipmentId: 'towel_eq_id',
-        timeLimit: 12,
-        targetCount: 3,
-        description: 'Enhance your flexibility using a simple towel',
-        instructions: 'Great for stretching and resistance exercises',
-        isPopular: false,
-        trendingScore: 0.32,
-        isActive: true,
-        displayOrder: 7,
-        createdAt: now,
-        updatedAt: now,
-      ),
-      ChallengeItem(
-        id: '8',
-        code: 'luggage_challenge',
-        title: 'Luggage Challenge',
-        equipmentId: 'luggage_eq_id',
-        timeLimit: 25,
-        targetCount: 4,
-        description: 'Heavy-duty workout with your suitcase',
-        instructions: 'Use your luggage for strength and stability training',
-        isPopular: false,
-        trendingScore: 0.18,
-        isActive: true,
-        displayOrder: 8,
-        createdAt: now,
-        updatedAt: now,
-      ),
-      ChallengeItem(
-        id: '9',
-        code: 'guitar_challenge',
-        title: 'Guitar Challenge',
-        equipmentId: 'guitar_eq_id',
-        timeLimit: 15,
-        targetCount: 5,
-        description: 'Musical instrument workout challenge',
-        instructions: 'Use the guitar as a prop for creative exercises',
-        isPopular: false,
-        trendingScore: 0.023,
-        isActive: true,
-        displayOrder: 9,
-        createdAt: now,
-        updatedAt: now,
-      ),
-    ];
   }
 
   @override
@@ -237,7 +90,7 @@ class _ChallengesPageState extends State<ChallengesPage> {
   Widget _buildChallengeContent() {
     return Stack(
       children: [
-        // Background Image
+        // Background Image - Fixed background (won't change)
         Positioned.fill(
           child: CachedNetworkImage(
             imageUrl: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80',
@@ -468,30 +321,15 @@ class _ChallengesPageState extends State<ChallengesPage> {
     );
   }
 
-  Widget _buildChallengeCard(ChallengeItem challenge, int index) {
-    // Generate mock data based on challenge properties
-    final participantCounts = [1200, 800, 2100, 650, 420, 890, 320, 180, 23];
-    final participantCount = participantCounts[index % participantCounts.length];
+  Widget _buildChallengeCard(ChallengeItemDto challenge, int index) {
+    // Use data from the API
+    final participantCount = challenge.totalParticipants;
+    final emoji = challenge.emoji;
 
-    final emojis = ['🌂', '🧃', '🪑', '🎒', '🧹', '📚', '🧺', '🧳', '🎸'];
-    final emoji = emojis[index % emojis.length];
-
-    // Background images for each challenge type
-    final backgroundImages = [
-      'https://images.unsplash.com/photo-1520970014086-2208d157c9e2?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80', // Umbrella/rain workout
-      'https://images.unsplash.com/photo-1544161515-4ab6ce6db874?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80', // Hydration/water theme
-      'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80', // Office/chair workout
-      'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80', // Travel/backpack fitness
-      'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80', // Home cleaning workout
-      'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80', // Study/reading fitness
-      'https://images.unsplash.com/photo-1584464491033-06628f3a6b7b?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80', // Laundry/basket workout
-      'https://images.unsplash.com/photo-1488646953014-85cb44e25828?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80', // Luggage/travel fitness
-      'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80', // Music/guitar workout
-    ];
-
-    final backgroundImage = backgroundImages[index % backgroundImages.length];
-    final difficulties = _getDifficultyStars(challenge.trendingScore);
-    final rarity = _getRarityLevel(participantCount);
+    // Use image from API or fallback to gradient
+    final backgroundImage = challenge.imageUrl;
+    final difficulties = challenge.difficulty; // Use difficulty from API
+    final rarity = _getRarityFromString(challenge.baseRarity); // Convert string to enum
 
     return Material(
       elevation: 12,
@@ -517,36 +355,49 @@ class _ChallengesPageState extends State<ChallengesPage> {
             borderRadius: BorderRadius.circular(16),
             child: Stack(
               children: [
-                // Background Image
+                // Background Image or Gradient
                 Positioned.fill(
-                  child: CachedNetworkImage(
-                    imageUrl: backgroundImage,
-                    fit: BoxFit.cover,
-                    placeholder: (context, url) => Container(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [
-                            _getRarityColor(rarity).withOpacity(0.8),
-                            _getRarityColor(rarity).withOpacity(0.6),
-                          ],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
+                  child: backgroundImage != null
+                      ? CachedNetworkImage(
+                          imageUrl: backgroundImage,
+                          fit: BoxFit.cover,
+                          placeholder: (context, url) => Container(
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [
+                                  _getRarityColor(rarity).withOpacity(0.8),
+                                  _getRarityColor(rarity).withOpacity(0.6),
+                                ],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ),
+                            ),
+                          ),
+                          errorWidget: (context, url, error) => Container(
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [
+                                  _getRarityColor(rarity).withOpacity(0.8),
+                                  _getRarityColor(rarity).withOpacity(0.6),
+                                ],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ),
+                            ),
+                          ),
+                        )
+                      : Container(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [
+                                _getRarityColor(rarity).withOpacity(0.8),
+                                _getRarityColor(rarity).withOpacity(0.6),
+                              ],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                          ),
                         ),
-                      ),
-                    ),
-                    errorWidget: (context, url, error) => Container(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [
-                            _getRarityColor(rarity).withOpacity(0.8),
-                            _getRarityColor(rarity).withOpacity(0.6),
-                          ],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
-                      ),
-                    ),
-                  ),
                 ),
 
                 // Dark gradient overlay for text readability
@@ -646,7 +497,7 @@ class _ChallengesPageState extends State<ChallengesPage> {
                         children: [
                           // Title with enhanced styling
                           Text(
-                            _getDisplayTitle(challenge.title),
+                            _getDisplayTitle(challenge.name), // Use 'name' instead of 'title'
                             style: const TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w800,
@@ -870,25 +721,18 @@ class _ChallengesPageState extends State<ChallengesPage> {
     return title.replaceAll(' Challenge', '');
   }
 
-  String _formatCount(int count) {
-    if (count >= 1000) {
-      return '${(count / 1000).toStringAsFixed(1)}k';
+  RarityLevel _getRarityFromString(String rarityStr) {
+    switch (rarityStr.toUpperCase()) {
+      case 'LEGENDARY':
+        return RarityLevel.legendary;
+      case 'EPIC':
+        return RarityLevel.epic;
+      case 'RARE':
+        return RarityLevel.rare;
+      case 'COMMON':
+      default:
+        return RarityLevel.common;
     }
-    return count.toString();
-  }
-
-  int _getDifficultyStars(double trendingScore) {
-    if (trendingScore >= 0.8) return 2;
-    if (trendingScore >= 0.6) return 3;
-    if (trendingScore >= 0.4) return 4;
-    return 5;
-  }
-
-  RarityLevel _getRarityLevel(int participantCount) {
-    if (participantCount >= 1000) return RarityLevel.common;
-    if (participantCount >= 200) return RarityLevel.rare;
-    if (participantCount >= 50) return RarityLevel.epic;
-    return RarityLevel.legendary;
   }
 
   Color _getRarityColor(RarityLevel rarity) {
@@ -917,123 +761,17 @@ class _ChallengesPageState extends State<ChallengesPage> {
     }
   }
 
-  void _onChallengePressed(ChallengeItem challenge) {
-    debugPrint('Challenge pressed: ${challenge.title}');
+  void _onChallengePressed(ChallengeItemDto challenge) {
+    debugPrint('Challenge pressed: ${challenge.name}');
 
-    // 为挑战创建模拟的动作训练数据
-    final exercises = _createMockExercisesForChallenge(challenge);
-
-    if (exercises.isNotEmpty) {
-      // 直接跳转到动作训练页面
-      AppRoutes.navigateToProfessionalWorkoutVideo(
-        context,
-        exercise: exercises.first,
-        exercises: exercises,
-        currentExerciseIndex: 0,
-      );
-    } else {
-      // 如果没有找到对应的动作，显示提示
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('${challenge.title} training exercises are under development'),
-          backgroundColor: Colors.orange,
-          duration: const Duration(seconds: 2),
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
-      );
-    }
+    // Use AppRoutes to navigate directly to workout result page with challenge configuration
+    AppRoutes.challengeQuickJoin(
+      context,
+      challengeId: challenge.id,
+      equipmentCode: challenge.code.replaceAll('_challenge', ''), // Extract equipment code from challenge code
+    );
   }
 
-  // 为挑战创建模拟动作数据
-  List<Exercise> _createMockExercisesForChallenge(ChallengeItem challenge) {
-    final exerciseTemplates = {
-      'towel_challenge': [
-        {
-          'name': 'Towel Rowing',
-          'description': 'Back muscle training using towel resistance',
-          'videoUrl': 'https://sample-videos.com/zip/10/mp4/SampleVideo_1280x720_1mb.mp4',
-          'duration': 45,
-          'reps': 12,
-        },
-        {
-          'name': 'Towel Stretching',
-          'description': 'Shoulder stretching exercise with towel assistance',
-          'videoUrl': 'https://sample-videos.com/zip/10/mp4/SampleVideo_1280x720_2mb.mp4',
-          'duration': 30,
-          'reps': 8,
-        },
-      ],
-      'water_bottle_challenge': [
-        {
-          'name': 'Water Bottle Press',
-          'description': 'Arm strength training using water bottles as weights',
-          'videoUrl': 'https://sample-videos.com/zip/10/mp4/SampleVideo_1280x720_1mb.mp4',
-          'duration': 40,
-          'reps': 15,
-        },
-        {
-          'name': 'Water Bottle Squats',
-          'description': 'Weighted squats for leg muscle development',
-          'videoUrl': 'https://sample-videos.com/zip/10/mp4/SampleVideo_1280x720_2mb.mp4',
-          'duration': 50,
-          'reps': 12,
-        },
-      ],
-      'chair_challenge': [
-        {
-          'name': 'Chair Dips',
-          'description': 'Upper body strength training using chair support',
-          'videoUrl': 'https://sample-videos.com/zip/10/mp4/SampleVideo_1280x720_1mb.mp4',
-          'duration': 35,
-          'reps': 10,
-        },
-        {
-          'name': 'Chair Squats',
-          'description': 'Chair-assisted squats for leg strength',
-          'videoUrl': 'https://sample-videos.com/zip/10/mp4/SampleVideo_1280x720_2mb.mp4',
-          'duration': 45,
-          'reps': 15,
-        },
-      ],
-    };
-
-    final templates = exerciseTemplates[challenge.code] ?? [
-      {
-        'name': '${challenge.title} Basic Training',
-        'description': '${challenge.description}',
-        'videoUrl': 'https://sample-videos.com/zip/10/mp4/SampleVideo_1280x720_1mb.mp4',
-        'duration': 45,
-        'reps': 10,
-      }
-    ];
-
-    return templates.asMap().entries.map<Exercise>((entry) {
-      final index = entry.key;
-      final template = entry.value;
-      return Exercise(
-        id: '${challenge.id}_exercise_$index',
-        code: '${challenge.code}_ex_$index',
-        name: template['name'] as String,
-        description: template['description'] as String,
-        primaryMuscle: TargetMuscle.fullBody,
-        secondaryMuscles: const [TargetMuscle.core],
-        intentType: WorkoutIntent.strength,
-        difficulty: ExerciseDifficulty.intermediate,
-        durationSeconds: template['duration'] as int,
-        sets: challenge.targetCount,
-        repetitions: template['reps'] as int,
-        demoVideoUrl: template['videoUrl'] as String,
-        thumbnailUrl: 'https://via.placeholder.com/400x300/6366F1/FFFFFF?text=${Uri.encodeComponent(template['name'] as String)}',
-        keyPoints: const ['Prepare related items', 'Follow movement demonstration', 'Maintain proper form', 'Control breathing rhythm'],
-        safetyWarnings: const ['Ensure safe surroundings', 'Be mindful of range of motion', 'Stop immediately if you feel discomfort'],
-        benefits: 'Improve physical fitness and exercise skills through challenge training',
-        tags: const [ExerciseTag.strength],
-      );
-    }).toList();
-  }
 }
 
 enum RarityLevel { common, rare, epic, legendary }

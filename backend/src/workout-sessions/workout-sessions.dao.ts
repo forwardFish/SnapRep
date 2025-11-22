@@ -339,4 +339,53 @@ export class WorkoutSessionsDao extends PrismaBaseDao<any> {
       return 0;
     }
   }
+
+  /**
+   * 获取用户最常训练的动作
+   * @param userId 用户ID
+   * @param limit 返回数量限制
+   * @returns 最常训练的动作列表
+   */
+  async getUserMostTrainedExercises(userId: string, limit: number = 6) {
+    try {
+      // 查询用户训练次数最多的动作
+      const exerciseStats = await this.prisma.$queryRaw`
+        SELECT
+          e.id,
+          e.code,
+          e.name,
+          e.description,
+          e.primary_muscle as "primaryMuscle",
+          e.difficulty,
+          e.duration_seconds as "durationSeconds",
+          e.demo_image_url as "demoImageUrl",
+          e.thumbnail_url as "thumbnailUrl",
+          COUNT(se.exercise_id) as "trainedCount",
+          MAX(ws.completed_at) as "lastTrainedAt"
+        FROM exercises e
+        INNER JOIN session_exercises se ON e.id = se.exercise_id
+        INNER JOIN workout_sessions ws ON se.workout_session_id = ws.id
+        WHERE ws.user_id = ${userId}
+          AND ws.status = 'COMPLETED'
+          AND e.is_active = true
+        GROUP BY e.id, e.code, e.name, e.description, e.primary_muscle, e.difficulty, e.duration_seconds, e.demo_image_url, e.thumbnail_url
+        ORDER BY "trainedCount" DESC, "lastTrainedAt" DESC
+        LIMIT ${limit}
+      `;
+
+      logger.debug(`获取用户最常训练动作成功: userId=${userId}, count=${exerciseStats.length}`);
+      return exerciseStats.map((stat: any) => ({
+        ...stat,
+        trainedCount: Number(stat.trainedCount) // 确保trainedCount是数字类型
+      }));
+
+    } catch (error) {
+      logger.error(`获取用户最常训练动作失败: userId=${userId}, error=${error.message}`);
+      throw new ResponseError(
+        ErrorCodes.DATABASE?.QUERY_FAILED || { code: 2001, message: 'Database query failed' },
+        error,
+        { userId, limit }
+      );
+    }
+  }
 }

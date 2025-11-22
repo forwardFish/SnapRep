@@ -184,6 +184,98 @@ export class ExercisesController {
   }
 
   /**
+   * 获取热门推荐动作（通用，不需要用户ID）
+   * GET /api/v1/recommendations/popular-exercises
+   */
+  @Get('popular-exercises')
+  @ApiOperation({
+    summary: '获取热门推荐动作',
+    description: '获取最受欢迎的训练动作列表，适合所有用户'
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: '热门推荐动作获取成功',
+    schema: {
+      type: 'object',
+      properties: {
+        exercises: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              id: { type: 'string', example: 'exercise-123' },
+              code: { type: 'string', example: 'push_ups' },
+              name: { type: 'string', example: '俯卧撑' },
+              description: { type: 'string' },
+              primaryMuscle: { type: 'string', example: 'chest' },
+              difficulty: { type: 'string', example: 'INTERMEDIATE' },
+              durationSeconds: { type: 'number', example: 60 },
+              demoImageUrl: { type: 'string' },
+              thumbnailUrl: { type: 'string' },
+              popularityScore: { type: 'number', example: 85 }
+            }
+          }
+        }
+      }
+    }
+  })
+  async getPopularExercises(@Query('limit') limit: number = 6) {
+    logger.debug(`获取热门推荐动作: limit=${limit}`);
+
+    try {
+      const exercises = await this.getPopularExercisesFromDB(limit);
+
+      return {
+        success: true,
+        data: { exercises }
+      };
+    } catch (error) {
+      logger.error(`获取热门推荐动作失败: ${error.message}`);
+      this.handleError(error, 'getPopularExercises', { limit });
+    }
+  }
+
+  /**
+   * 从数据库获取热门推荐动作
+   * @param limit 返回数量限制
+   */
+  private async getPopularExercisesFromDB(limit: number) {
+    try {
+      // 查询推荐动作，按创建时间倒序排列（最新的动作优先）
+      // 由于数据库中没有trending_score字段，我们使用现有字段
+      const popularExercises = await this.supabaseApi.get('exercises', {
+        is_active: 'eq.true',
+        order: 'created_at.desc,name.asc',
+        limit: limit.toString(),
+      });
+
+      if (!popularExercises || popularExercises.length === 0) {
+        logger.warn('No popular exercises found, returning empty array');
+        return [];
+      }
+
+      return popularExercises.map((exercise: any, index: number) => ({
+        id: exercise.id,
+        code: exercise.code,
+        name: exercise.name, // 使用name字段而不是title
+        description: typeof exercise.description === 'object'
+          ? JSON.stringify(exercise.description)
+          : exercise.description || '',
+        primaryMuscle: exercise.primary_muscle,
+        difficulty: exercise.difficulty || 'BEGINNER',
+        durationSeconds: exercise.default_duration || 60,
+        demoImageUrl: exercise.demo_image_url,
+        thumbnailUrl: exercise.demo_image_url, // 使用demo_image_url作为缩略图
+        popularityScore: 100 - (index * 5), // 根据排序给予评分，递减幅度小一点
+      }));
+
+    } catch (error) {
+      logger.error(`查询热门推荐动作失败: ${error.message}`);
+      throw error;
+    }
+  }
+
+  /**
    * 统一错误处理方法
    * @param error 错误对象
    * @param method 方法名

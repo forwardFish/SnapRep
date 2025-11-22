@@ -14,7 +14,21 @@
       "Bash(ls:*)",
       "Bash(npm install:*)",
       "Bash(npx prisma:*)",
-      "Bash(npm run start:dev:*)"
+      "Bash(npm run start:dev:*)",
+      "Bash(powershell -Command \"Get-Process -Name node -ErrorAction SilentlyContinue | Stop-Process -Force\")",
+      "Bash(flutter devices:*)",
+      "Bash(netstat:*)",
+      "Bash(findstr:*)",
+      "Bash(powershell -Command:*)",
+      "Read(//d/**)",
+      "Bash(git log:*)",
+      "Bash(for commit in 3bd739f 772b293 a08126a)",
+      "Bash(do echo \"=== Commit $commit ===\")",
+      "Bash(done)",
+      "Bash(git checkout:*)",
+      "Bash(cat:*)",
+      "Bash(flutter analyze:*)",
+      "Bash(find:*)"
     ],
     "deny": [],
     "ask": []

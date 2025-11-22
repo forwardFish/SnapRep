@@ -770,6 +770,10 @@ model ChallengeItem {
   // 描述信息
   description String? @db.VarChar(200) // 挑战描述
 
+  // 媒体资源
+  iconUrl  String? @map("icon_url") // 卡片小图标URL（可选）
+  imageUrl String? @map("image_url") // 卡片背景大图URL（可选）
+
   // 统计字段（冗余字段，提升查询性能）
   totalParticipants Int   @default(0) @map("total_participants") // 总参与人数
   totalCompletions  Int   @default(0) @map("total_completions") // 总完成人数

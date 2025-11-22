@@ -28,6 +28,12 @@ export class ChallengeItemDto {
   @ApiProperty({ example: 'Complete workouts using an umbrella', description: 'Challenge description', required: false })
   description?: string;
 
+  @ApiProperty({ example: 'https://example.com/icons/umbrella.png', description: 'Card icon URL', required: false })
+  iconUrl?: string;
+
+  @ApiProperty({ example: 'https://example.com/images/umbrella-bg.jpg', description: 'Card background image URL', required: false })
+  imageUrl?: string;
+
   @ApiProperty({ example: 142, description: 'Total number of participants' })
   totalParticipants: number;
 

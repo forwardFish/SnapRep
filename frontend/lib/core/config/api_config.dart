@@ -3,13 +3,12 @@ class ApiConfig {
   /// Base URL for the API endpoints
   ///
   /// For development:
-  /// - Local backend: 'http://localhost:3000/api'
-  /// - Local Supabase Edge Functions: 'http://localhost:54321/functions/v1'
+  /// - Local backend: 'http://localhost:3000' (without /api or /rest/v1)
+  /// - Each service adds its own path prefix (e.g., /rest/v1/challenges, /api/v1/recommendations)
   ///
   /// For production:
   /// - Production backend: 'https://api.snaprep.com'
-  /// - Supabase Edge Functions: 'https://your-project.supabase.co/functions/v1'
-  static const String baseUrl = 'http://localhost:3000/api';
+  static const String baseUrl = 'http://localhost:3000';
 
   /// Supabase configuration
   static const String supabaseUrl = 'https://your-project.supabase.co';

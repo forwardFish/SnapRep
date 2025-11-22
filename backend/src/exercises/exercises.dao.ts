@@ -143,34 +143,78 @@ export class ExercisesDao extends PrismaBaseDao<any> {
     try {
       logger.info('Using SupabaseApiService due to database connection issue');
 
+      // 1. 如果指定了equipment，先通过 exercise_equipment 表查找符合条件的 exercise_ids
+      let exerciseIdsFromEquipment: string[] | null = null;
+      if (criteria.equipment && criteria.equipment.length > 0) {
+        // 查询 equipment 表获取 equipment_ids
+        const equipmentRecords = await this.supabaseApi.get('equipment', {
+          code: `in.(${criteria.equipment.join(',')})`,
+          is_active: true,
+        });
+
+        if (equipmentRecords.length > 0) {
+          const equipmentIds = equipmentRecords.map((eq: any) => eq.id);
+
+          // 查询 exercise_equipment 表获取关联的 exercise_ids
+          const exerciseEquipment = await this.supabaseApi.get('exercise_equipment', {
+            equipment_id: `in.(${equipmentIds.join(',')})`,
+          });
+
+          exerciseIdsFromEquipment = exerciseEquipment.map((ee: any) => ee.exercise_id);
+          logger.info(`Found ${exerciseIdsFromEquipment.length} exercises matching equipment: ${criteria.equipment.join(',')}`);
+
+          // 如果没有找到匹配的exercises，直接返回空数组
+          if (exerciseIdsFromEquipment.length === 0) {
+            logger.warn(`No exercises found for equipment: ${criteria.equipment.join(',')}`);
+            return [];
+          }
+        } else {
+          logger.warn(`No equipment found with codes: ${criteria.equipment.join(',')}`);
+          return [];
+        }
+      }
+
       const filters: Record<string, any> = {
         is_active: true,
       };
 
-      // 意图筛选
+      // 2. 如果有equipment筛选结果，添加到filters
+      if (exerciseIdsFromEquipment && exerciseIdsFromEquipment.length > 0) {
+        filters.id = `in.(${exerciseIdsFromEquipment.join(',')})`;
+      }
+
+      // 3. 意图筛选
       if (criteria.intent) {
         filters.intent_type = criteria.intent;
       }
 
-      // 难度筛选
+      // 4. 难度筛选
       if (criteria.difficulty) {
         filters.difficulty = criteria.difficulty;
       }
 
-      // 目标肌群筛选 - 简化版，只查primary muscle
+      // 5. 目标肌群筛选 - 简化版，只查primary muscle
       if (criteria.targetMuscles && criteria.targetMuscles.length > 0) {
         filters.primary_muscle = `in.(${criteria.targetMuscles.join(',')})`;
       }
 
-      // 获取基础练习数据
+      // 6. 排除特定IDs
+      if (criteria.excludeIds && criteria.excludeIds.length > 0) {
+        // Supabase使用 not.in 语法
+        filters.id = filters.id
+          ? `${filters.id},not.in.(${criteria.excludeIds.join(',')})`
+          : `not.in.(${criteria.excludeIds.join(',')})`;
+      }
+
+      // 7. 获取基础练习数据
       const exercises = await this.supabaseApi.get('exercises', filters, {
         limit: criteria.limit || 50,
         orderBy: 'created_at.desc',
       });
 
-      logger.info(`Found ${exercises.length} exercises from Supabase`);
+      logger.info(`Found ${exercises.length} exercises from Supabase after all filters`);
 
-      // 转换数据格式（将 snake_case 转换为 camelCase）
+      // 8. 转换数据格式（将 snake_case 转换为 camelCase）
       return exercises.map((exercise: any) => ({
         id: exercise.id,
         code: exercise.code,

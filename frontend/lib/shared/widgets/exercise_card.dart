@@ -72,7 +72,7 @@ class ExerciseCard extends StatelessWidget {
                         fit: BoxFit.cover,
                         errorBuilder: (context, error, stackTrace) => Center(
                           child: Icon(
-                            _getExerciseIcon(exercise.primaryMuscle),
+                            _getExerciseIcon(exercise.primaryMuscle.code),
                             size: isCompact ? 24 : 32,
                             color: Colors.grey[400],
                           ),
@@ -81,7 +81,7 @@ class ExerciseCard extends StatelessWidget {
                     )
                   : Center(
                       child: Icon(
-                        _getExerciseIcon(exercise.primaryMuscle),
+                        _getExerciseIcon(exercise.primaryMuscle.code),
                         size: isCompact ? 24 : 32,
                         color: Colors.grey[400],
                       ),
@@ -110,14 +110,14 @@ class ExerciseCard extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color: _getMuscleColor(exercise.primaryMuscle).withOpacity(0.1),
+                    color: _getMuscleColor(exercise.primaryMuscle.code).withOpacity(0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
-                    _getMuscleName(exercise.primaryMuscle),
+                    _getMuscleName(exercise.primaryMuscle.code),
                     style: TextStyle(
                       fontSize: isCompact ? 10 : 12,
-                      color: _getMuscleColor(exercise.primaryMuscle),
+                      color: _getMuscleColor(exercise.primaryMuscle.code),
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -126,7 +126,7 @@ class ExerciseCard extends StatelessWidget {
                 const Spacer(),
 
                 DifficultyIndicator(
-                  difficulty: exercise.difficulty,
+                  difficulty: exercise.difficulty.code,
                   size: isCompact ? 12 : 16,
                 ),
               ],
@@ -145,7 +145,7 @@ class ExerciseCard extends StatelessWidget {
                   ),
                   const SizedBox(width: 4),
                   Text(
-                    '${exercise.defaultDuration}${exercise.durationType == 'TIME' ? '秒' : '次'}',
+                    '${exercise.durationSeconds}秒',
                     style: TextStyle(
                       fontSize: isCompact ? 12 : 14,
                       color: Colors.grey[600],
@@ -350,7 +350,7 @@ class QuickExerciseCard extends StatelessWidget {
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Text(
-                _getMuscleName(exercise.primaryMuscle),
+                _getMuscleName(exercise.primaryMuscle.code),
                 style: const TextStyle(
                   fontSize: 14,
                   color: Color(0xFF6C5CE7),
@@ -372,7 +372,7 @@ class QuickExerciseCard extends StatelessWidget {
                 ),
                 const SizedBox(width: 4),
                 Text(
-                  '${exercise.defaultDuration}秒',
+                  '${exercise.durationSeconds}秒',
                   style: const TextStyle(
                     fontSize: 14,
                     color: Colors.grey,

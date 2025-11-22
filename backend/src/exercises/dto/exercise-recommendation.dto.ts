@@ -25,9 +25,20 @@ export class QuickRecommendationDto {
   @IsString({ each: true })
   equipment?: string[];
 
+  // 支持前端发送的 equipmentCodes（向后兼容）
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  equipmentCodes?: string[];
+
   @IsOptional()
   @IsString()
   scenario?: string;
+
+  // 支持前端发送的 scenarioCode（向后兼容）
+  @IsOptional()
+  @IsString()
+  scenarioCode?: string;
 
   @IsOptional()
   @IsArray()

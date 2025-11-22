@@ -1,13 +1,13 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import '../models/challenge_item.dart';
+import '../models/challenge_item_dto.dart';
 import '../config/api_config.dart';
 
 class ChallengesService {
   static const String _baseUrl = ApiConfig.baseUrl;
 
-  /// Get all challenge items
-  Future<List<ChallengeItem>> getChallenges({
+  /// Get all challenge items (returns DTOs from API)
+  Future<List<ChallengeItemDto>> getChallenges({
     int page = 1,
     int pageSize = 12,
     bool? isActive,
@@ -22,7 +22,7 @@ class ChallengesService {
         queryParams['isActive'] = isActive.toString();
       }
 
-      final uri = Uri.parse('$_baseUrl/challenges')
+      final uri = Uri.parse('$_baseUrl/rest/v1/challenges')
           .replace(queryParameters: queryParams);
 
       final response = await http.get(uri);
@@ -32,7 +32,7 @@ class ChallengesService {
         final List<dynamic> challengesJson = data['data'] ?? [];
 
         return challengesJson
-            .map((json) => ChallengeItem.fromJson(json))
+            .map((json) => ChallengeItemDto.fromJson(json))
             .toList();
       } else {
         throw Exception('Failed to load challenges: ${response.statusCode}');
@@ -42,16 +42,16 @@ class ChallengesService {
     }
   }
 
-  /// Get single challenge item by ID
-  Future<ChallengeItem> getChallengeById(String id) async {
+  /// Get single challenge item by ID (returns DTO from API)
+  Future<ChallengeItemDto> getChallengeById(String id) async {
     try {
       final response = await http.get(
-        Uri.parse('$_baseUrl/challenges/$id'),
+        Uri.parse('$_baseUrl/rest/v1/challenges/$id'),
       );
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        return ChallengeItem.fromJson(data['data']);
+        return ChallengeItemDto.fromJson(data['data']);
       } else if (response.statusCode == 404) {
         throw Exception('Challenge not found');
       } else {
@@ -69,7 +69,7 @@ class ChallengesService {
   }) async {
     try {
       final response = await http.post(
-        Uri.parse('$_baseUrl/challenges/completions'),
+        Uri.parse('$_baseUrl/rest/v1/challenges/completions'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({
           'userId': userId,
@@ -96,7 +96,7 @@ class ChallengesService {
   }) async {
     try {
       final response = await http.patch(
-        Uri.parse('$_baseUrl/challenges/completions/$completionId'),
+        Uri.parse('$_baseUrl/rest/v1/challenges/completions/$completionId'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({
           'actualDuration': actualDuration,
@@ -126,7 +126,7 @@ class ChallengesService {
   }) async {
     try {
       final response = await http.patch(
-        Uri.parse('$_baseUrl/challenges/completions/$completionId/complete'),
+        Uri.parse('$_baseUrl/rest/v1/challenges/completions/$completionId/complete'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({
           'actualDuration': actualDuration,
@@ -153,7 +153,7 @@ class ChallengesService {
   }) async {
     try {
       final response = await http.patch(
-        Uri.parse('$_baseUrl/challenges/completions/$completionId/abandon'),
+        Uri.parse('$_baseUrl/rest/v1/challenges/completions/$completionId/abandon'),
         headers: {'Content-Type': 'application/json'},
       );
 
@@ -177,7 +177,7 @@ class ChallengesService {
         queryParams['status'] = status;
       }
 
-      final uri = Uri.parse('$_baseUrl/challenges/completions/user/$userId')
+      final uri = Uri.parse('$_baseUrl/rest/v1/challenges/completions/user/$userId')
           .replace(queryParameters: queryParams.isNotEmpty ? queryParams : null);
 
       final response = await http.get(uri);
@@ -198,7 +198,7 @@ class ChallengesService {
   Future<Map<String, dynamic>> getChallengesStats() async {
     try {
       final response = await http.get(
-        Uri.parse('$_baseUrl/challenges/stats'),
+        Uri.parse('$_baseUrl/rest/v1/challenges/stats'),
       );
 
       if (response.statusCode == 200) {

@@ -5,6 +5,7 @@ import '../../../routes/app_routes.dart';
 import '../../../core/models/exercise.dart';
 import '../../../core/models/target_muscle.dart';
 import '../../../core/models/workout_intent.dart';
+import '../../../core/services/exercise_service.dart';
 import '../../workout_execution/screens/professional_workout_video_page_v2.dart';
 
 /// Modern Workout Result Page - Based on Design Document Section 3.2
@@ -26,87 +27,17 @@ class _ModernWorkoutResultPageState extends State<ModernWorkoutResultPage>
     with TickerProviderStateMixin {
   int _currentNavIndex = 0; // Home section
   bool _isLoading = false;
+  String? _error;
   late AnimationController _cardController;
   late AnimationController _previewController;
   late Animation<double> _cardAnimation;
   late Animation<Offset> _cardSlideAnimation;
 
-  // Mock data for demonstration
-  final List<WorkoutCard> _workoutCards = [
-    WorkoutCard(
-      id: '1',
-      name: 'Wall Chest Opener',
-      difficulty: DifficultyLevel.easy,
-      duration: 20,
-      sets: 1,
-      tags: ['Standing', 'Wall', 'Stretching'],
-      benefits: 'Relieves neck tension\nOpens upper back',
-      safetyTips: [
-        '⚠️ Keep neck neutral, no backward bend',
-        '⚠️ Shoulders down, avoid shrugging'
-      ],
-      previewImage: 'assets/exercises/wall_chest_opener.jpg',
-      isReplacement: false,
-    ),
-    WorkoutCard(
-      id: '2',
-      name: 'Chair Sit-to-Stand',
-      difficulty: DifficultyLevel.easy,
-      duration: 30,
-      sets: 1,
-      tags: ['Chair', 'Lower Body', 'Functional'],
-      benefits: 'Strengthens legs\nImproves mobility',
-      safetyTips: [
-        '⚠️ Control the movement, no bouncing',
-        '⚠️ Keep feet flat on ground'
-      ],
-      previewImage: 'assets/exercises/chair_sit_stand.jpg',
-      isReplacement: false,
-    ),
-    WorkoutCard(
-      id: '3',
-      name: 'Core Three-Point Support',
-      difficulty: DifficultyLevel.easy,
-      duration: 15,
-      sets: 1,
-      tags: ['Core', 'Stability', 'Floor'],
-      benefits: 'Activates core\nImproves stability',
-      safetyTips: [
-        '⚠️ Engage core throughout',
-        '⚠️ Breathe steadily'
-      ],
-      previewImage: 'assets/exercises/core_three_point.jpg',
-      isReplacement: false,
-    ),
-  ];
+  final ExerciseService _exerciseService = ExerciseService();
 
-  final List<WorkoutCard> _alternativeCards = [
-    WorkoutCard(
-      id: 'alt1',
-      name: 'Wall Push',
-      difficulty: DifficultyLevel.easy,
-      duration: 20,
-      sets: 1,
-      tags: ['Wall', 'Upper Body'],
-      benefits: 'Chest activation',
-      safetyTips: ['⚠️ Keep core engaged'],
-      previewImage: 'assets/exercises/wall_push.jpg',
-      isReplacement: true,
-    ),
-    WorkoutCard(
-      id: 'alt2',
-      name: 'Desk Lean',
-      difficulty: DifficultyLevel.easy,
-      duration: 15,
-      sets: 1,
-      tags: ['Desk', 'Stretching'],
-      benefits: 'Hip flexor stretch',
-      safetyTips: ['⚠️ Gentle movement'],
-      previewImage: 'assets/exercises/desk_lean.jpg',
-      isReplacement: true,
-    ),
-    // Add more alternatives...
-  ];
+  // Data loaded from API
+  List<WorkoutCard> _workoutCards = [];
+  List<WorkoutCard> _alternativeCards = [];
 
   @override
   void initState() {
@@ -154,16 +85,230 @@ class _ModernWorkoutResultPageState extends State<ModernWorkoutResultPage>
   Future<void> _loadWorkoutData() async {
     setState(() {
       _isLoading = true;
+      _error = null;
     });
 
-    // Simulate API call
-    await Future.delayed(const Duration(milliseconds: 800));
+    try {
+      // Extract parameters from widget.recommendationParams or use defaults
+      final params = widget.recommendationParams ?? {};
 
-    if (mounted) {
+      final intent = _parseIntent(params['intent'] ?? 'STRETCH');
+      // Support both 'equipment' and 'equipmentCodes' keys for compatibility
+      final equipmentCodes = _parseEquipmentCodes(
+        params['equipmentCodes'] ?? params['equipment'] ?? ['chair', 'wall']
+      );
+      final scenarioCode = params['scenarioCode'] ?? params['scenario'] ?? 'office';
+      final targetMuscles = _parseTargetMuscles(params['targetMuscles']);
+
+      debugPrint('🎯 Loading workout recommendations: intent=$intent, equipment=$equipmentCodes, scenario=$scenarioCode');
+
+      // Get recommendations from API
+      final recommendationData = await _exerciseService.getQuickRecommendation(
+        intent: intent,
+        equipmentCodes: equipmentCodes,
+        scenarioCode: scenarioCode,
+        targetMuscles: targetMuscles,
+        difficultyLevel: params['difficultyLevel'],
+        maxDuration: params['maxDuration'],
+      );
+
+      // Convert API response to WorkoutCard objects
+      final exercises = recommendationData['exercises'] as List<dynamic>? ?? [];
+      _workoutCards = exercises.take(3).map((exercise) => _convertToWorkoutCard(exercise, false)).toList();
+
+      // Load alternative exercises if needed
+      if (_workoutCards.isNotEmpty) {
+        try {
+          final alternatives = await _exerciseService.getExercisesByContext(
+            equipmentCodes: equipmentCodes,
+            scenarioCode: scenarioCode,
+            intent: intent,
+            targetMuscles: targetMuscles,
+            pageSize: 6,
+          );
+
+          _alternativeCards = alternatives
+              .where((ex) => !_workoutCards.any((card) => card.id == ex.id))
+              .take(3)
+              .map((exercise) => _convertExerciseToWorkoutCard(exercise, true))
+              .toList();
+        } catch (e) {
+          debugPrint('⚠️ Failed to load alternatives: $e');
+          _alternativeCards = [];
+        }
+      }
+
+      debugPrint('✅ Workout data loaded: ${_workoutCards.length} main exercises, ${_alternativeCards.length} alternatives');
+    } catch (e) {
+      debugPrint('❌ Failed to load workout data: $e');
       setState(() {
-        _isLoading = false;
+        _error = 'Failed to load workout recommendations: $e';
       });
+
+      // Use fallback data if API fails
+      _setFallbackWorkoutData();
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
+  }
+
+  WorkoutIntent _parseIntent(dynamic intentValue) {
+    if (intentValue is WorkoutIntent) return intentValue;
+    final intentStr = intentValue.toString().toUpperCase();
+    return WorkoutIntent.values.firstWhere(
+      (e) => e.name.toUpperCase() == intentStr,
+      orElse: () => WorkoutIntent.stretch,
+    );
+  }
+
+  List<String> _parseEquipmentCodes(dynamic equipmentValue) {
+    if (equipmentValue is List<String>) return equipmentValue;
+    if (equipmentValue is List) return equipmentValue.map((e) => e.toString()).toList();
+    if (equipmentValue is String) return [equipmentValue];
+    return ['chair', 'wall']; // Default fallback
+  }
+
+  List<TargetMuscle>? _parseTargetMuscles(dynamic muscleValue) {
+    if (muscleValue == null) return null;
+    if (muscleValue is List<TargetMuscle>) return muscleValue;
+    if (muscleValue is List) {
+      return muscleValue
+          .map((m) => TargetMuscle.values.firstWhere(
+                (tm) => tm.name.toUpperCase() == m.toString().toUpperCase(),
+                orElse: () => TargetMuscle.fullBody,
+              ))
+          .toList();
+    }
+    return null;
+  }
+
+  WorkoutCard _convertToWorkoutCard(dynamic exercise, bool isReplacement) {
+    return WorkoutCard(
+      id: exercise['id']?.toString() ?? '',
+      name: exercise['name']?.toString() ?? 'Exercise',
+      difficulty: _parseDifficulty(exercise['difficulty']),
+      duration: exercise['duration'] ?? 30,
+      sets: exercise['sets'] ?? 1,
+      tags: _parseTags(exercise),
+      benefits: exercise['benefits']?.toString() ?? '',
+      safetyTips: _parseSafetyTips(exercise),
+      previewImage: exercise['thumbnailUrl'] ?? 'assets/exercises/default.jpg',
+      isReplacement: isReplacement,
+    );
+  }
+
+  WorkoutCard _convertExerciseToWorkoutCard(Exercise exercise, bool isReplacement) {
+    return WorkoutCard(
+      id: exercise.id,
+      name: exercise.name,
+      difficulty: _exerciseDifficultyToLevel(exercise.difficulty),
+      duration: exercise.durationSeconds,
+      sets: exercise.sets,
+      tags: _exerciseToTags(exercise),
+      benefits: exercise.benefits,
+      safetyTips: exercise.safetyWarnings,
+      previewImage: exercise.thumbnailUrl ?? 'assets/exercises/default.jpg',
+      isReplacement: isReplacement,
+    );
+  }
+
+  DifficultyLevel _parseDifficulty(dynamic difficulty) {
+    if (difficulty == null) return DifficultyLevel.easy;
+    final diffStr = difficulty.toString().toLowerCase();
+    if (diffStr.contains('hard') || diffStr.contains('advanced')) return DifficultyLevel.hard;
+    if (diffStr.contains('medium') || diffStr.contains('intermediate')) return DifficultyLevel.medium;
+    return DifficultyLevel.easy;
+  }
+
+  DifficultyLevel _exerciseDifficultyToLevel(ExerciseDifficulty difficulty) {
+    switch (difficulty) {
+      case ExerciseDifficulty.beginner:
+        return DifficultyLevel.easy;
+      case ExerciseDifficulty.intermediate:
+        return DifficultyLevel.medium;
+      case ExerciseDifficulty.advanced:
+      case ExerciseDifficulty.expert:
+        return DifficultyLevel.hard;
+    }
+  }
+
+  List<String> _parseTags(dynamic exercise) {
+    final tags = <String>[];
+
+    if (exercise['primaryMuscle'] != null) {
+      tags.add(exercise['primaryMuscle'].toString());
+    }
+
+    if (exercise['intentType'] != null) {
+      tags.add(exercise['intentType'].toString());
+    }
+
+    if (exercise['tags'] != null && exercise['tags'] is List) {
+      tags.addAll((exercise['tags'] as List).map((t) => t.toString()));
+    }
+
+    return tags.isNotEmpty ? tags : ['General'];
+  }
+
+  List<String> _exerciseToTags(Exercise exercise) {
+    final tags = <String>[exercise.primaryMuscle.name];
+    if (exercise.secondaryMuscles.isNotEmpty) {
+      tags.addAll(exercise.secondaryMuscles.take(2).map((m) => m.name));
+    }
+    tags.add(exercise.intentType.name);
+    return tags;
+  }
+
+  List<String> _parseSafetyTips(dynamic exercise) {
+    if (exercise['safetyWarnings'] != null && exercise['safetyWarnings'] is List) {
+      return (exercise['safetyWarnings'] as List)
+          .map((tip) => '⚠️ ${tip.toString()}')
+          .toList();
+    }
+
+    if (exercise['keyPoints'] != null && exercise['keyPoints'] is List) {
+      return (exercise['keyPoints'] as List)
+          .take(2)
+          .map((point) => '⚠️ ${point.toString()}')
+          .toList();
+    }
+
+    return ['⚠️ Maintain proper form', '⚠️ Listen to your body'];
+  }
+
+  void _setFallbackWorkoutData() {
+    debugPrint('⚠️ Using fallback workout data');
+    _workoutCards = [
+      WorkoutCard(
+        id: 'fallback-1',
+        name: 'Wall Chest Opener',
+        difficulty: DifficultyLevel.easy,
+        duration: 20,
+        sets: 1,
+        tags: ['Standing', 'Wall', 'Stretching'],
+        benefits: 'Relieves neck tension\nOpens upper back',
+        safetyTips: ['⚠️ Keep neck neutral', '⚠️ Shoulders down'],
+        previewImage: 'assets/exercises/wall_chest_opener.jpg',
+        isReplacement: false,
+      ),
+      WorkoutCard(
+        id: 'fallback-2',
+        name: 'Chair Sit-to-Stand',
+        difficulty: DifficultyLevel.easy,
+        duration: 30,
+        sets: 1,
+        tags: ['Chair', 'Lower Body'],
+        benefits: 'Strengthens legs\nImproves mobility',
+        safetyTips: ['⚠️ Control the movement', '⚠️ Keep feet flat'],
+        previewImage: 'assets/exercises/chair_sit_stand.jpg',
+        isReplacement: false,
+      ),
+    ];
+    _alternativeCards = [];
   }
 
   @override

@@ -633,3 +633,7 @@ INSERT INTO exercises (
 ---
 
 *此方案在ChatGPT设计基础上，结合项目实际情况进行了优化简化，既保留了核心创新点，又确保了实施的可行性。建议按照阶段计划逐步实施，确保系统稳定性和用户体验的持续提升。*
+
+视频：
+Pexels: https://www.pexels.com/search/videos/fitness/
+Pixabay: https://pixabay.com/videos/search/workout/

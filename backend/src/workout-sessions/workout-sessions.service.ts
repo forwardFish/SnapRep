@@ -264,6 +264,27 @@ export class WorkoutSessionsService {
   }
 
   /**
+   * 获取用户最常训练的动作
+   * @param userId 用户ID
+   * @param limit 返回数量限制
+   * @returns 最常训练的动作列表
+   */
+  async getUserMostTrainedExercises(userId: string, limit: number = 6) {
+    try {
+      logger.debug(`获取用户最常训练动作: userId=${userId}, limit=${limit}`);
+
+      const exercises = await this.workoutSessionsDao.getUserMostTrainedExercises(userId, limit);
+
+      logger.debug(`获取用户最常训练动作成功: userId=${userId}, count=${exercises.length}`);
+      return exercises;
+
+    } catch (error) {
+      logger.error(`获取用户最常训练动作失败: userId=${userId}, error=${error.message}`);
+      throw error;
+    }
+  }
+
+  /**
    * 获取用户训练统计
    * @param userId 用户ID
    * @param query 统计查询参数

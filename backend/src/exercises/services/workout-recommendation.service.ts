@@ -48,11 +48,17 @@ export class WorkoutRecommendationService {
       // 处理前端发送的 intents 数组，取第一个作为主要意图
       const primaryIntent = dto.intents?.[0] || dto.intent;
 
+      // 支持 equipmentCodes 和 equipment 两种字段名（向后兼容）
+      const equipment = dto.equipmentCodes || dto.equipment || ['none'];
+
+      // 支持 scenarioCode 和 scenario 两种字段名（向后兼容）
+      const scenario = dto.scenarioCode || dto.scenario;
+
       // 2. 筛选可用动作
       const availableExercises = await this.exercisesDao.findBySmartCriteria({
         intent: primaryIntent || undefined,
-        equipment: dto.equipment || ['none'],
-        scenario: dto.scenario,
+        equipment: equipment,
+        scenario: scenario,
         targetMuscles: dto.targetMuscles,
         difficulty: dto.difficulty,
         excludeIds: dto.excludeExerciseIds,

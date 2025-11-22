@@ -4,11 +4,13 @@ import 'package:cached_network_image/cached_network_image.dart';
 class ChallengeHeroSection extends StatelessWidget {
   final VoidCallback onPressed;
   final bool isLoading;
+  final String? imageUrl;
 
   const ChallengeHeroSection({
     super.key,
     required this.onPressed,
     this.isLoading = false,
+    this.imageUrl,
   });
 
   @override
@@ -32,57 +34,90 @@ class ChallengeHeroSection extends StatelessWidget {
           children: [
             // Background Image - 使用创意健身/挑战主题的图片
             Positioned.fill(
-              child: CachedNetworkImage(
-                imageUrl: 'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80',
-                fit: BoxFit.cover,
-                placeholder: (context, url) => Container(
-                  decoration: const BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        Color(0xFF6366F1), // 蓝紫渐变
-                        Color(0xFF8B5CF6),
-                      ],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                  ),
-                  child: const Center(
-                    child: CircularProgressIndicator(color: Colors.white),
-                  ),
-                ),
-                errorWidget: (context, url, error) => Container(
-                  decoration: const BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        Color(0xFF6366F1), // 蓝紫渐变备用
-                        Color(0xFF8B5CF6),
-                      ],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                  ),
-                  child: const Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          '🎯',
-                          style: TextStyle(fontSize: 48),
-                        ),
-                        SizedBox(height: 8),
-                        Text(
-                          'Challenge Arena',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.white,
+              child: imageUrl != null
+                  ? CachedNetworkImage(
+                      imageUrl: imageUrl!,
+                      fit: BoxFit.cover,
+                      placeholder: (context, url) => Container(
+                        decoration: const BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [
+                              Color(0xFF6366F1),
+                              Color(0xFF8B5CF6),
+                            ],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
                           ),
                         ),
-                      ],
+                        child: const Center(
+                          child: CircularProgressIndicator(color: Colors.white),
+                        ),
+                      ),
+                      errorWidget: (context, url, error) => Container(
+                        decoration: const BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [
+                              Color(0xFF6366F1),
+                              Color(0xFF8B5CF6),
+                            ],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                        ),
+                        child: const Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                '🎯',
+                                style: TextStyle(fontSize: 48),
+                              ),
+                              SizedBox(height: 8),
+                              Text(
+                                'Challenge Arena',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    )
+                  : Container(
+                      decoration: const BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            Color(0xFF6366F1),
+                            Color(0xFF8B5CF6),
+                          ],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                      ),
+                      child: const Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              '🎯',
+                              style: TextStyle(fontSize: 48),
+                            ),
+                            SizedBox(height: 8),
+                            Text(
+                              'Challenge Arena',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
-                  ),
-                ),
-              ),
             ),
 
             // Gradient Overlay (same as Hero Section)

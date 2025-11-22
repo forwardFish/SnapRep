@@ -5,9 +5,7 @@ import '../features/workout_guide/screens/camera_detection_page.dart';
 import '../features/workout_guide/screens/workout_mode_selection_page.dart';
 import '../features/workout_guide/screens/environment_confirmation_page.dart';
 import '../features/workout_guide/screens/workout_guide_step3_page.dart';
-import '../features/workout_result/screens/workout_result_page.dart';
 import '../features/workout_result/screens/modern_workout_result_page.dart';
-import '../features/workout_execution/screens/professional_workout_video_page_v2.dart';
 import '../features/workout_execution/screens/reference_workout_page.dart';
 import '../features/result_card/screens/result_card_page.dart';
 import '../features/profile/screens/my_page.dart';
@@ -17,6 +15,7 @@ import '../features/profile/screens/workout_calendar_page.dart';
 import '../features/profile/screens/achievement_details_page.dart';
 import '../features/auth/screens/google_login_page.dart';
 import '../features/challenges/screens/challenges_page.dart';
+import '../features/exercises/screens/recommended_exercises_page.dart';
 import '../features/onboarding/screens/scenario_selection_page.dart';
 import '../features/onboarding/screens/equipment_selection_page.dart';
 import '../features/onboarding/screens/intent_selection_page.dart';
@@ -48,6 +47,7 @@ class AppRoutes {
   static const String googleLogin = '/google-login';
   static const String professionalWorkoutVideo = '/professional-workout-video';
   static const String challenges = '/challenges';
+  static const String recommendedExercises = '/recommended-exercises';
 
   // New onboarding flow routes
   static const String scenarioSelection = '/scenario-selection';
@@ -87,6 +87,7 @@ class AppRoutes {
       achievementDetails: (context) => const AchievementDetailsPage(),
       googleLogin: (context) => const GoogleLoginPage(),
       challenges: (context) => const ChallengesPage(),
+      recommendedExercises: (context) => const RecommendedExercisesPage(),
 
       // New onboarding flow routes
       scenarioSelection: (context) => const ScenarioSelectionPage(),
