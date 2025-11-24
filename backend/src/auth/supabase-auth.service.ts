@@ -2,7 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { SupabaseApiService } from '../common/services/supabase-api.service';
-import { RegisterDto, LoginDto, OtpLoginDto, VerifyOtpDto } from './dto/auth.dto';
+import { RegisterDto, LoginDto, OtpLoginDto, VerifyOtpDto, GoogleOAuthDto } from './dto/auth.dto';
 import { AuthResponseDto, OtpResponseDto, UserResponseDto } from './dto/auth-response.dto';
 import { ResponseError } from '../exception/response-error';
 import { ErrorCodes } from '../exception/error-codes';
@@ -131,12 +131,15 @@ export class SupabaseAuthService {
     try {
       logger.info(`发送OTP验证码: ${otpLoginDto.email}`);
 
-      // 使用 Supabase Auth API 发送 OTP
+      // 使用 Supabase Auth API 发送 OTP 验证码（不是魔法链接）
       const authResponse = await this.callSupabaseAuth('/auth/v1/otp', {
         email: otpLoginDto.email,
+        create_user: true,  // 如果用户不存在则自动创建
+        data: {},
       });
 
       if (authResponse.error_code || authResponse.error || authResponse.msg) {
+        logger.error(`发送OTP失败: ${JSON.stringify(authResponse)}`);
         throw new ResponseError(ErrorCodes.AUTH.EMAIL_SEND_FAILED);
       }
 
@@ -199,6 +202,58 @@ export class SupabaseAuthService {
         throw error;
       }
       throw new ResponseError(ErrorCodes.AUTH.OTP_VERIFICATION_FAILED, error);
+    }
+  }
+
+  /**
+   * Google OAuth 登录
+   * 使用 Supabase 的 ID Token 验证进行 Google 登录
+   */
+  async googleOAuthLogin(googleOAuthDto: GoogleOAuthDto): Promise<AuthResponseDto> {
+    try {
+      logger.info('Google OAuth 登录请求');
+
+      // 使用 Supabase Auth API 验证 Google ID Token
+      const authResponse = await this.callSupabaseAuth('/auth/v1/token?grant_type=id_token', {
+        provider: 'google',
+        id_token: googleOAuthDto.idToken,
+        access_token: googleOAuthDto.accessToken,
+      });
+
+      if (authResponse.error_code || authResponse.error || authResponse.msg) {
+        logger.error(`Google OAuth 验证失败: ${JSON.stringify(authResponse)}`);
+        throw new ResponseError(ErrorCodes.AUTH.INVALID_CREDENTIALS);
+      }
+
+      // 创建或更新用户信息
+      const user = await this.createOrUpdateUser({
+        id: authResponse.user.id,
+        email: authResponse.user.email,
+        name: authResponse.user.user_metadata?.name || authResponse.user.user_metadata?.full_name,
+        avatarUrl: authResponse.user.user_metadata?.avatar_url || authResponse.user.user_metadata?.picture,
+      });
+
+      // 生成我们自己的 JWT token
+      const tokens = this.generateTokens({ userId: user.id });
+
+      logger.info(`Google OAuth 登录成功: ${user.email}`);
+
+      return {
+        ...tokens,
+        user: {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          avatarUrl: user.avatar_url,
+        },
+        expiresIn: 3600,
+      };
+    } catch (error) {
+      logger.error(`Google OAuth 登录失败: ${error.message}`, error.stack);
+      if (error instanceof ResponseError) {
+        throw error;
+      }
+      throw new ResponseError(ErrorCodes.AUTH.INVALID_CREDENTIALS, error);
     }
   }
 
@@ -289,7 +344,7 @@ export class SupabaseAuthService {
   /**
    * 创建或更新用户到我们的数据库
    */
-  private async createOrUpdateUser(userData: { id: string; email: string; name?: string }) {
+  private async createOrUpdateUser(userData: { id: string; email: string; name?: string; avatarUrl?: string }) {
     try {
       // 先尝试获取用户
       const existingUser = await this.supabaseApi.getById('users', userData.id);
@@ -299,6 +354,7 @@ export class SupabaseAuthService {
         return await this.supabaseApi.patch('users', userData.id, {
           email: userData.email,
           name: userData.name || existingUser.name,
+          avatar_url: userData.avatarUrl || existingUser.avatar_url,
           updated_at: new Date().toISOString(),
         });
       } else {
@@ -307,7 +363,7 @@ export class SupabaseAuthService {
           id: userData.id,
           email: userData.email,
           name: userData.name || '',
-          avatar_url: null,
+          avatar_url: userData.avatarUrl || null,
           total_workouts: 0,
           total_duration_sec: 0,
           current_streak: 0,

@@ -92,12 +92,16 @@ class MyPageProvider with ChangeNotifier {
       _currentTabIndex = initialTabIndex;
     }
 
-    // 并行加载所有数据
-    await Future.wait([
-      loadUserInfo(),
-      loadCardCollection(),
-      loadWorkoutHistory(),
-    ]);
+    // 首先加载用户信息，确定登录状态
+    await loadUserInfo();
+
+    // 只有登录用户才加载卡片和训练历史
+    if (isUserLoggedIn) {
+      await Future.wait([
+        loadCardCollection(),
+        loadWorkoutHistory(),
+      ]);
+    }
   }
 
   /// 切换Tab
@@ -124,6 +128,7 @@ class MyPageProvider with ChangeNotifier {
       _userId = userData['id'];
       _userEmail = userData['email'];
       _userName = userData['name'] ?? userData['email'];
+      _avatarUrl = userData['avatar_url'];
       _totalWorkouts = userData['total_workouts'] ?? 0;
       _currentStreak = userData['current_streak'] ?? 0;
       _totalCards = userData['total_cards'] ?? 0;
@@ -131,18 +136,22 @@ class MyPageProvider with ChangeNotifier {
       debugPrint('✅ User info loaded from API: $_userName');
     } catch (e) {
       debugPrint('❌ API failed to load user info: $e');
-      _userError = 'Failed to load user info: ${e.toString().split(':').first}';
 
-      // Only use fallback if we have no user data at all
-      if (_userId == null || _userId!.isEmpty) {
-        debugPrint('⚠️ Using fallback user data as emergency measure');
-        await Future.delayed(const Duration(milliseconds: 500));
-        _setMockUserData();
-        _userError = 'Using offline user data due to connection issue';
-        debugPrint('✅ User info loaded from fallback data');
-      } else {
-        debugPrint('⚠️ Keeping existing user data due to API error');
+      // 用户未登录或API失败，清空用户数据，保持未登录状态
+      // 不再使用 mock 数据作为 fallback
+      _userId = null;
+      _userEmail = null;
+      _userName = null;
+      _avatarUrl = null;
+      _totalWorkouts = 0;
+      _currentStreak = 0;
+      _totalCards = 0;
+
+      // 只有在非"未认证"错误时才设置错误信息
+      if (!e.toString().contains('not authenticated')) {
+        _userError = 'Failed to load user info';
       }
+      debugPrint('ℹ️ User not logged in or API error, showing login prompt');
     } finally {
       _isLoadingUser = false;
       notifyListeners();
@@ -152,6 +161,15 @@ class MyPageProvider with ChangeNotifier {
   /// 加载卡片收集
   Future<void> loadCardCollection() async {
     debugPrint('🎨 Loading card collection');
+
+    // 未登录用户不加载卡片
+    if (!isUserLoggedIn) {
+      debugPrint('ℹ️ User not logged in, skipping card collection load');
+      _allCards = [];
+      _totalCards = 0;
+      _applyCardFilters();
+      return;
+    }
 
     _isLoadingCards = true;
     _cardsError = null;
@@ -175,20 +193,11 @@ class MyPageProvider with ChangeNotifier {
       }
     } catch (e) {
       debugPrint('❌ API failed to load card collection: $e');
-      _cardsError = 'Failed to load cards: ${e.toString().split(':').first}';
+      _cardsError = 'Failed to load cards';
 
-      // Only use fallback if we have no existing card data
-      if (_allCards.isEmpty) {
-        debugPrint('⚠️ Using fallback card data as emergency measure');
-        await Future.delayed(const Duration(milliseconds: 800));
-        _setMockCardData();
-        _cardsError = 'Using offline cards due to connection issue';
-        debugPrint('✅ Card collection loaded from fallback data');
-      } else {
-        debugPrint('⚠️ Keeping existing card data due to API error');
-      }
-
-      _totalCards = _allCards.length;
+      // 不再使用 mock 数据作为 fallback
+      _allCards = [];
+      _totalCards = 0;
       _applyCardFilters();
     } finally {
       _isLoadingCards = false;
@@ -199,6 +208,14 @@ class MyPageProvider with ChangeNotifier {
   /// 加载训练历史
   Future<void> loadWorkoutHistory() async {
     debugPrint('📅 Loading workout history');
+
+    // 未登录用户不加载训练历史
+    if (!isUserLoggedIn) {
+      debugPrint('ℹ️ User not logged in, skipping workout history load');
+      _workoutHistory = [];
+      _buildCalendarData();
+      return;
+    }
 
     _isLoadingHistory = true;
     _historyError = null;
@@ -220,19 +237,10 @@ class MyPageProvider with ChangeNotifier {
       }
     } catch (e) {
       debugPrint('❌ API failed to load workout history: $e');
-      _historyError = 'Failed to load workout history: ${e.toString().split(':').first}';
+      _historyError = 'Failed to load workout history';
 
-      // Only use fallback if we have no existing history data
-      if (_workoutHistory.isEmpty) {
-        debugPrint('⚠️ Using fallback history data as emergency measure');
-        await Future.delayed(const Duration(milliseconds: 600));
-        _setMockHistoryData();
-        _historyError = 'Using offline history due to connection issue';
-        debugPrint('✅ Workout history loaded from fallback data');
-      } else {
-        debugPrint('⚠️ Keeping existing history data due to API error');
-      }
-
+      // 不再使用 mock 数据作为 fallback
+      _workoutHistory = [];
       _buildCalendarData();
     } finally {
       _isLoadingHistory = false;

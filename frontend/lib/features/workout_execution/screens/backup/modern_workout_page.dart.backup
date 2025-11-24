@@ -39,6 +39,29 @@ class _ModernWorkoutPageState extends State<ModernWorkoutPage>
     'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=800&q=80', // Flexibility/yoga
   ];
 
+  // Parameters received from navigation
+  String? exerciseId;
+  String? exerciseName;
+  bool fromRecommended = false;
+  
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+
+    // Get navigation arguments
+    final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+    if (args != null) {
+      exerciseId = args['exerciseId'] as String?;
+      exerciseName = args['exerciseName'] as String?;
+      fromRecommended = args['fromRecommended'] as bool? ?? false;
+
+      if (fromRecommended && exerciseId != null) {
+        debugPrint('📍 Challenges page loaded with exercise: $exerciseName (ID: $exerciseId)');
+        // TODO: Load specific exercise details or create workout session
+      }
+    }
+  }
+
   @override
   void initState() {
     super.initState();

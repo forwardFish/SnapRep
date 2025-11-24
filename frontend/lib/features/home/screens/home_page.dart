@@ -58,23 +58,25 @@ class _HomePageState extends State<HomePage> {
                       items: homeProvider.scenarios,
                       getTitle: (scenario) => scenario.name,
                       getImageUrl: (scenario) => scenario.iconUrl,
-                      onItemTap: (scenario) => () => _onScenarioPressed(scenario),
+                      onItemTap: (scenario) =>
+                          () => _onScenarioPressed(scenario),
                       isLoading: homeProvider.isLoadingScenarios,
                       error: homeProvider.scenariosError,
                       onRetry: () => homeProvider.loadScenarios(),
                     ),
 
                     // Equipment
-                    HorizontalScrollSection<Equipment>(
+/*                     HorizontalScrollSection<Equipment>(
                       title: 'Equipments',
                       items: homeProvider.equipment,
                       getTitle: (equipment) => equipment.name,
                       getImageUrl: (equipment) => equipment.iconUrl,
-                      onItemTap: (equipment) => () => _onEquipmentPressed(equipment),
+                      onItemTap: (equipment) =>
+                          () => _onEquipmentPressed(equipment),
                       isLoading: homeProvider.isLoadingEquipment,
                       error: homeProvider.equipmentError,
                       onRetry: () => homeProvider.loadEquipment(),
-                    ),
+                    ), */
 
                     // Item Challenge Section Title
                     const Padding(
@@ -96,7 +98,8 @@ class _HomePageState extends State<HomePage> {
                       child: ChallengeHeroSection(
                         onPressed: _onChallengesPressed,
                         // Fixed image URL for challenge hero section (won't change)
-                        imageUrl: 'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80',
+                        imageUrl:
+                            'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80',
                       ),
                     ),
                   ],
@@ -140,10 +143,9 @@ class _HomePageState extends State<HomePage> {
 
   void _onEquipmentPressed(Equipment equipment) {
     debugPrint('Equipment pressed: ${equipment.name}');
-    // 直接跳转到challenges页面（动作结果页面）
-    AppRoutes.navigateTo(context, AppRoutes.challenges);
+    // 直接跳转到训练指南步骤2
+    AppRoutes.navigateTo(context, AppRoutes.workoutGuideStep2);
   }
-
 
   void _onChallengesPressed() {
     debugPrint('Navigate to item challenge list page');

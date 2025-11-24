@@ -349,7 +349,7 @@ export class WorkoutSessionsDao extends PrismaBaseDao<any> {
   async getUserMostTrainedExercises(userId: string, limit: number = 6) {
     try {
       // 查询用户训练次数最多的动作
-      const exerciseStats = await this.prisma.$queryRaw`
+      const exerciseStats = await this.prisma.$queryRaw<Array<any>>`
         SELECT
           e.id,
           e.code,
@@ -382,7 +382,7 @@ export class WorkoutSessionsDao extends PrismaBaseDao<any> {
     } catch (error) {
       logger.error(`获取用户最常训练动作失败: userId=${userId}, error=${error.message}`);
       throw new ResponseError(
-        ErrorCodes.DATABASE?.QUERY_FAILED || { code: 2001, message: 'Database query failed' },
+        ErrorCodes.DATABASE.QUERY_ERROR,
         error,
         { userId, limit }
       );

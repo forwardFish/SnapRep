@@ -220,7 +220,7 @@ export class ExercisesController {
     }
   })
   async getPopularExercises(@Query('limit') limit: number = 6) {
-    logger.debug(`获取热门推荐动作: limit=${limit}`);
+    logger.info(`获取热门推荐动作: limit=${limit}`);
 
     try {
       const exercises = await this.getPopularExercisesFromDB(limit);
@@ -243,11 +243,16 @@ export class ExercisesController {
     try {
       // 查询推荐动作，按创建时间倒序排列（最新的动作优先）
       // 由于数据库中没有trending_score字段，我们使用现有字段
-      const popularExercises = await this.supabaseApi.get('exercises', {
-        is_active: 'eq.true',
-        order: 'created_at.desc,name.asc',
-        limit: limit.toString(),
-      });
+      const popularExercises = await this.supabaseApi.get(
+        'exercises',
+        {
+          is_active: 'eq.true',
+        },
+        {
+          orderBy: 'created_at.desc,name.asc',
+          limit: limit,
+        }
+      );
 
       if (!popularExercises || popularExercises.length === 0) {
         logger.warn('No popular exercises found, returning empty array');

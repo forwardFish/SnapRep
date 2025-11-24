@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../../../core/services/google_auth_service.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import '../../../core/services/supabase_service.dart';
+import '../../../core/constants/app_constants.dart';
 import '../../../shared/widgets/bottom_navigation_bar.dart';
 
-/// Google登录页面
-/// 专业设计的用户认证界面，支持Google Sign-In
+/// 邮箱登录页面
+/// 专业设计的用户认证界面，支持邮箱密码登录
 class GoogleLoginPage extends StatefulWidget {
   const GoogleLoginPage({super.key});
 
@@ -15,7 +18,19 @@ class GoogleLoginPage extends StatefulWidget {
 class _GoogleLoginPageState extends State<GoogleLoginPage>
     with TickerProviderStateMixin {
   bool _isLoading = false;
+  bool _isLoginMode = true; // true: 登录, false: 注册
   int _currentNavIndex = 2; // Profile section
+
+  // 控制是否显示 Google 登录按钮
+  // 设置为 false 表示暂时禁用 Google 登录
+  // 当 Supabase 配置好 Google OAuth 后，改为 true
+  static const bool _enableGoogleLogin = false;
+
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _nameController = TextEditingController();
+  final _formKey = GlobalKey<FormState>();
+  bool _obscurePassword = true;
 
   late AnimationController _fadeController;
   late AnimationController _slideController;
@@ -63,6 +78,9 @@ class _GoogleLoginPageState extends State<GoogleLoginPage>
   void dispose() {
     _fadeController.dispose();
     _slideController.dispose();
+    _emailController.dispose();
+    _passwordController.dispose();
+    _nameController.dispose();
     super.dispose();
   }
 
@@ -112,10 +130,28 @@ class _GoogleLoginPageState extends State<GoogleLoginPage>
                     // Welcome Section
                     _buildWelcomeSection(),
 
-                    SizedBox(height: screenHeight * 0.06),
+                    SizedBox(height: screenHeight * 0.04),
 
-                    // Google Sign-In Button
-                    _buildGoogleSignInButton(),
+                    // Login/Register Form
+                    _buildAuthForm(),
+
+                    // Google Login Section (only if enabled)
+                    if (_enableGoogleLogin) ...[
+                      SizedBox(height: 24),
+
+                      // Divider with "OR"
+                      _buildOrDivider(),
+
+                      SizedBox(height: 24),
+
+                      // Google Sign-In Button
+                      _buildGoogleSignInButton(),
+                    ],
+
+                    SizedBox(height: 16),
+
+                    // Toggle Login/Register
+                    _buildToggleAuthMode(),
 
                     SizedBox(height: screenHeight * 0.08),
 
@@ -231,9 +267,9 @@ class _GoogleLoginPageState extends State<GoogleLoginPage>
   Widget _buildWelcomeSection() {
     return Column(
       children: [
-        const Text(
-          'Welcome Back!',
-          style: TextStyle(
+        Text(
+          _isLoginMode ? 'Welcome Back!' : 'Create Account',
+          style: const TextStyle(
             fontSize: 28,
             fontWeight: FontWeight.w600,
             color: Color(0xFF2C3E50),
@@ -243,13 +279,238 @@ class _GoogleLoginPageState extends State<GoogleLoginPage>
         const SizedBox(height: 16),
 
         Text(
-          'Sign in to sync your workouts across all devices and unlock personalized fitness recommendations.',
+          _isLoginMode
+              ? 'Sign in to sync your workouts and unlock personalized recommendations.'
+              : 'Join SnapRep to start your fitness journey and track your progress!',
           textAlign: TextAlign.center,
           style: TextStyle(
             fontSize: 16,
             height: 1.5,
             color: Colors.grey[600],
             fontWeight: FontWeight.w400,
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// Auth Form (Login or Register)
+  Widget _buildAuthForm() {
+    return Form(
+      key: _formKey,
+      child: Column(
+        children: [
+          // Name Field (only for register)
+          if (!_isLoginMode) ...[
+            TextFormField(
+              controller: _nameController,
+              decoration: InputDecoration(
+                labelText: 'Name',
+                hintText: 'Enter your name',
+                prefixIcon: const Icon(Icons.person_outline, color: Color(0xFFFFD700)),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: BorderSide(color: Colors.grey[300]!),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: BorderSide(color: Colors.grey[300]!),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: const BorderSide(color: Color(0xFFFFD700), width: 2),
+                ),
+                filled: true,
+                fillColor: Colors.white,
+              ),
+              validator: (value) {
+                if (!_isLoginMode && (value == null || value.isEmpty)) {
+                  return 'Please enter your name';
+                }
+                return null;
+              },
+            ),
+            const SizedBox(height: 16),
+          ],
+
+          // Email Field
+          TextFormField(
+            controller: _emailController,
+            keyboardType: TextInputType.emailAddress,
+            decoration: InputDecoration(
+              labelText: 'Email Address',
+              hintText: 'Enter your email',
+              prefixIcon: const Icon(Icons.email_outlined, color: Color(0xFFFFD700)),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: BorderSide(color: Colors.grey[300]!),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: BorderSide(color: Colors.grey[300]!),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: const BorderSide(color: Color(0xFFFFD700), width: 2),
+              ),
+              filled: true,
+              fillColor: Colors.white,
+            ),
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Please enter your email';
+              }
+              if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
+                return 'Please enter a valid email';
+              }
+              return null;
+            },
+          ),
+
+          const SizedBox(height: 16),
+
+          // Password Field
+          TextFormField(
+            controller: _passwordController,
+            obscureText: _obscurePassword,
+            decoration: InputDecoration(
+              labelText: 'Password',
+              hintText: 'Enter your password',
+              prefixIcon: const Icon(Icons.lock_outlined, color: Color(0xFFFFD700)),
+              suffixIcon: IconButton(
+                icon: Icon(
+                  _obscurePassword ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+                  color: Colors.grey[600],
+                ),
+                onPressed: () {
+                  setState(() {
+                    _obscurePassword = !_obscurePassword;
+                  });
+                },
+              ),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: BorderSide(color: Colors.grey[300]!),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: BorderSide(color: Colors.grey[300]!),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: const BorderSide(color: Color(0xFFFFD700), width: 2),
+              ),
+              filled: true,
+              fillColor: Colors.white,
+            ),
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Please enter your password';
+              }
+              if (value.length < 6) {
+                return 'Password must be at least 6 characters';
+              }
+              return null;
+            },
+          ),
+
+          const SizedBox(height: 24),
+
+          // Submit Button
+          SizedBox(
+            width: double.infinity,
+            height: 56,
+            child: ElevatedButton(
+              onPressed: _isLoading ? null : _handleSubmit,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFFFD700),
+                foregroundColor: Colors.black,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                elevation: 2,
+                shadowColor: const Color(0xFFFFD700).withOpacity(0.3),
+              ),
+              child: _isLoading
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.black),
+                      ),
+                    )
+                  : Text(
+                      _isLoginMode ? 'Sign In' : 'Create Account',
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Toggle between Login and Register
+  Widget _buildToggleAuthMode() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Text(
+          _isLoginMode ? "Don't have an account? " : 'Already have an account? ',
+          style: TextStyle(
+            color: Colors.grey[600],
+            fontSize: 14,
+          ),
+        ),
+        TextButton(
+          onPressed: () {
+            setState(() {
+              _isLoginMode = !_isLoginMode;
+              _formKey.currentState?.reset();
+            });
+          },
+          child: Text(
+            _isLoginMode ? 'Sign Up' : 'Sign In',
+            style: const TextStyle(
+              color: Color(0xFFFFD700),
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// OR Divider
+  Widget _buildOrDivider() {
+    return Row(
+      children: [
+        Expanded(
+          child: Container(
+            height: 1,
+            color: Colors.grey[300],
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Text(
+            'OR',
+            style: TextStyle(
+              color: Colors.grey[600],
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+        Expanded(
+          child: Container(
+            height: 1,
+            color: Colors.grey[300],
           ),
         ),
       ],
@@ -286,53 +547,31 @@ class _GoogleLoginPageState extends State<GoogleLoginPage>
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                if (_isLoading) ...[
-                  SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation<Color>(
-                        Colors.grey[600]!,
+                // Google Logo
+                Container(
+                  width: 24,
+                  height: 24,
+                  decoration: const BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: LinearGradient(
+                      colors: [Color(0xFF4285F4), Color(0xFF34A853)],
+                    ),
+                  ),
+                  child: const Center(
+                    child: Text(
+                      'G',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
                       ),
                     ),
                   ),
-                  const SizedBox(width: 16),
-                ] else ...[
-                  // Google Logo
-                  Image.asset(
-                    'assets/images/google_logo.png', // You'll need to add this asset
-                    width: 24,
-                    height: 24,
-                    errorBuilder: (context, error, stackTrace) {
-                      return Container(
-                        width: 24,
-                        height: 24,
-                        decoration: const BoxDecoration(
-                          shape: BoxShape.circle,
-                          gradient: LinearGradient(
-                            colors: [Color(0xFF4285F4), Color(0xFF34A853)],
-                          ),
-                        ),
-                        child: const Center(
-                          child: Text(
-                            'G',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 14,
-                            ),
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                  const SizedBox(width: 16),
-                ],
-
-                Text(
-                  _isLoading ? 'Signing in...' : 'Continue with Google',
-                  style: const TextStyle(
+                ),
+                const SizedBox(width: 16),
+                const Text(
+                  'Continue with Google',
+                  style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
                     color: Color(0xFF2C3E50),
@@ -355,58 +594,40 @@ class _GoogleLoginPageState extends State<GoogleLoginPage>
     });
 
     try {
-      // Add haptic feedback
       HapticFeedback.lightImpact();
 
-      debugPrint('🔐 Starting Google Sign-In process...');
+      debugPrint('🔐 Starting Google Sign-In with Supabase...');
 
-      // Use real Google Sign-In service
-      final googleAuthService = GoogleAuthService();
-      final result = await googleAuthService.signInWithGoogle();
+      // Use Supabase Google OAuth
+      final supabaseService = SupabaseService.instance;
+      final success = await supabaseService.signInWithGoogle();
 
-      if (result.success) {
-        debugPrint('✅ Google Sign-In successful');
+      if (success) {
+        debugPrint('✅ Google OAuth initiated successfully');
 
-        // Show success message
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Row(
                 children: [
-                  Icon(Icons.check_circle, color: Colors.white),
+                  Icon(Icons.info_outline, color: Colors.white),
                   SizedBox(width: 12),
-                  Text('Successfully signed in!'),
+                  Expanded(
+                    child: Text('Opening Google authentication. Please complete the login in your browser.'),
+                  ),
                 ],
               ),
-              backgroundColor: Colors.green,
-              duration: Duration(seconds: 2),
+              backgroundColor: Colors.blue,
+              duration: Duration(seconds: 3),
               behavior: SnackBarBehavior.floating,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.all(Radius.circular(12)),
               ),
             ),
           );
-
-          // Navigate back to profile with small delay
-          await Future.delayed(const Duration(milliseconds: 1500));
-
-          if (mounted) {
-            Navigator.pushReplacementNamed(context, '/my-page');
-          }
         }
       } else {
-        // Handle sign-in failure
-        final errorMessage = result.error ?? 'Google Sign-In failed';
-
-        // Show more informative error for missing plugin
-        String userFriendlyMessage = errorMessage;
-        if (errorMessage.contains('not properly configured') ||
-            errorMessage.contains('MissingPluginException') ||
-            errorMessage.contains('No implementation found')) {
-          userFriendlyMessage = 'Google Sign-In is not available in development mode. This feature will be enabled in the production app.';
-        }
-
-        throw Exception(userFriendlyMessage);
+        throw Exception('Failed to initiate Google OAuth');
       }
 
     } catch (e) {
@@ -420,11 +641,11 @@ class _GoogleLoginPageState extends State<GoogleLoginPage>
                 const Icon(Icons.error_outline, color: Colors.white),
                 const SizedBox(width: 12),
                 Expanded(
-                  child: Text('Sign-in failed: ${e.toString()}'),
+                  child: Text('Google sign-in is not available yet. Please use email/password login.'),
                 ),
               ],
             ),
-            backgroundColor: Colors.red,
+            backgroundColor: Colors.orange,
             duration: const Duration(seconds: 3),
             behavior: SnackBarBehavior.floating,
             shape: const RoundedRectangleBorder(
@@ -441,4 +662,183 @@ class _GoogleLoginPageState extends State<GoogleLoginPage>
       }
     }
   }
+
+  /// Handle Submit (Login or Register)
+  Future<void> _handleSubmit() async {
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      HapticFeedback.lightImpact();
+
+      if (_isLoginMode) {
+        await _handleLogin();
+      } else {
+        await _handleRegister();
+      }
+    } catch (e) {
+      debugPrint('❌ Auth error: $e');
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.error_outline, color: Colors.white),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    _isLoginMode
+                        ? 'Login failed: ${e.toString().replaceAll('Exception: ', '')}'
+                        : 'Registration failed: ${e.toString().replaceAll('Exception: ', '')}',
+                  ),
+                ),
+              ],
+            ),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 4),
+            behavior: SnackBarBehavior.floating,
+            shape: const RoundedRectangleBorder(
+              borderRadius: BorderRadius.all(Radius.circular(12)),
+            ),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  /// Handle Login
+  Future<void> _handleLogin() async {
+    debugPrint('🔐 Logging in: ${_emailController.text}');
+
+    final response = await http.post(
+      Uri.parse('${AppConstants.nestJsApiUrl}/rest/v1/auth/login'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({
+        'email': _emailController.text.trim(),
+        'password': _passwordController.text,
+      }),
+    );
+
+    debugPrint('Response status: ${response.statusCode}');
+    debugPrint('Response body: ${response.body}');
+
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      final data = jsonDecode(response.body);
+      debugPrint('✅ Login successful');
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Row(
+              children: [
+                Icon(Icons.check_circle, color: Colors.white),
+                SizedBox(width: 12),
+                Text('Successfully signed in!'),
+              ],
+            ),
+            backgroundColor: Colors.green,
+            duration: Duration(seconds: 2),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.all(Radius.circular(12)),
+            ),
+          ),
+        );
+
+        await Future.delayed(const Duration(milliseconds: 1500));
+
+        if (mounted) {
+          Navigator.pushReplacementNamed(context, '/my-page');
+        }
+      }
+    } else {
+      final errorBody = response.body;
+      String errorMessage = 'Invalid email or password';
+
+      try {
+        final errorData = jsonDecode(errorBody);
+        errorMessage = errorData['message'] ?? errorData['error'] ?? errorMessage;
+      } catch (e) {
+        // If can't parse JSON, use status code
+        errorMessage = 'Login failed (${response.statusCode})';
+      }
+
+      throw Exception(errorMessage);
+    }
+  }
+
+  /// Handle Register
+  Future<void> _handleRegister() async {
+    debugPrint('📝 Registering: ${_emailController.text}');
+
+    final response = await http.post(
+      Uri.parse('${AppConstants.nestJsApiUrl}/rest/v1/auth/register'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({
+        'email': _emailController.text.trim(),
+        'password': _passwordController.text,
+        'name': _nameController.text.trim(),
+      }),
+    );
+
+    debugPrint('Response status: ${response.statusCode}');
+    debugPrint('Response body: ${response.body}');
+
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      final data = jsonDecode(response.body);
+      debugPrint('✅ Registration successful');
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Row(
+              children: [
+                Icon(Icons.check_circle, color: Colors.white),
+                SizedBox(width: 12),
+                Text('Account created successfully!'),
+              ],
+            ),
+            backgroundColor: Colors.green,
+            duration: Duration(seconds: 2),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.all(Radius.circular(12)),
+            ),
+          ),
+        );
+
+        await Future.delayed(const Duration(milliseconds: 1500));
+
+        if (mounted) {
+          Navigator.pushReplacementNamed(context, '/my-page');
+        }
+      }
+    } else {
+      final errorBody = response.body;
+      String errorMessage = 'Registration failed';
+
+      try {
+        final errorData = jsonDecode(errorBody);
+        errorMessage = errorData['message'] ?? errorData['error'] ?? errorMessage;
+      } catch (e) {
+        // If can't parse JSON, use status code
+        errorMessage = 'Registration failed (${response.statusCode})';
+      }
+
+      throw Exception(errorMessage);
+    }
+  }
+
 }

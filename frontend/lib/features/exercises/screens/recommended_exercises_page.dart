@@ -1,14 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../../core/models/popular_exercise_dto.dart';
+import '../../../core/models/exercise.dart';
+import '../../../core/models/target_muscle.dart';
+import '../../../core/models/workout_intent.dart';
 import '../../../core/services/popular_exercises_service.dart';
+import '../../workout_result/screens/modern_workout_result_page.dart';
+// import '../../workout_execution/screens/modern_workout_page_fixed.dart';
 
 class RecommendedExercisesPage extends StatefulWidget {
   // 不再需要userId参数，因为这是通用推荐
   const RecommendedExercisesPage({super.key});
 
   @override
-  State<RecommendedExercisesPage> createState() => _RecommendedExercisesPageState();
+  State<RecommendedExercisesPage> createState() =>
+      _RecommendedExercisesPageState();
 }
 
 class _RecommendedExercisesPageState extends State<RecommendedExercisesPage> {
@@ -37,7 +43,8 @@ class _RecommendedExercisesPageState extends State<RecommendedExercisesPage> {
         isLoading = false;
       });
 
-      debugPrint('✅ Popular exercises loaded from API: ${exerciseList.length} items');
+      debugPrint(
+          '✅ Popular exercises loaded from API: ${exerciseList.length} items');
     } catch (e) {
       debugPrint('❌ Failed to load popular exercises from API: $e');
       setState(() {
@@ -168,23 +175,16 @@ class _RecommendedExercisesPageState extends State<RecommendedExercisesPage> {
   Widget _buildExerciseContent() {
     return Stack(
       children: [
-        // Background Image - Use local asset instead of network image
+        // Background - Use gradient (no asset needed)
         Positioned.fill(
-          child: Image.asset(
-            'assets/images/exercise_background.jpg',
-            fit: BoxFit.cover,
-            // Fallback to gradient if image not found
-            errorBuilder: (context, error, stackTrace) {
-              return Container(
-                decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [Color(0xFF6C5CE7), Color(0xFF74B9FF)],
-                  ),
-                ),
-              );
-            },
+          child: Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [Color(0xFF6C5CE7), Color(0xFF74B9FF)],
+              ),
+            ),
           ),
         ),
         // Dark overlay
@@ -298,7 +298,8 @@ class _RecommendedExercisesPageState extends State<RecommendedExercisesPage> {
                 ),
                 child: exercise.demoImageUrl != null
                     ? ClipRRect(
-                        borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                        borderRadius: const BorderRadius.vertical(
+                            top: Radius.circular(16)),
                         child: CachedNetworkImage(
                           imageUrl: exercise.demoImageUrl!,
                           fit: BoxFit.cover,
@@ -336,6 +337,7 @@ class _RecommendedExercisesPageState extends State<RecommendedExercisesPage> {
                 padding: const EdgeInsets.all(12.0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min, // 改为 min，让 Column 只占用所需空间
                   children: [
                     // Exercise name
                     Text(
@@ -354,7 +356,8 @@ class _RecommendedExercisesPageState extends State<RecommendedExercisesPage> {
                       children: [
                         Expanded(
                           child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 6, vertical: 2),
                             decoration: BoxDecoration(
                               color: const Color(0xFF6C5CE7).withOpacity(0.1),
                               borderRadius: BorderRadius.circular(8),
@@ -403,10 +406,69 @@ class _RecommendedExercisesPageState extends State<RecommendedExercisesPage> {
     );
   }
 
-  void _navigateToExercise(PopularExerciseDto exercise) {
-    // Navigate to exercise result page
-    // This needs to create a training session and then navigate to challenges page
-    // For now, navigate to challenges page, can be changed later to create single exercise training session
-    Navigator.of(context).pushNamed('/challenges');
+  void _navigateToExercise(PopularExerciseDto popularExercise) {
+    debugPrint(
+        '📍 Navigating to reference workout page for: ${popularExercise.name} (ID: ${popularExercise.id})');
+
+    // 将 PopularExerciseDto 转换为 Exercise 对象
+    // 因为 ReferenceWorkoutPage 需要 Exercise 类型
+    final exercise = Exercise(
+      id: popularExercise.id,
+      code: popularExercise.code,
+      name: popularExercise.name,
+      description: popularExercise.description.isNotEmpty
+          ? popularExercise.description
+          : 'An effective training exercise that helps improve your fitness',
+      primaryMuscle: TargetMuscle.fullBody, // 默认值,可以根据实际情况调整
+      secondaryMuscles: [],
+      intentType: WorkoutIntent.stretch,
+      difficulty: ExerciseDifficulty.intermediate,
+      durationSeconds: popularExercise.durationSeconds,
+      sets: 3,
+      repetitions: 12,
+      thumbnailUrl:
+          popularExercise.thumbnailUrl ?? popularExercise.demoImageUrl,
+      demoImageUrl: popularExercise.demoImageUrl,
+      demoVideoUrl: null, // PopularExerciseDto 没有视频URL
+      keyPoints: [
+        'Maintain proper posture throughout the exercise',
+        'Breathe evenly and avoid holding your breath',
+        'Focus on form rather than speed',
+        'Progress gradually and listen to your body',
+      ],
+      safetyWarnings: [
+        'Stop immediately if you feel any discomfort or pain',
+        'Protect your joints by avoiding hyperextension',
+        'Avoid overtraining - rest is important for recovery',
+        'Warm up properly before starting the exercise',
+      ],
+      benefits:
+          'Improves physical fitness, enhances overall strength, increases flexibility, and promotes better body awareness',
+      tags: [ExerciseTag.handsFreee],
+    );
+
+    // 直接跳转到 ModernWorkoutResultPage (合并后的统一页面)
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ModernWorkoutResultPage(
+          exercise: exercise,
+          exercises: [exercise], // 单个动作也可以作为列表传入
+          currentExerciseIndex: 0,
+        ),
+      ),
+    );
+
+    // 之前测试的 ModernWorkoutPage (来自 modern_workout_page_fixed.dart)
+    // Navigator.push(
+    //   context,
+    //   MaterialPageRoute(
+    //     builder: (context) => ModernWorkoutPage(
+    //       exercise: exercise,
+    //       exercises: [exercise],
+    //       currentExerciseIndex: 0,
+    //     ),
+    //   ),
+    // );
   }
 }

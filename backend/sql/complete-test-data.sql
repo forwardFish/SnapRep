@@ -48,12 +48,13 @@ DELETE FROM users WHERE email LIKE '%test%' OR email LIKE '%example%' OR email L
 
 INSERT INTO scenarios (id, code, name, noise_tolerance, space_requirement, icon_url, is_active, created_at, updated_at)
 VALUES
-  ('cuid_scenario_office', 'office', '办公室', 'SILENT', 'SMALL', 'https://cdn.snaprep.com/icons/office.svg', true, NOW(), NOW()),
-  ('cuid_scenario_home', 'home', '居家客厅', 'QUIET', 'MEDIUM', 'https://cdn.snaprep.com/icons/home.svg', true, NOW(), NOW()),
-  ('cuid_scenario_park', 'park', '公园户外', 'NORMAL', 'LARGE', 'https://cdn.snaprep.com/icons/park.svg', true, NOW(), NOW()),
-  ('cuid_scenario_gym', 'gym', '健身房', 'NORMAL', 'LARGE', 'https://cdn.snaprep.com/icons/gym.svg', true, NOW(), NOW()),
-  ('cuid_scenario_hotel', 'hotel', '酒店房间', 'QUIET', 'SMALL', 'https://cdn.snaprep.com/icons/hotel.svg', true, NOW(), NOW())
+  ('cuid_scenario_office', 'office', 'Office', 'SILENT', 'SMALL', 'https://cdn.snaprep.com/icons/office.svg', true, NOW(), NOW()),
+  ('cuid_scenario_home', 'home', 'Home Living Room', 'QUIET', 'MEDIUM', 'https://cdn.snaprep.com/icons/home.svg', true, NOW(), NOW()),
+  ('cuid_scenario_park', 'park', 'Outdoor Park', 'NORMAL', 'LARGE', 'https://cdn.snaprep.com/icons/park.svg', true, NOW(), NOW()),
+  ('cuid_scenario_gym', 'gym', 'Gym', 'NORMAL', 'LARGE', 'https://cdn.snaprep.com/icons/gym.svg', true, NOW(), NOW()),
+  ('cuid_scenario_hotel', 'hotel', 'Hotel Room', 'QUIET', 'SMALL', 'https://cdn.snaprep.com/icons/hotel.svg', true, NOW(), NOW())
 ON CONFLICT (code) DO NOTHING;
+
 
 -- ==========================================
 -- 2. 器材数据 (20个器材) - 按分类组织，使用CUID格式
@@ -61,46 +62,47 @@ ON CONFLICT (code) DO NOTHING;
 
 INSERT INTO equipment (id, code, name, category, recognizable, recognition_labels, recognition_confidence, icon_url, image_url, display_order, is_active, created_at, updated_at)
 VALUES
-  -- NONE 类别 (徒手)
-  ('cuid_equipment_none', 'none', '无器材', 'NONE', false, '{}', 0.0, 'https://cdn.snaprep.com/icons/none.svg', NULL, 1, true, NOW(), NOW()),
+  -- NONE category (Bodyweight / No equipment)
+  ('cuid_equipment_none', 'none', 'No Equipment', 'NONE', false, '{}', 0.0, 'https://cdn.snaprep.com/icons/none.svg', NULL, 1, true, NOW(), NOW()),
 
-  -- FURNITURE 类别 (家具系)
-  ('cuid_equipment_chair', 'chair', '椅子', 'FURNITURE', true, '{"chair", "seat", "office chair"}', 0.85, 'https://cdn.snaprep.com/icons/chair.svg', 'https://cdn.snaprep.com/images/chair.jpg', 2, true, NOW(), NOW()),
-  ('cuid_equipment_sofa', 'sofa', '沙发', 'FURNITURE', true, '{"sofa", "couch", "sectional"}', 0.80, 'https://cdn.snaprep.com/icons/sofa.svg', 'https://cdn.snaprep.com/images/sofa.jpg', 3, true, NOW(), NOW()),
-  ('cuid_equipment_desk', 'desk', '桌子', 'FURNITURE', true, '{"table", "desk", "workstation"}', 0.75, 'https://cdn.snaprep.com/icons/desk.svg', 'https://cdn.snaprep.com/images/desk.jpg', 4, true, NOW(), NOW()),
-  ('cuid_equipment_bed', 'bed', '床', 'FURNITURE', true, '{"bed", "mattress", "bedroom"}', 0.85, 'https://cdn.snaprep.com/icons/bed.svg', 'https://cdn.snaprep.com/images/bed.jpg', 5, true, NOW(), NOW()),
+  -- FURNITURE category
+  ('cuid_equipment_chair', 'chair', 'Chair', 'FURNITURE', true, '{"chair", "seat", "office chair"}', 0.85, 'https://cdn.snaprep.com/icons/chair.svg', 'https://cdn.snaprep.com/images/chair.jpg', 2, true, NOW(), NOW()),
+  ('cuid_equipment_sofa', 'sofa', 'Sofa', 'FURNITURE', true, '{"sofa", "couch", "sectional"}', 0.80, 'https://cdn.snaprep.com/icons/sofa.svg', 'https://cdn.snaprep.com/images/sofa.jpg', 3, true, NOW(), NOW()),
+  ('cuid_equipment_desk', 'desk', 'Desk', 'FURNITURE', true, '{"table", "desk", "workstation"}', 0.75, 'https://cdn.snaprep.com/icons/desk.svg', 'https://cdn.snaprep.com/images/desk.jpg', 4, true, NOW(), NOW()),
+  ('cuid_equipment_bed', 'bed', 'Bed', 'FURNITURE', true, '{"bed", "mattress", "bedroom"}', 0.85, 'https://cdn.snaprep.com/icons/bed.svg', 'https://cdn.snaprep.com/images/bed.jpg', 5, true, NOW(), NOW()),
 
-  -- WALL 类别 (墙面系)
-  ('cuid_equipment_wall', 'wall', '墙面', 'WALL', true, '{"wall", "partition", "surface"}', 0.90, 'https://cdn.snaprep.com/icons/wall.svg', 'https://cdn.snaprep.com/images/wall.jpg', 6, true, NOW(), NOW()),
-  ('cuid_equipment_door', 'door', '门框', 'WALL', true, '{"door", "doorframe", "entrance"}', 0.80, 'https://cdn.snaprep.com/icons/door.svg', NULL, 7, true, NOW(), NOW()),
+  -- WALL category
+  ('cuid_equipment_wall', 'wall', 'Wall', 'WALL', true, '{"wall", "partition", "surface"}', 0.90, 'https://cdn.snaprep.com/icons/wall.svg', 'https://cdn.snaprep.com/images/wall.jpg', 6, true, NOW(), NOW()),
+  ('cuid_equipment_door', 'door', 'Doorframe', 'WALL', true, '{"door", "doorframe", "entrance"}', 0.80, 'https://cdn.snaprep.com/icons/door.svg', NULL, 7, true, NOW(), NOW()),
 
-  -- BOTTLE 类别 (水瓶系)
-  ('cuid_equipment_water_bottle', 'water_bottle', '水瓶', 'BOTTLE', true, '{"bottle", "water bottle", "drink bottle"}', 0.85, 'https://cdn.snaprep.com/icons/water_bottle.svg', 'https://cdn.snaprep.com/images/water_bottle.jpg', 8, true, NOW(), NOW()),
-  ('cuid_equipment_wine_bottle', 'wine_bottle', '酒瓶', 'BOTTLE', true, '{"wine bottle", "glass bottle"}', 0.75, 'https://cdn.snaprep.com/icons/wine_bottle.svg', NULL, 9, true, NOW(), NOW()),
+  -- BOTTLE category
+  ('cuid_equipment_water_bottle', 'water_bottle', 'Water Bottle', 'BOTTLE', true, '{"bottle", "water bottle", "drink bottle"}', 0.85, 'https://cdn.snaprep.com/icons/water_bottle.svg', 'https://cdn.snaprep.com/images/water_bottle.jpg', 8, true, NOW(), NOW()),
+  ('cuid_equipment_wine_bottle', 'wine_bottle', 'Wine Bottle', 'BOTTLE', true, '{"wine bottle", "glass bottle"}', 0.75, 'https://cdn.snaprep.com/icons/wine_bottle.svg', NULL, 9, true, NOW(), NOW()),
 
-  -- BAG 类别 (背包系)
-  ('cuid_equipment_backpack', 'backpack', '背包', 'BAG', true, '{"backpack", "rucksack", "bag"}', 0.85, 'https://cdn.snaprep.com/icons/backpack.svg', 'https://cdn.snaprep.com/images/backpack.jpg', 10, true, NOW(), NOW()),
-  ('cuid_equipment_handbag', 'handbag', '手提包', 'BAG', true, '{"handbag", "purse", "bag"}', 0.80, 'https://cdn.snaprep.com/icons/handbag.svg', NULL, 11, true, NOW(), NOW()),
-  ('cuid_equipment_suitcase', 'suitcase', '行李箱', 'BAG', true, '{"suitcase", "luggage", "travel bag"}', 0.85, 'https://cdn.snaprep.com/icons/suitcase.svg', NULL, 12, true, NOW(), NOW()),
+  -- BAG category
+  ('cuid_equipment_backpack', 'backpack', 'Backpack', 'BAG', true, '{"backpack", "rucksack", "bag"}', 0.85, 'https://cdn.snaprep.com/icons/backpack.svg', 'https://cdn.snaprep.com/images/backpack.jpg', 10, true, NOW(), NOW()),
+  ('cuid_equipment_handbag', 'handbag', 'Handbag', 'BAG', true, '{"handbag", "purse", "bag"}', 0.80, 'https://cdn.snaprep.com/icons/handbag.svg', NULL, 11, true, NOW(), NOW()),
+  ('cuid_equipment_suitcase', 'suitcase', 'Suitcase', 'BAG', true, '{"suitcase", "luggage", "travel bag"}', 0.85, 'https://cdn.snaprep.com/icons/suitcase.svg', NULL, 12, true, NOW(), NOW()),
 
-  -- STAIRS 类别 (台阶系)
-  ('cuid_equipment_stairs', 'stairs', '楼梯', 'STAIRS', true, '{"stairs", "steps", "staircase"}', 0.80, 'https://cdn.snaprep.com/icons/stairs.svg', 'https://cdn.snaprep.com/images/stairs.jpg', 13, true, NOW(), NOW()),
-  ('cuid_equipment_bench', 'bench', '长椅', 'STAIRS', true, '{"bench", "park bench", "seat"}', 0.80, 'https://cdn.snaprep.com/icons/bench.svg', NULL, 14, true, NOW(), NOW()),
+  -- STAIRS category
+  ('cuid_equipment_stairs', 'stairs', 'Stairs', 'STAIRS', true, '{"stairs", "steps", "staircase"}', 0.80, 'https://cdn.snaprep.com/icons/stairs.svg', 'https://cdn.snaprep.com/images/stairs.jpg', 13, true, NOW(), NOW()),
+  ('cuid_equipment_bench', 'bench', 'Bench', 'STAIRS', true, '{"bench", "park bench", "seat"}', 0.80, 'https://cdn.snaprep.com/icons/bench.svg', NULL, 14, true, NOW(), NOW()),
 
-  -- FABRIC 类别 (布料系)
-  ('cuid_equipment_towel', 'towel', '毛巾', 'FABRIC', true, '{"towel", "cloth", "fabric"}', 0.70, 'https://cdn.snaprep.com/icons/towel.svg', NULL, 15, true, NOW(), NOW()),
+  -- FABRIC category
+  ('cuid_equipment_towel', 'towel', 'Towel', 'FABRIC', true, '{"towel", "cloth", "fabric"}', 0.70, 'https://cdn.snaprep.com/icons/towel.svg', NULL, 15, true, NOW(), NOW()),
 
-  -- STICK 类别 (棍棒系)
-  ('cuid_equipment_umbrella', 'umbrella', '雨伞', 'STICK', true, '{"umbrella", "parasol"}', 0.85, 'https://cdn.snaprep.com/icons/umbrella.svg', NULL, 16, true, NOW(), NOW()),
-  ('cuid_equipment_mop', 'mop', '拖把', 'STICK', true, '{"mop", "cleaning tool"}', 0.75, 'https://cdn.snaprep.com/icons/mop.svg', NULL, 17, true, NOW(), NOW()),
+  -- STICK category
+  ('cuid_equipment_umbrella', 'umbrella', 'Umbrella', 'STICK', true, '{"umbrella", "parasol"}', 0.85, 'https://cdn.snaprep.com/icons/umbrella.svg', NULL, 16, true, NOW(), NOW()),
+  ('cuid_equipment_mop', 'mop', 'Mop', 'STICK', true, '{"mop", "cleaning tool"}', 0.75, 'https://cdn.snaprep.com/icons/mop.svg', NULL, 17, true, NOW(), NOW()),
 
-  -- OUTDOOR 类别 (户外系)
-  ('cuid_equipment_tree', 'tree', '树木', 'OUTDOOR', true, '{"tree", "trunk", "branch"}', 0.90, 'https://cdn.snaprep.com/icons/tree.svg', 'https://cdn.snaprep.com/images/tree.jpg', 18, true, NOW(), NOW()),
-  ('cuid_equipment_rock', 'rock', '石头', 'OUTDOOR', true, '{"rock", "stone", "boulder"}', 0.75, 'https://cdn.snaprep.com/icons/rock.svg', NULL, 19, true, NOW(), NOW()),
+  -- OUTDOOR category
+  ('cuid_equipment_tree', 'tree', 'Tree', 'OUTDOOR', true, '{"tree", "trunk", "branch"}', 0.90, 'https://cdn.snaprep.com/icons/tree.svg', 'https://cdn.snaprep.com/images/tree.jpg', 18, true, NOW(), NOW()),
+  ('cuid_equipment_rock', 'rock', 'Rock', 'OUTDOOR', true, '{"rock", "stone", "boulder"}', 0.75, 'https://cdn.snaprep.com/icons/rock.svg', NULL, 19, true, NOW(), NOW()),
 
-  -- CREATIVE 类别 (创意系)
-  ('cuid_equipment_book', 'book', '书本', 'CREATIVE', true, '{"book", "textbook", "novel"}', 0.80, 'https://cdn.snaprep.com/icons/book.svg', NULL, 20, true, NOW(), NOW())
+  -- CREATIVE category
+  ('cuid_equipment_book', 'book', 'Book', 'CREATIVE', true, '{"book", "textbook", "novel"}', 0.80, 'https://cdn.snaprep.com/icons/book.svg', NULL, 20, true, NOW(), NOW())
 ON CONFLICT (code) DO NOTHING;
+
 
 -- ==========================================
 -- 3. 场景-器材关联表 (ScenarioEquipment) - 核心关联数据
@@ -165,112 +167,113 @@ ON CONFLICT (scenario_id, equipment_id) DO NOTHING;
 
 INSERT INTO exercises (id, code, name, primary_muscle, secondary_muscles, intent_type, difficulty, description, default_duration, default_sets, duration_type, demo_image_url, demo_video_url, tags, is_active, created_at, updated_at)
 VALUES
-  -- ========== 胸部肌群 (CHEST) ==========
-  -- 墙面俯卧撑系列
-  ('cuid_exercise_wall_pushup', 'wall_pushup', '墙面俯卧撑', 'CHEST', '{"ARMS","CORE"}', 'STRENGTH', 'GREEN',
-   '{"keyPoints": ["保持身体一条线", "控制推起速度", "呼吸配合动作"], "steps": ["面对墙站立，手臂距离", "手掌贴墙推起", "缓慢还原"], "warnings": ["避免过度弯曲手腕"]}',
-   30, 3, 'REPS', 'https://cdn.snaprep.com/demos/wall_pushup.jpg', 'https://cdn.snaprep.com/videos/wall_pushup.mp4', '{"墙面","力量","胸部"}', true, NOW(), NOW()),
+  -- ========== CHEST ==========
+  -- Wall push-up series
+  ('cuid_exercise_wall_pushup', 'wall_pushup', 'Wall Push-Up', 'CHEST', '{"ARMS","CORE"}', 'STRENGTH', 'GREEN',
+   '{"keyPoints": ["Keep your body in a straight line", "Control the pushing speed", "Breathe with the movement"], "steps": ["Stand facing the wall with arms extended", "Place palms on the wall and push", "Slowly return to start"], "warnings": ["Avoid over-bending your wrists"]}',
+   30, 3, 'REPS', 'https://cdn.snaprep.com/demos/wall_pushup.jpg', 'https://cdn.snaprep.com/videos/wall_pushup.mp4', '{"wall","strength","chest"}', true, NOW(), NOW()),
 
-  ('cuid_exercise_standard_pushup', 'standard_pushup', '标准俯卧撑', 'CHEST', '{"ARMS","CORE"}', 'STRENGTH', 'BLUE',
-   '{"keyPoints": ["保持身体笔直", "胸部贴近地面", "核心收紧"], "steps": ["俯卧撑起始位", "下降至胸部贴地", "推起至起始位"], "warnings": ["避免塌腰或拱背"]}',
-   20, 3, 'REPS', 'https://cdn.snaprep.com/demos/standard_pushup.jpg', 'https://cdn.snaprep.com/videos/standard_pushup.mp4', '{"徒手","力量","胸部"}', true, NOW(), NOW()),
+  ('cuid_exercise_standard_pushup', 'standard_pushup', 'Standard Push-Up', 'CHEST', '{"ARMS","CORE"}', 'STRENGTH', 'BLUE',
+   '{"keyPoints": ["Keep your body straight", "Lower until your chest is close to the floor", "Engage your core"], "steps": ["Start in a push-up position", "Lower your body under control", "Push back up to start"], "warnings": ["Avoid sagging hips or arching your back"]}',
+   20, 3, 'REPS', 'https://cdn.snaprep.com/demos/standard_pushup.jpg', 'https://cdn.snaprep.com/videos/standard_pushup.mp4', '{"bodyweight","strength","chest"}', true, NOW(), NOW()),
 
-  ('cuid_exercise_sofa_incline_pushup', 'sofa_incline_pushup', '沙发斜板俯卧撑', 'CHEST', '{"ARMS","CORE"}', 'STRENGTH', 'BLUE',
-   '{"keyPoints": ["手部稳定支撑", "身体保持直线", "控制节奏"], "steps": ["双手撑在沙发边缘", "身体斜向下推", "推起恢复"], "warnings": ["确保沙发稳固"]}',
-   25, 3, 'REPS', 'https://cdn.snaprep.com/demos/sofa_pushup.jpg', NULL, '{"沙发","力量","胸部"}', true, NOW(), NOW()),
+  ('cuid_exercise_sofa_incline_pushup', 'sofa_incline_pushup', 'Sofa Incline Push-Up', 'CHEST', '{"ARMS","CORE"}', 'STRENGTH', 'BLUE',
+   '{"keyPoints": ["Maintain stable hand support", "Keep your body in a straight line", "Control the tempo"], "steps": ["Place hands on the edge of the sofa", "Lower your chest toward the sofa", "Push back up to start"], "warnings": ["Make sure the sofa is stable"]}',
+   25, 3, 'REPS', 'https://cdn.snaprep.com/demos/sofa_pushup.jpg', NULL, '{"sofa","strength","chest"}', true, NOW(), NOW()),
 
-  -- ========== 腿部肌群 (LEGS) ==========
-  -- 椅子深蹲系列
-  ('cuid_exercise_chair_squat', 'chair_squat', '椅子深蹲', 'LEGS', '{"GLUTES","CORE"}', 'STRENGTH', 'GREEN',
-   '{"keyPoints": ["膝盖不超脚尖", "背部保持挺直", "臀部向后坐"], "steps": ["站在椅子前", "下蹲至轻碰椅面", "站起恢复"], "warnings": ["膝关节不适者慎用"]}',
-   25, 3, 'REPS', 'https://cdn.snaprep.com/demos/chair_squat.jpg', 'https://cdn.snaprep.com/videos/chair_squat.mp4', '{"椅子","力量","腿部"}', true, NOW(), NOW()),
+  -- ========== LEGS ==========
+  -- Chair squat series
+  ('cuid_exercise_chair_squat', 'chair_squat', 'Chair Squat', 'LEGS', '{"GLUTES","CORE"}', 'STRENGTH', 'GREEN',
+   '{"keyPoints": ["Keep knees behind toes", "Maintain an upright back", "Sit hips back"], "steps": ["Stand in front of a chair", "Squat down until you lightly touch the seat", "Stand back up to start"], "warnings": ["Use caution if you have knee discomfort"]}',
+   25, 3, 'REPS', 'https://cdn.snaprep.com/demos/chair_squat.jpg', 'https://cdn.snaprep.com/videos/chair_squat.mp4', '{"chair","strength","legs"}', true, NOW(), NOW()),
 
-  ('cuid_exercise_wall_squat', 'wall_squat', '靠墙深蹲', 'LEGS', '{"GLUTES","CORE"}', 'STRENGTH', 'BLUE',
-   '{"keyPoints": ["背部贴紧墙面", "大腿平行地面", "膝盖稳定"], "steps": ["背靠墙站立", "下蹲至90度", "保持姿势"], "warnings": ["膝关节疾病慎用"]}',
-   30, 1, 'TIME', 'https://cdn.snaprep.com/demos/wall_squat.jpg', NULL, '{"墙面","力量","腿部"}', true, NOW(), NOW()),
+  ('cuid_exercise_wall_squat', 'wall_squat', 'Wall Sit', 'LEGS', '{"GLUTES","CORE"}', 'STRENGTH', 'BLUE',
+   '{"keyPoints": ["Keep your back flat against the wall", "Thighs parallel to the floor", "Knees stable over feet"], "steps": ["Stand with your back against the wall", "Slide down to about 90 degrees at the knees", "Hold the position"], "warnings": ["Avoid if you have knee joint issues"]}',
+   30, 1, 'TIME', 'https://cdn.snaprep.com/demos/wall_squat.jpg', NULL, '{"wall","strength","legs"}', true, NOW(), NOW()),
 
-  ('cuid_exercise_stairs_stepup', 'stairs_stepup', '台阶踏步', 'LEGS', '{"GLUTES","CORE"}', 'MODERATE', 'BLUE',
-   '{"keyPoints": ["全脚掌踏实", "核心保持稳定", "控制下降"], "steps": ["单脚踏上台阶", "另一脚跟上", "控制下降"], "warnings": ["台阶要稳固安全"]}',
-   40, 3, 'REPS', 'https://cdn.snaprep.com/demos/stairs_stepup.jpg', NULL, '{"台阶","有氧","腿部"}', true, NOW(), NOW()),
+  ('cuid_exercise_stairs_stepup', 'stairs_stepup', 'Stair Step-Up', 'LEGS', '{"GLUTES","CORE"}', 'MODERATE', 'BLUE',
+   '{"keyPoints": ["Step with your whole foot", "Keep core engaged and steady", "Control the descent"], "steps": ["Step one foot onto the stair", "Bring the other foot up to stand tall", "Step down under control"], "warnings": ["Use a stable and safe step"]}',
+   40, 3, 'REPS', 'https://cdn.snaprep.com/demos/stairs_stepup.jpg', NULL, '{"stairs","cardio","legs"}', true, NOW(), NOW()),
 
-  -- ========== 手臂肌群 (ARMS) ==========
-  -- 水瓶训练系列
-  ('cuid_exercise_bottle_bicep_curl', 'bottle_bicep_curl', '水瓶二头弯举', 'ARMS', '{}', 'STRENGTH', 'GREEN',
-   '{"keyPoints": ["肘部固定", "控制重量", "充分收缩"], "steps": ["双手持水瓶", "弯曲肘部上举", "缓慢放下"], "warnings": ["选择合适重量"]}',
-   30, 3, 'REPS', 'https://cdn.snaprep.com/demos/bottle_curl.jpg', NULL, '{"水瓶","力量","手臂"}', true, NOW(), NOW()),
+  -- ========== ARMS ==========
+  -- Bottle training series
+  ('cuid_exercise_bottle_bicep_curl', 'bottle_bicep_curl', 'Bottle Bicep Curl', 'ARMS', '{}', 'STRENGTH', 'GREEN',
+   '{"keyPoints": ["Keep elbows close to your body", "Control the weight", "Squeeze at the top"], "steps": ["Hold bottles in both hands", "Curl up by bending elbows", "Lower slowly to start"], "warnings": ["Choose a comfortable weight"]}',
+   30, 3, 'REPS', 'https://cdn.snaprep.com/demos/bottle_curl.jpg', NULL, '{"bottle","strength","arms"}', true, NOW(), NOW()),
 
-  ('cuid_exercise_chair_dips', 'chair_dips', '椅子臂屈伸', 'ARMS', '{"CHEST","SHOULDERS"}', 'STRENGTH', 'BLUE',
-   '{"keyPoints": ["身体贴近椅子", "肘部向后", "控制幅度"], "steps": ["坐在椅子边缘", "手撑椅面滑下", "推起恢复"], "warnings": ["椅子必须稳固"]}',
-   20, 3, 'REPS', 'https://cdn.snaprep.com/demos/chair_dips.jpg', 'https://cdn.snaprep.com/videos/chair_dips.mp4', '{"椅子","力量","手臂"}', true, NOW(), NOW()),
+  ('cuid_exercise_chair_dips', 'chair_dips', 'Chair Triceps Dip', 'ARMS', '{"CHEST","SHOULDERS"}', 'STRENGTH', 'BLUE',
+   '{"keyPoints": ["Stay close to the chair", "Elbows track backward", "Control your range of motion"], "steps": ["Sit on the chair edge with hands gripping the seat", "Slide hips off and lower down", "Press back up to start"], "warnings": ["Chair must be stable"]}',
+   20, 3, 'REPS', 'https://cdn.snaprep.com/demos/chair_dips.jpg', 'https://cdn.snaprep.com/videos/chair_dips.mp4', '{"chair","strength","arms"}', true, NOW(), NOW()),
 
-  -- ========== 核心肌群 (CORE) ==========
-  ('cuid_exercise_plank', 'plank', '平板支撑', 'CORE', '{"SHOULDERS","ARMS"}', 'STRENGTH', 'BLUE',
-   '{"keyPoints": ["身体保持一条线", "避免塌腰", "呼吸均匀"], "steps": ["俯卧撑准备位", "前臂支撑", "保持姿势"], "warnings": ["腰椎问题者慎用"]}',
-   30, 1, 'TIME', 'https://cdn.snaprep.com/demos/plank.jpg', 'https://cdn.snaprep.com/videos/plank.mp4', '{"徒手","力量","核心"}', true, NOW(), NOW()),
+  -- ========== CORE ==========
+  ('cuid_exercise_plank', 'plank', 'Plank', 'CORE', '{"SHOULDERS","ARMS"}', 'STRENGTH', 'BLUE',
+   '{"keyPoints": ["Keep your body in a straight line", "Avoid dropping hips", "Breathe steadily"], "steps": ["Start like a push-up", "Lower to forearms", "Hold the position"], "warnings": ["Use caution if you have low-back issues"]}',
+   30, 1, 'TIME', 'https://cdn.snaprep.com/demos/plank.jpg', 'https://cdn.snaprep.com/videos/plank.mp4', '{"bodyweight","strength","core"}', true, NOW(), NOW()),
 
-  ('cuid_exercise_bottle_russian_twist', 'bottle_russian_twist', '水瓶俄式转体', 'CORE', '{"OBLIQUES"}', 'STRENGTH', 'BLUE',
-   '{"keyPoints": ["背部挺直", "转体幅度适中", "核心发力"], "steps": ["坐姿持水瓶", "身体后倾", "左右转体"], "warnings": ["腰椎疾病慎用"]}',
-   40, 3, 'REPS', 'https://cdn.snaprep.com/demos/bottle_twist.jpg', NULL, '{"水瓶","力量","核心"}', true, NOW(), NOW()),
+  ('cuid_exercise_bottle_russian_twist', 'bottle_russian_twist', 'Bottle Russian Twist', 'CORE', '{"OBLIQUES"}', 'STRENGTH', 'BLUE',
+   '{"keyPoints": ["Keep your back long", "Rotate with control", "Drive the movement from your core"], "steps": ["Sit holding a bottle", "Lean back slightly", "Rotate left and right"], "warnings": ["Avoid if you have lumbar spine problems"]}',
+   40, 3, 'REPS', 'https://cdn.snaprep.com/demos/bottle_twist.jpg', NULL, '{"bottle","strength","core"}', true, NOW(), NOW()),
 
-  -- ========== 肩部肌群 (SHOULDERS) ==========
-  ('cuid_exercise_bottle_shoulder_press', 'bottle_shoulder_press', '水瓶肩上推举', 'SHOULDERS', '{"ARMS","CORE"}', 'STRENGTH', 'GREEN',
-   '{"keyPoints": ["核心收紧", "推举路径直线", "肩胛稳定"], "steps": ["持瓶至肩部", "向上推举", "缓慢下降"], "warnings": ["肩关节损伤慎用"]}',
-   25, 3, 'REPS', 'https://cdn.snaprep.com/demos/bottle_press.jpg', NULL, '{"水瓶","力量","肩部"}', true, NOW(), NOW()),
+  -- ========== SHOULDERS ==========
+  ('cuid_exercise_bottle_shoulder_press', 'bottle_shoulder_press', 'Bottle Shoulder Press', 'SHOULDERS', '{"ARMS","CORE"}', 'STRENGTH', 'GREEN',
+   '{"keyPoints": ["Brace your core", "Press straight up", "Keep shoulder blades stable"], "steps": ["Hold bottles at shoulder height", "Press overhead", "Lower slowly to start"], "warnings": ["Avoid if you have shoulder injuries"]}',
+   25, 3, 'REPS', 'https://cdn.snaprep.com/demos/bottle_press.jpg', NULL, '{"bottle","strength","shoulders"}', true, NOW(), NOW()),
 
-  ('cuid_exercise_wall_handstand_prep', 'wall_handstand_prep', '靠墙倒立预备', 'SHOULDERS', '{"CORE","ARMS"}', 'STRENGTH', 'RED',
-   '{"keyPoints": ["循序渐进", "保持呼吸", "控制平衡"], "steps": ["面墙倒立准备", "脚部靠墙支撑", "保持稳定"], "warnings": ["高血压禁用，需有人保护"]}',
-   15, 1, 'TIME', 'https://cdn.snaprep.com/demos/wall_handstand.jpg', 'https://cdn.snaprep.com/videos/wall_handstand.mp4', '{"墙面","力量","肩部"}', true, NOW(), NOW()),
+  ('cuid_exercise_wall_handstand_prep', 'wall_handstand_prep', 'Wall Handstand Prep', 'SHOULDERS', '{"CORE","ARMS"}', 'STRENGTH', 'RED',
+   '{"keyPoints": ["Progress gradually", "Keep breathing", "Control your balance"], "steps": ["Set up facing the wall", "Walk feet up the wall into an inverted position", "Hold steady with control"], "warnings": ["Not suitable for high blood pressure; use a spotter"]}',
+   15, 1, 'TIME', 'https://cdn.snaprep.com/demos/wall_handstand.jpg', 'https://cdn.snaprep.com/videos/wall_handstand.mp4', '{"wall","strength","shoulders"}', true, NOW(), NOW()),
 
-  -- ========== 背部肌群 (BACK) ==========
-  ('cuid_exercise_backpack_deadlift', 'backpack_deadlift', '背包硬拉', 'BACK', '{"LEGS","GLUTES"}', 'STRENGTH', 'BLUE',
-   '{"keyPoints": ["背部挺直", "臀部后推", "重心稳定"], "steps": ["持背包站立", "臀部后推下蹲", "背部发力拉起"], "warnings": ["腰椎间盘突出慎用"]}',
-   30, 3, 'REPS', 'https://cdn.snaprep.com/demos/backpack_deadlift.jpg', NULL, '{"背包","力量","背部"}', true, NOW(), NOW()),
+  -- ========== BACK ==========
+  ('cuid_exercise_backpack_deadlift', 'backpack_deadlift', 'Backpack Deadlift', 'BACK', '{"LEGS","GLUTES"}', 'STRENGTH', 'BLUE',
+   '{"keyPoints": ["Keep your back neutral", "Hinge hips back", "Maintain balance"], "steps": ["Stand holding a backpack", "Hinge and lower with hips back", "Lift by driving through hips and back"], "warnings": ["Avoid if you have a herniated disc"]}',
+   30, 3, 'REPS', 'https://cdn.snaprep.com/demos/backpack_deadlift.jpg', NULL, '{"backpack","strength","back"}', true, NOW(), NOW()),
 
-  -- ========== 臀部肌群 (GLUTES) ==========
-  ('cuid_exercise_sofa_stepup', 'sofa_stepup', '沙发踏步', 'GLUTES', '{"LEGS","CORE"}', 'MODERATE', 'BLUE',
-   '{"keyPoints": ["臀部发力", "核心稳定", "控制节奏"], "steps": ["单脚踏上沙发", "臀部发力站起", "控制下降"], "warnings": ["确保沙发稳固"]}',
-   35, 3, 'REPS', 'https://cdn.snaprep.com/demos/sofa_stepup.jpg', NULL, '{"沙发","有氧","臀部"}', true, NOW(), NOW()),
+  -- ========== GLUTES ==========
+  ('cuid_exercise_sofa_stepup', 'sofa_stepup', 'Sofa Step-Up', 'GLUTES', '{"LEGS","CORE"}', 'MODERATE', 'BLUE',
+   '{"keyPoints": ["Drive through glutes", "Keep core stable", "Control the tempo"], "steps": ["Step one foot onto the sofa", "Stand up by squeezing glutes", "Step down under control"], "warnings": ["Make sure the sofa is stable"]}',
+   35, 3, 'REPS', 'https://cdn.snaprep.com/demos/sofa_stepup.jpg', NULL, '{"sofa","cardio","glutes"}', true, NOW(), NOW()),
 
-  -- ========== 全身训练 (FULL_BODY) ==========
-  ('cuid_exercise_burpees', 'burpees', '波比跳', 'FULL_BODY', '{"CHEST","LEGS","ARMS","CORE"}', 'STRENGTH', 'RED',
-   '{"keyPoints": ["动作连贯", "呼吸节奏", "循序渐进"], "steps": ["深蹲下撑", "后跳俯卧撑", "前跳起立跳"], "warnings": ["心脏病禁用"]}',
-   20, 3, 'REPS', 'https://cdn.snaprep.com/demos/burpees.jpg', 'https://cdn.snaprep.com/videos/burpees.mp4', '{"徒手","力量","全身"}', true, NOW(), NOW()),
+  -- ========== FULL BODY ==========
+  ('cuid_exercise_burpees', 'burpees', 'Burpee', 'FULL_BODY', '{"CHEST","LEGS","ARMS","CORE"}', 'STRENGTH', 'RED',
+   '{"keyPoints": ["Move smoothly and continuously", "Keep breathing rhythmically", "Progress at your own pace"], "steps": ["Squat down and place hands on the floor", "Jump feet back into a push-up position", "Jump feet forward and explode up"], "warnings": ["Not suitable for people with heart conditions"]}',
+   20, 3, 'REPS', 'https://cdn.snaprep.com/demos/burpees.jpg', 'https://cdn.snaprep.com/videos/burpees.mp4', '{"bodyweight","strength","full_body"}', true, NOW(), NOW()),
 
-  ('cuid_exercise_jumping_jacks', 'jumping_jacks', '开合跳', 'FULL_BODY', '{"LEGS","ARMS"}', 'MODERATE', 'BLUE',
-   '{"keyPoints": ["着地轻柔", "手臂配合", "保持节奏"], "steps": ["并腿直立", "跳起分腿举臂", "跳回起始位"], "warnings": ["膝关节疾病慎用"]}',
-   45, 1, 'TIME', 'https://cdn.snaprep.com/demos/jumping_jacks.jpg', 'https://cdn.snaprep.com/videos/jumping_jacks.mp4', '{"徒手","有氧","全身"}', true, NOW(), NOW()),
+  ('cuid_exercise_jumping_jacks', 'jumping_jacks', 'Jumping Jack', 'FULL_BODY', '{"LEGS","ARMS"}', 'MODERATE', 'BLUE',
+   '{"keyPoints": ["Land softly", "Coordinate arms and legs", "Keep a steady pace"], "steps": ["Stand tall with feet together", "Jump out while raising arms overhead", "Jump back to start"], "warnings": ["Use caution if you have knee problems"]}',
+   45, 1, 'TIME', 'https://cdn.snaprep.com/demos/jumping_jacks.jpg', 'https://cdn.snaprep.com/videos/jumping_jacks.mp4', '{"bodyweight","cardio","full_body"}', true, NOW(), NOW()),
 
-  -- ========== 颈肩部位 (NECK_SHOULDER) 放松拉伸 ==========
-  ('cuid_exercise_neck_stretch', 'neck_stretch', '颈部侧向拉伸', 'NECK_SHOULDER', '{}', 'RELAX', 'GREEN',
-   '{"keyPoints": ["动作轻柔", "避免强迫", "保持呼吸"], "steps": ["头部向侧倾斜", "对侧手下沉", "保持拉伸"], "warnings": ["颈椎病急性期禁用"]}',
-   20, 1, 'TIME', 'https://cdn.snaprep.com/demos/neck_stretch.jpg', NULL, '{"徒手","放松","颈部"}', true, NOW(), NOW()),
+  -- ========== NECK & SHOULDERS (RELAX / STRETCH) ==========
+  ('cuid_exercise_neck_stretch', 'neck_stretch', 'Neck Side Stretch', 'NECK_SHOULDER', '{}', 'RELAX', 'GREEN',
+   '{"keyPoints": ["Move gently", "Do not force the stretch", "Keep breathing"], "steps": ["Tilt your head to one side", "Let the opposite hand reach downward", "Hold the stretch"], "warnings": ["Avoid during acute neck pain flare-ups"]}',
+   20, 1, 'TIME', 'https://cdn.snaprep.com/demos/neck_stretch.jpg', NULL, '{"bodyweight","relax","neck"}', true, NOW(), NOW()),
 
-  ('cuid_exercise_shoulder_roll', 'shoulder_roll', '肩部环绕放松', 'NECK_SHOULDER', '{}', 'RELAX', 'GREEN',
-   '{"keyPoints": ["动作缓慢", "幅度适中", "放松肌肉"], "steps": ["肩部向后环绕", "感受肌肉放松", "重复动作"], "warnings": ["肩关节炎急性期慎用"]}',
-   25, 1, 'TIME', 'https://cdn.snaprep.com/demos/shoulder_roll.jpg', NULL, '{"徒手","放松","肩部"}', true, NOW(), NOW()),
+  ('cuid_exercise_shoulder_roll', 'shoulder_roll', 'Shoulder Rolls', 'NECK_SHOULDER', '{}', 'RELAX', 'GREEN',
+   '{"keyPoints": ["Move slowly", "Use a comfortable range", "Relax the muscles"], "steps": ["Roll shoulders backward in a circle", "Feel the tension release", "Repeat smoothly"], "warnings": ["Avoid during acute shoulder inflammation"]}',
+   25, 1, 'TIME', 'https://cdn.snaprep.com/demos/shoulder_roll.jpg', NULL, '{"bodyweight","relax","shoulders"}', true, NOW(), NOW()),
 
-  ('cuid_exercise_wall_chest_stretch', 'wall_chest_stretch', '靠墙胸部拉伸', 'CHEST', '{"SHOULDERS"}', 'STRETCH', 'GREEN',
-   '{"keyPoints": ["肩胛下沉", "胸部打开", "深度适中"], "steps": ["手臂靠墙伸展", "身体前倾", "感受胸部拉伸"], "warnings": ["肩关节脱位史慎用"]}',
-   25, 1, 'TIME', 'https://cdn.snaprep.com/demos/wall_chest_stretch.jpg', NULL, '{"墙面","拉伸","胸部"}', true, NOW(), NOW()),
+  ('cuid_exercise_wall_chest_stretch', 'wall_chest_stretch', 'Wall Chest Stretch', 'CHEST', '{"SHOULDERS"}', 'STRETCH', 'GREEN',
+   '{"keyPoints": ["Depress the shoulder blades", "Open the chest", "Keep the stretch moderate"], "steps": ["Place your arm against the wall", "Lean your body forward", "Feel the chest stretch"], "warnings": ["Avoid if you have a history of shoulder dislocation"]}',
+   25, 1, 'TIME', 'https://cdn.snaprep.com/demos/wall_chest_stretch.jpg', NULL, '{"wall","stretch","chest"}', true, NOW(), NOW()),
 
-  -- ========== 拉伸类动作 (STRETCH) ==========
-  ('cuid_exercise_towel_overhead_stretch', 'towel_overhead_stretch', '毛巾过顶拉伸', 'SHOULDERS', '{"BACK"}', 'STRETCH', 'GREEN',
-   '{"keyPoints": ["毛巾拉直", "肩部放松", "控制幅度"], "steps": ["双手持毛巾", "过顶向后拉伸", "保持拉伸"], "warnings": ["肩袖损伤慎用"]}',
-   20, 1, 'TIME', 'https://cdn.snaprep.com/demos/towel_stretch.jpg', NULL, '{"毛巾","拉伸","肩部"}', true, NOW(), NOW()),
+  -- ========== STRETCH ==========
+  ('cuid_exercise_towel_overhead_stretch', 'towel_overhead_stretch', 'Towel Overhead Stretch', 'SHOULDERS', '{"BACK"}', 'STRETCH', 'GREEN',
+   '{"keyPoints": ["Keep the towel taut", "Relax shoulders", "Control the range"], "steps": ["Hold a towel with both hands", "Lift overhead and gently pull back", "Hold the stretch"], "warnings": ["Avoid if you have rotator cuff injuries"]}',
+   20, 1, 'TIME', 'https://cdn.snaprep.com/demos/towel_stretch.jpg', NULL, '{"towel","stretch","shoulders"}', true, NOW(), NOW()),
 
-  ('cuid_exercise_chair_spinal_twist', 'chair_spinal_twist', '椅上脊椎扭转', 'CORE', '{"BACK"}', 'STRETCH', 'GREEN',
-   '{"keyPoints": ["转动适中", "保持坐姿", "呼吸配合"], "steps": ["端坐椅子上", "身体向一侧扭转", "保持拉伸"], "warnings": ["腰椎手术史慎用"]}',
-   30, 1, 'TIME', 'https://cdn.snaprep.com/demos/chair_twist.jpg', NULL, '{"椅子","拉伸","脊椎"}', true, NOW(), NOW()),
+  ('cuid_exercise_chair_spinal_twist', 'chair_spinal_twist', 'Seated Chair Spinal Twist', 'CORE', '{"BACK"}', 'STRETCH', 'GREEN',
+   '{"keyPoints": ["Twist gently", "Stay tall while seated", "Breathe through the stretch"], "steps": ["Sit upright on a chair", "Rotate your torso to one side", "Hold and breathe"], "warnings": ["Avoid if you have had lower-back surgery"]}',
+   30, 1, 'TIME', 'https://cdn.snaprep.com/demos/chair_twist.jpg', NULL, '{"chair","stretch","spine"}', true, NOW(), NOW()),
 
-  -- ========== 适度运动 (MODERATE) ==========
-  ('cuid_exercise_marching_in_place', 'marching_in_place', '原地踏步', 'LEGS', '{"CORE"}', 'MODERATE', 'GREEN',
-   '{"keyPoints": ["膝盖适度抬高", "保持节奏", "摆臂配合"], "steps": ["原地高抬腿", "交替踏步", "保持节奏"], "warnings": ["膝关节损伤慎用"]}',
-   60, 1, 'TIME', 'https://cdn.snaprep.com/demos/marching.jpg', NULL, '{"徒手","有氧","腿部"}', true, NOW(), NOW()),
+  -- ========== MODERATE ==========
+  ('cuid_exercise_marching_in_place', 'marching_in_place', 'Marching in Place', 'LEGS', '{"CORE"}', 'MODERATE', 'GREEN',
+   '{"keyPoints": ["Lift knees to a comfortable height", "Keep a steady rhythm", "Swing arms naturally"], "steps": ["March in place with alternating knees", "Keep posture upright", "Maintain pace"], "warnings": ["Use caution if you have knee injuries"]}',
+   60, 1, 'TIME', 'https://cdn.snaprep.com/demos/marching.jpg', NULL, '{"bodyweight","cardio","legs"}', true, NOW(), NOW()),
 
-  ('cuid_exercise_chair_marching', 'chair_marching', '椅上踏步', 'LEGS', '{"CORE"}', 'MODERATE', 'GREEN',
-   '{"keyPoints": ["坐姿挺直", "膝盖交替抬起", "保持平衡"], "steps": ["端坐椅子", "膝盖交替抬高", "保持节奏"], "warnings": ["确保椅子稳固"]}',
-   45, 1, 'TIME', 'https://cdn.snaprep.com/demos/chair_marching.jpg', NULL, '{"椅子","有氧","腿部"}', true, NOW(), NOW())
+  ('cuid_exercise_chair_marching', 'chair_marching', 'Seated Marching', 'LEGS', '{"CORE"}', 'MODERATE', 'GREEN',
+   '{"keyPoints": ["Sit tall with a straight back", "Lift knees alternately", "Keep balance and control"], "steps": ["Sit firmly on a chair", "Lift one knee then the other", "Maintain a steady rhythm"], "warnings": ["Ensure the chair is stable"]}',
+   45, 1, 'TIME', 'https://cdn.snaprep.com/demos/chair_marching.jpg', NULL, '{"chair","cardio","legs"}', true, NOW(), NOW())
 ON CONFLICT (code) DO NOTHING;
+
 
 -- ==========================================
 -- 5. 动作-器材关联表 (ExerciseEquipment)
@@ -404,30 +407,31 @@ ON CONFLICT (email) DO NOTHING;
 
 INSERT INTO theme_weeks (id, title, code, description, equipment_code, target_exercise_count, start_date, end_date, reward_type, reward_data, status, is_visible, display_order, total_participants, total_completions, completion_rate, created_at, updated_at)
 VALUES
-  -- 当前活跃主题周
-  ('cuid_themeweek_chair', '#椅子日', 'chair_week', '用椅子动三下·完成解锁贴纸皮肤', 'chair', 3,
+  -- Currently active theme week
+  ('cuid_themeweek_chair', '#Chair Day', 'chair_week', 'Do 3 chair exercises to unlock a sticker skin', 'chair', 3,
    (NOW() - INTERVAL '2 days')::date, (NOW() + INTERVAL '5 days')::date, 'skin',
-   '{"skin_name": "椅子大师", "skin_color": "#8B4513", "rarity": "RARE"}', 'ACTIVE', true, 1, 128, 67, 52.3, NOW(), NOW()),
+   '{"skin_name": "Chair Master", "skin_color": "#8B4513", "rarity": "RARE"}', 'ACTIVE', true, 1, 128, 67, 52.3, NOW(), NOW()),
 
-  -- 即将开始的主题周
-  ('cuid_themeweek_bottle', '#水瓶周', 'bottle_week', '随身水瓶变健身器材', 'water_bottle', 3,
+  -- Upcoming theme week
+  ('cuid_themeweek_bottle', '#Water Bottle Week', 'bottle_week', 'Turn your everyday bottle into workout gear', 'water_bottle', 3,
    (NOW() + INTERVAL '5 days')::date, (NOW() + INTERVAL '12 days')::date, 'badge',
-   '{"badge_name": "水瓶战士", "badge_icon": "bottle-badge", "description": "完成水瓶系列训练"}', 'UPCOMING', true, 2, 0, 0, 0.0, NOW(), NOW()),
+   '{"badge_name": "Bottle Warrior", "badge_icon": "bottle-badge", "description": "Complete the water bottle workout series"}', 'UPCOMING', true, 2, 0, 0, 0.0, NOW(), NOW()),
 
-  -- 未来主题周
-  ('cuid_themeweek_backpack', '#背包周', 'backpack_week', '旅行路上不放弃健身', 'backpack', 5,
+  -- Future theme week
+  ('cuid_themeweek_backpack', '#Backpack Week', 'backpack_week', 'Stay fit even while traveling', 'backpack', 5,
    (NOW() + INTERVAL '12 days')::date, (NOW() + INTERVAL '19 days')::date, 'rarity_boost',
-   '{"boost_multiplier": 1.5, "duration_days": 7, "description": "所有卡片稀有度提升50%"}', 'UPCOMING', true, 3, 0, 0, 0.0, NOW(), NOW()),
+   '{"boost_multiplier": 1.5, "duration_days": 7, "description": "Increase all card rarities by 50%"}', 'UPCOMING', true, 3, 0, 0, 0.0, NOW(), NOW()),
 
-  -- 历史主题周
-  ('cuid_themeweek_wall', '#墙面周', 'wall_week', '靠墙就能练出好身材', 'wall', 3,
+  -- Past theme weeks
+  ('cuid_themeweek_wall', '#Wall Week', 'wall_week', 'Get a great workout using just a wall', 'wall', 3,
    (NOW() - INTERVAL '14 days')::date, (NOW() - INTERVAL '7 days')::date, 'skin',
-   '{"skin_name": "墙面大师", "skin_color": "#C0C0C0", "rarity": "UNCOMMON"}', 'COMPLETED', false, 4, 89, 72, 80.9, NOW(), NOW()),
+   '{"skin_name": "Wall Master", "skin_color": "#C0C0C0", "rarity": "UNCOMMON"}', 'COMPLETED', false, 4, 89, 72, 80.9, NOW(), NOW()),
 
-  ('cuid_themeweek_none', '#无器械周', 'none_week', '徒手训练挑战', 'none', 7,
+  ('cuid_themeweek_none', '#No-Equipment Week', 'none_week', 'Bodyweight training challenge', 'none', 7,
    (NOW() - INTERVAL '21 days')::date, (NOW() - INTERVAL '14 days')::date, 'badge',
-   '{"badge_name": "极简主义者", "badge_icon": "minimalist-badge", "description": "无器械训练完成者"}', 'COMPLETED', false, 5, 156, 134, 85.9, NOW(), NOW())
+   '{"badge_name": "Minimalist", "badge_icon": "minimalist-badge", "description": "Completed the no-equipment training week"}', 'COMPLETED', false, 5, 156, 134, 85.9, NOW(), NOW())
 ON CONFLICT (code) DO NOTHING;
+
 
 -- ==========================================
 -- 9. 训练会话数据 (25个会话) - 使用CUID格式

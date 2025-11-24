@@ -1,4 +1,5 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:flutter/foundation.dart';
 import '../constants/app_constants.dart';
 
 class SupabaseService {
@@ -27,6 +28,25 @@ class SupabaseService {
     return await _client.auth.signInAnonymously();
   }
 
+  /// Sign in with Google OAuth
+  /// Opens a web browser for Google authentication
+  Future<bool> signInWithGoogle() async {
+    try {
+      debugPrint('🔐 Starting Supabase Google OAuth...');
+
+      final result = await _client.auth.signInWithOAuth(
+        OAuthProvider.google,
+        redirectTo: 'snaprep://auth-callback',
+      );
+
+      debugPrint('✅ Google OAuth initiated: $result');
+      return result;
+    } catch (e) {
+      debugPrint('❌ Supabase Google OAuth error: $e');
+      return false;
+    }
+  }
+
   Future<void> signOut() async {
     await _client.auth.signOut();
   }
@@ -34,4 +54,7 @@ class SupabaseService {
   User? get currentUser => _client.auth.currentUser;
 
   bool get isAuthenticated => _client.auth.currentUser != null;
+
+  /// Get current user's access token (for backend API calls)
+  String? get accessToken => _client.auth.currentSession?.accessToken;
 }

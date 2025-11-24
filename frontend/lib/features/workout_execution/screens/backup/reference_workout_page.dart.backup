@@ -2,18 +2,23 @@ import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../../core/models/exercise.dart';
 import '../../../core/models/target_muscle.dart';
+import '../../../core/models/workout_intent.dart';
+import '../../../core/services/exercise_service.dart';
 
 /// Workout Page - Exactly matching reference UI design (xunlian-2.jpg)
+/// Now supports both direct exercise list and API-based loading from recommendationParams
 class ReferenceWorkoutPage extends StatefulWidget {
-  final Exercise exercise;
-  final List<Exercise> exercises;
+  final Exercise? exercise;
+  final List<Exercise>? exercises;
   final int currentExerciseIndex;
+  final Map<String, dynamic>? recommendationParams;
 
   const ReferenceWorkoutPage({
     super.key,
-    required this.exercise,
-    required this.exercises,
+    this.exercise,
+    this.exercises,
     this.currentExerciseIndex = 0,
+    this.recommendationParams,
   });
 
   @override
@@ -21,8 +26,14 @@ class ReferenceWorkoutPage extends StatefulWidget {
 }
 
 class _ReferenceWorkoutPageState extends State<ReferenceWorkoutPage> {
+  final ExerciseService _exerciseService = ExerciseService();
+
+  List<Exercise> _exercises = [];
+  bool _isLoading = false;
+  String? _error;
   int _selectedExerciseIndex = 0;
-  Exercise get _currentExercise => widget.exercises[_selectedExerciseIndex];
+
+  Exercise get _currentExercise => _exercises.isNotEmpty ? _exercises[_selectedExerciseIndex] : _createPlaceholderExercise();
 
   // Athletic background images matching reference style
   final List<String> _athleticBackgrounds = [
@@ -46,6 +57,199 @@ class _ReferenceWorkoutPageState extends State<ReferenceWorkoutPage> {
   void initState() {
     super.initState();
     _selectedExerciseIndex = widget.currentExerciseIndex;
+    _initializeData();
+  }
+
+  /// Initialize data - either from passed exercises or load from API
+  Future<void> _initializeData() async {
+    if (widget.exercises != null && widget.exercises!.isNotEmpty) {
+      // Use directly passed exercises
+      setState(() {
+        _exercises = widget.exercises!;
+      });
+    } else if (widget.recommendationParams != null) {
+      // Load exercises from API based on recommendation params
+      await _loadExercisesFromAPI();
+    } else if (widget.exercise != null) {
+      // Single exercise provided
+      setState(() {
+        _exercises = [widget.exercise!];
+      });
+    } else {
+      // No data provided, show error
+      setState(() {
+        _error = 'No workout data provided';
+      });
+    }
+  }
+
+  /// Load exercises from API using recommendation parameters
+  Future<void> _loadExercisesFromAPI() async {
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
+
+    try {
+      final params = widget.recommendationParams!;
+
+      // Parse parameters
+      final intent = _parseIntent(params['intent'] ?? 'STRETCH');
+      final equipmentCodes = _parseEquipmentCodes(
+        params['equipmentCodes'] ?? params['equipment'] ?? ['hands_free']
+      );
+      final scenarioCode = params['scenarioCode'] ?? params['scenario'] ?? 'home';
+      final targetMuscles = _parseTargetMuscles(params['targetMuscles']);
+
+      debugPrint('🎯 Loading workout recommendations: intent=$intent, equipment=$equipmentCodes, scenario=$scenarioCode');
+
+      // Get recommendations from API
+      final recommendationData = await _exerciseService.getQuickRecommendation(
+        intent: intent,
+        equipmentCodes: equipmentCodes,
+        scenarioCode: scenarioCode,
+        targetMuscles: targetMuscles,
+        difficultyLevel: params['difficultyLevel'],
+        maxDuration: params['maxDuration'],
+      );
+
+      // Extract exercises from API response
+      final exercisesData = recommendationData['exercises'] as List<dynamic>? ?? [];
+
+      if (exercisesData.isEmpty) {
+        // Try alternative method
+        final exercises = await _exerciseService.getExercisesByContext(
+          equipmentCodes: equipmentCodes,
+          scenarioCode: scenarioCode,
+          intent: intent,
+          targetMuscles: targetMuscles,
+          pageSize: 6,
+        );
+
+        setState(() {
+          _exercises = exercises.take(6).toList();
+          _isLoading = false;
+        });
+      } else {
+        // Convert API data to Exercise objects
+        final exercises = <Exercise>[];
+        for (var data in exercisesData.take(6)) {
+          if (data is Exercise) {
+            exercises.add(data);
+          } else if (data is Map<String, dynamic>) {
+            // Parse from JSON if needed
+            exercises.add(Exercise.fromJson(data));
+          }
+        }
+
+        setState(() {
+          _exercises = exercises;
+          _isLoading = false;
+        });
+      }
+
+      debugPrint('✅ Loaded ${_exercises.length} exercises from API');
+    } catch (e) {
+      debugPrint('❌ Failed to load exercises: $e');
+      setState(() {
+        _error = 'Failed to load workout: $e';
+        _isLoading = false;
+      });
+
+      // Use fallback exercise
+      _setFallbackExercises();
+    }
+  }
+
+  /// Parse workout intent from parameter
+  WorkoutIntent _parseIntent(dynamic intentValue) {
+    if (intentValue is WorkoutIntent) return intentValue;
+    final intentStr = intentValue.toString().toUpperCase();
+    return WorkoutIntent.values.firstWhere(
+      (e) => e.name.toUpperCase() == intentStr,
+      orElse: () => WorkoutIntent.stretch,
+    );
+  }
+
+  /// Parse equipment codes from parameter
+  List<String> _parseEquipmentCodes(dynamic equipment) {
+    if (equipment is List) {
+      return equipment.map((e) => e.toString()).toList();
+    } else if (equipment is String) {
+      return [equipment];
+    }
+    return ['hands_free'];
+  }
+
+  /// Parse target muscles from parameter
+  List<TargetMuscle> _parseTargetMuscles(dynamic muscles) {
+    if (muscles == null) return [];
+    if (muscles is List<TargetMuscle>) return muscles;
+    if (muscles is List) {
+      return muscles.map((m) {
+        if (m is TargetMuscle) return m;
+        final str = m.toString().toUpperCase();
+        return TargetMuscle.values.firstWhere(
+          (e) => e.name.toUpperCase() == str,
+          orElse: () => TargetMuscle.fullBody,
+        );
+      }).toList();
+    }
+    return [];
+  }
+
+  /// Create placeholder exercise for empty state
+  Exercise _createPlaceholderExercise() {
+    return Exercise(
+      id: 'placeholder',
+      code: 'placeholder',
+      name: 'No Exercise Available',
+      description: 'Please select or load exercises',
+      primaryMuscle: TargetMuscle.fullBody,
+      secondaryMuscles: [],
+      intentType: WorkoutIntent.stretch,
+      difficulty: ExerciseDifficulty.beginner,
+      durationSeconds: 0,
+      sets: 0,
+      keyPoints: [],
+      safetyWarnings: [],
+      benefits: '',
+      tags: [],
+    );
+  }
+
+  /// Set fallback exercises when API fails
+  void _setFallbackExercises() {
+    setState(() {
+      _exercises = [
+        Exercise(
+          id: 'fallback-1',
+          code: 'wall_stretch',
+          name: 'Wall Chest Opener',
+          description: 'A simple stretching exercise using a wall to open chest and shoulders',
+          primaryMuscle: TargetMuscle.chestBack,
+          secondaryMuscles: [TargetMuscle.neckShoulder],
+          intentType: WorkoutIntent.stretch,
+          difficulty: ExerciseDifficulty.beginner,
+          durationSeconds: 30,
+          sets: 2,
+          repetitions: 1,
+          keyPoints: [
+            'Stand next to a wall with your arm extended',
+            'Slowly rotate your body away from the wall',
+            'Hold the stretch for 30 seconds',
+            'Repeat on the other side',
+          ],
+          safetyWarnings: [
+            'Keep your neck neutral',
+            'Don\'t force the stretch',
+            'Stop if you feel pain',
+          ],
+          benefits: 'Relieves neck tension and opens upper back',
+          tags: [ExerciseTag.wall, ExerciseTag.stretch],
+        ),
+      ];
+    });
   }
 
   void _selectExercise(int index) {
@@ -92,6 +296,94 @@ class _ReferenceWorkoutPageState extends State<ReferenceWorkoutPage> {
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return Scaffold(
+        backgroundColor: Colors.white,
+        body: const Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(Colors.black87),
+              ),
+              SizedBox(height: 16),
+              Text(
+                'Loading workout recommendations...',
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Colors.black54,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    if (_error != null) {
+      return Scaffold(
+        backgroundColor: Colors.white,
+        appBar: AppBar(
+          backgroundColor: Colors.white,
+          elevation: 0,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back_ios, color: Colors.black87),
+            onPressed: () => Navigator.pop(context),
+          ),
+          title: const Text(
+            'Workout Error',
+            style: TextStyle(
+              color: Colors.black87,
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(
+                  Icons.error_outline,
+                  size: 64,
+                  color: Colors.red,
+                ),
+                const SizedBox(height: 24),
+                Text(
+                  _error!,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    color: Colors.black54,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 32),
+                ElevatedButton(
+                  onPressed: () {
+                    _initializeData(); // Retry loading
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.black87,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 32,
+                      vertical: 16,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                  ),
+                  child: const Text('Retry'),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
     return Scaffold(
       backgroundColor: Colors.white,
       body: Column(
@@ -237,7 +529,7 @@ class _ReferenceWorkoutPageState extends State<ReferenceWorkoutPage> {
           top: 64,
           left: 24,
           child: Text(
-            '${widget.exercises.length} Sessions • Current Session ${_selectedExerciseIndex + 1}',
+            '${_exercises.length} Sessions • Current Session ${_selectedExerciseIndex + 1}',
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w500,
@@ -263,9 +555,9 @@ class _ReferenceWorkoutPageState extends State<ReferenceWorkoutPage> {
       height: 120,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
-        itemCount: widget.exercises.length,
+        itemCount: _exercises.length,
         itemBuilder: (context, index) {
-          final exercise = widget.exercises[index];
+          final exercise = _exercises[index];
           final isSelected = index == _selectedExerciseIndex;
           final demoImage = _exerciseDemoImages[index % _exerciseDemoImages.length];
 
@@ -429,6 +721,133 @@ class _ReferenceWorkoutPageState extends State<ReferenceWorkoutPage> {
 
             const SizedBox(height: 32),
 
+            // Benefits Section (NEW)
+            _buildSectionTitle('Benefits'),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.green.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: Colors.green.withOpacity(0.3),
+                ),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Icon(
+                    Icons.check_circle_outline,
+                    color: Colors.green,
+                    size: 24,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      _currentExercise.benefits,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        height: 1.6,
+                        color: Colors.black87,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 32),
+
+            // Key Points Section (NEW)
+            _buildSectionTitle('Key Points'),
+            const SizedBox(height: 12),
+            ..._currentExercise.keyPoints.asMap().entries.map((entry) {
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 16),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      width: 28,
+                      height: 28,
+                      decoration: BoxDecoration(
+                        color: Colors.black87,
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: Center(
+                        child: Text(
+                          '${entry.key + 1}',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        entry.value,
+                        style: const TextStyle(
+                          fontSize: 15,
+                          height: 1.6,
+                          color: Colors.black87,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }),
+
+            const SizedBox(height: 32),
+
+            // Safety Tips Section (NEW)
+            _buildSectionTitle('Safety Tips'),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.amber.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: Colors.amber.withOpacity(0.3),
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: _currentExercise.safetyWarnings.map((warning) {
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Icon(
+                          Icons.warning_amber_rounded,
+                          color: Colors.amber,
+                          size: 20,
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            warning,
+                            style: const TextStyle(
+                              fontSize: 14,
+                              height: 1.5,
+                              color: Colors.black87,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }).toList(),
+              ),
+            ),
+
+            const SizedBox(height: 32),
+
             // Exercise Body Parts Section (matching reference: 练习部位)
             _buildBodyPartsSection(),
 
@@ -574,6 +993,18 @@ class _ReferenceWorkoutPageState extends State<ReferenceWorkoutPage> {
             letterSpacing: 0.5,
           ),
         ),
+      ),
+    );
+  }
+
+  /// Helper method to build section titles
+  Widget _buildSectionTitle(String title) {
+    return Text(
+      title,
+      style: const TextStyle(
+        fontSize: 18,
+        fontWeight: FontWeight.w700,
+        color: Colors.black87,
       ),
     );
   }

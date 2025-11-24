@@ -1,12 +1,14 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { SubscriptionService } from './subscription.service.temp';
 import { DailyUsageService } from './daily-usage.service.temp';
+import { logger } from '../common/logger/logger';
+
 
 export const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 @Injectable()
 export class SubscriptionTasksService implements OnModuleInit {
-  private readonly logger = new Logger(SubscriptionTasksService.name);
+  // private readonly logger = new Logger(SubscriptionTasksService.name);
 
   constructor(
     private subscriptionService: SubscriptionService,
@@ -32,7 +34,7 @@ export class SubscriptionTasksService implements OnModuleInit {
         await sleep(60 * 60 * 1000); // 1 hour
       } while (true);
     } catch (error) {
-      this.logger.error(
+      logger.error(
         `Error in startExpiredSubscriptionProcessor: ${error.message}`,
         error.stack
       );
@@ -50,7 +52,7 @@ export class SubscriptionTasksService implements OnModuleInit {
         await sleep(24 * 60 * 60 * 1000); // 24 hours
       } while (true);
     } catch (error) {
-      this.logger.error(
+      logger.error(
         `Error in startUsageRecordsCleaner: ${error.message}`,
         error.stack
       );
@@ -68,7 +70,7 @@ export class SubscriptionTasksService implements OnModuleInit {
         await sleep(15 * 60 * 1000); // 15 minutes
       } while (true);
     } catch (error) {
-      this.logger.error(
+      logger.error(
         `Error in startPurchaseVerifier: ${error.message}`,
         error.stack
       );
@@ -86,7 +88,7 @@ export class SubscriptionTasksService implements OnModuleInit {
         await sleep(6 * 60 * 60 * 1000); // 6 hours
       } while (true);
     } catch (error) {
-      this.logger.error(
+      logger.error(
         `Error in startAnalyticsGenerator: ${error.message}`,
         error.stack
       );
@@ -97,14 +99,14 @@ export class SubscriptionTasksService implements OnModuleInit {
    * Clean up expired subscriptions
    */
   async processExpiredSubscriptions() {
-    this.logger.log('Processing expired subscriptions...');
+    logger.info('Processing expired subscriptions...');
 
     try {
       // TODO: Enable after Prisma client is generated
       // await this.subscriptionService.processExpiredSubscriptions();
-      this.logger.log('Expired subscriptions processed successfully');
+      logger.info('Expired subscriptions processed successfully');
     } catch (error) {
-      this.logger.error('Failed to process expired subscriptions', error);
+      logger.error('Failed to process expired subscriptions', error);
     }
   }
 
@@ -112,14 +114,14 @@ export class SubscriptionTasksService implements OnModuleInit {
    * Clean up old daily usage records
    */
   async cleanupOldUsageRecords() {
-    this.logger.log('Cleaning up old usage records...');
+    logger.info('Cleaning up old usage records...');
 
     try {
       // TODO: Enable after Prisma client is generated
       // await this.dailyUsageService.resetDailyUsage();
-      this.logger.log('Old usage records cleaned up successfully');
+      logger.info('Old usage records cleaned up successfully');
     } catch (error) {
-      this.logger.error('Failed to clean up old usage records', error);
+      logger.error('Failed to clean up old usage records', error);
     }
   }
 
@@ -127,7 +129,7 @@ export class SubscriptionTasksService implements OnModuleInit {
    * Send subscription renewal reminders
    */
   async sendRenewalReminders() {
-    this.logger.log('Checking for subscription renewal reminders...');
+    logger.info('Checking for subscription renewal reminders...');
 
     try {
       // TODO: Implement renewal reminder logic
@@ -136,9 +138,9 @@ export class SubscriptionTasksService implements OnModuleInit {
       // 2. Find subscriptions expiring in 1 day
       // 3. Send appropriate notifications
 
-      this.logger.log('Renewal reminders checked successfully');
+      logger.info('Renewal reminders checked successfully');
     } catch (error) {
-      this.logger.error('Failed to check renewal reminders', error);
+      logger.error('Failed to check renewal reminders', error);
     }
   }
 
@@ -146,7 +148,7 @@ export class SubscriptionTasksService implements OnModuleInit {
    * Verify pending Google Play purchases
    */
   async verifyPendingPurchases() {
-    this.logger.log('Verifying pending Google Play purchases...');
+    logger.info('Verifying pending Google Play purchases...');
 
     try {
       // TODO: Implement pending purchase verification
@@ -155,9 +157,9 @@ export class SubscriptionTasksService implements OnModuleInit {
       // 2. Re-verify with Google Play
       // 3. Update subscription status accordingly
 
-      this.logger.log('Pending purchases verified successfully');
+      logger.info('Pending purchases verified successfully');
     } catch (error) {
-      this.logger.error('Failed to verify pending purchases', error);
+      logger.error('Failed to verify pending purchases', error);
     }
   }
 
@@ -165,7 +167,7 @@ export class SubscriptionTasksService implements OnModuleInit {
    * Generate subscription analytics
    */
   async generateAnalytics() {
-    this.logger.log('Generating subscription analytics...');
+    logger.info('Generating subscription analytics...');
 
     try {
       // TODO: Implement analytics generation
@@ -175,9 +177,9 @@ export class SubscriptionTasksService implements OnModuleInit {
       // - Revenue
       // - User retention
 
-      this.logger.log('Subscription analytics generated successfully');
+      logger.info('Subscription analytics generated successfully');
     } catch (error) {
-      this.logger.error('Failed to generate subscription analytics', error);
+      logger.error('Failed to generate subscription analytics', error);
     }
   }
 }

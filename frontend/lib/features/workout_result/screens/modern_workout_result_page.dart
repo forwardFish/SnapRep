@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../../../shared/widgets/bottom_navigation_bar.dart';
 import '../../../routes/app_routes.dart';
 import '../../../core/models/exercise.dart';
 import '../../../core/models/target_muscle.dart';
@@ -9,14 +8,21 @@ import '../../../core/services/exercise_service.dart';
 import '../../workout_execution/screens/professional_workout_video_page_v2.dart';
 
 /// Modern Workout Result Page - Based on Design Document Section 3.2
-/// Displays 3 workout cards with professional UI design
-/// Features: Info bar, workout cards, preview strip, action buttons
+/// Displays workout cards with professional UI design matching xunlian-2.jpg
+/// Supports both API-based loading (recommendationParams) and direct exercise passing
+/// Features: Background image, exercise cards, detailed info (Benefits, Key Points, Safety Tips)
 class ModernWorkoutResultPage extends StatefulWidget {
   final Map<String, dynamic>? recommendationParams;
+  final Exercise? exercise;
+  final List<Exercise>? exercises;
+  final int currentExerciseIndex;
 
   const ModernWorkoutResultPage({
     super.key,
     this.recommendationParams,
+    this.exercise,
+    this.exercises,
+    this.currentExerciseIndex = 0,
   });
 
   @override
@@ -89,7 +95,27 @@ class _ModernWorkoutResultPageState extends State<ModernWorkoutResultPage>
     });
 
     try {
-      // Extract parameters from widget.recommendationParams or use defaults
+      // Method 1: Direct exercises passed (from ReferenceWorkoutPage pattern)
+      if (widget.exercises != null && widget.exercises!.isNotEmpty) {
+        _workoutCards = widget.exercises!.map((ex) => _convertExerciseToWorkoutCard(ex, false)).toList();
+        _selectedExerciseIndex = widget.currentExerciseIndex;
+        setState(() {
+          _isLoading = false;
+        });
+        return;
+      }
+
+      // Method 2: Single exercise passed
+      if (widget.exercise != null) {
+        _workoutCards = [_convertExerciseToWorkoutCard(widget.exercise!, false)];
+        _selectedExerciseIndex = 0;
+        setState(() {
+          _isLoading = false;
+        });
+        return;
+      }
+
+      // Method 3: Load from API using recommendationParams
       final params = widget.recommendationParams ?? {};
 
       final intent = _parseIntent(params['intent'] ?? 'STRETCH');
@@ -313,59 +339,49 @@ class _ModernWorkoutResultPageState extends State<ModernWorkoutResultPage>
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return Scaffold(
+        backgroundColor: Colors.white,
+        body: const Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(Colors.black87),
+              ),
+              SizedBox(height: 16),
+              Text(
+                'Loading workout recommendations...',
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Colors.black54,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: Colors.black),
-          onPressed: () => Navigator.pop(context),
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.info_outline, color: Colors.black),
-            onPressed: _showSafetyInfo,
+      body: Column(
+        children: [
+          // Top White Navigation Bar (matching reference xunlian-2.jpg)
+          _buildTopNavigation(),
+
+          // Background Image Section with Exercise Cards
+          Expanded(
+            flex: 3,
+            child: _buildBackgroundImageSection(),
+          ),
+
+          // Bottom White Details Section
+          Expanded(
+            flex: 4,
+            child: _buildBottomDetailsSection(),
           ),
         ],
-        systemOverlayStyle: SystemUiOverlayStyle.dark,
-      ),
-      body: _isLoading
-          ? _buildLoadingState()
-          : Column(
-              children: [
-                // Top Info Bar
-                _buildInfoBar(),
-
-                // Main Content
-                Expanded(
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.symmetric(horizontal: 24),
-                    child: Column(
-                      children: [
-                        const SizedBox(height: 20),
-
-                        // Workout Cards (3 cards)
-                        _buildWorkoutCards(),
-
-                        const SizedBox(height: 32),
-
-                        // Preview Strip
-                        _buildPreviewStrip(),
-
-                        const SizedBox(height: 32),
-                      ],
-                    ),
-                  ),
-                ),
-
-                // Bottom Action Bar
-                _buildBottomActionBar(),
-              ],
-            ),
-      bottomNavigationBar: BottomNavigationBarWidget(
-        currentIndex: _currentNavIndex,
-        onTap: _onNavTap,
       ),
     );
   }
@@ -388,6 +404,743 @@ class _ModernWorkoutResultPageState extends State<ModernWorkoutResultPage>
         Navigator.pushNamed(context, AppRoutes.myPage);
         break;
     }
+  }
+
+  int _selectedExerciseIndex = 0;
+
+  void _selectExercise(int index) {
+    setState(() {
+      _selectedExerciseIndex = index;
+    });
+  }
+
+  WorkoutCard get _selectedCard {
+    if (_selectedExerciseIndex < _workoutCards.length) {
+      return _workoutCards[_selectedExerciseIndex];
+    }
+    return _workoutCards.first;
+  }
+
+  /// Top navigation bar - clean white design matching xunlian-2.jpg
+  Widget _buildTopNavigation() {
+    return Container(
+      padding: EdgeInsets.only(
+        top: MediaQuery.of(context).padding.top + 12,
+        left: 20,
+        right: 20,
+        bottom: 12,
+      ),
+      color: Colors.white,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          // Back Button - simple arrow
+          GestureDetector(
+            onTap: () => Navigator.pop(context),
+            child: Container(
+              padding: const EdgeInsets.all(4),
+              child: const Icon(
+                Icons.arrow_back_ios_new,
+                color: Color(0xFF1A1A1A),
+                size: 20,
+              ),
+            ),
+          ),
+
+          // Title - bold center text
+          Expanded(
+            child: Text(
+              _selectedCard.name,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 17,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF1A1A1A),
+                letterSpacing: -0.3,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+
+          // Favorite Button - outline heart
+          GestureDetector(
+            onTap: () {},
+            child: Container(
+              padding: const EdgeInsets.all(4),
+              child: const Icon(
+                Icons.favorite_border_rounded,
+                color: Color(0xFF1A1A1A),
+                size: 22,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Background image section - with real fitness background image
+  Widget _buildBackgroundImageSection() {
+    return Stack(
+      children: [
+        // Main Background Image - use actual exercise image with fallback to Unsplash
+        Positioned.fill(
+          child: Image.network(
+            _selectedCard.previewImage.isNotEmpty && !_selectedCard.previewImage.contains('default')
+                ? _selectedCard.previewImage
+                : 'https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+            fit: BoxFit.cover,
+            loadingBuilder: (context, child, loadingProgress) {
+              if (loadingProgress == null) return child;
+              return Container(
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [Color(0xFF6B7280), Color(0xFF374151)],
+                  ),
+                ),
+                child: const Center(
+                  child: CircularProgressIndicator(
+                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white70),
+                  ),
+                ),
+              );
+            },
+            errorBuilder: (context, error, stackTrace) => Image.network(
+              'https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+              fit: BoxFit.cover,
+              errorBuilder: (ctx, err, trace) => Container(
+                color: const Color(0xFF374151),
+                child: const Center(
+                  child: Icon(Icons.fitness_center, color: Colors.white38, size: 48),
+                ),
+              ),
+            ),
+          ),
+        ),
+
+        // Subtle gradient overlay - for text readability
+        Positioned.fill(
+          child: Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Colors.black.withOpacity(0.15),
+                  Colors.black.withOpacity(0.3),
+                  Colors.black.withOpacity(0.55),
+                ],
+                stops: const [0.0, 0.4, 1.0],
+              ),
+            ),
+          ),
+        ),
+
+        // Series badge
+        Positioned(
+          top: 20,
+          left: 20,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.layers_outlined,
+                color: Colors.white.withOpacity(0.9),
+                size: 18,
+              ),
+              const SizedBox(width: 6),
+              Text(
+                'From「Quick Fitness Series」',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.white.withOpacity(0.95),
+                  shadows: const [
+                    Shadow(color: Colors.black38, blurRadius: 4, offset: Offset(0, 1)),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        // Session info
+        Positioned(
+          top: 46,
+          left: 20,
+          child: Text(
+            '${_workoutCards.length} Sessions · Current #${_selectedExerciseIndex + 1}',
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w400,
+              color: Colors.white.withOpacity(0.85),
+              shadows: const [
+                Shadow(color: Colors.black38, blurRadius: 4, offset: Offset(0, 1)),
+              ],
+            ),
+          ),
+        ),
+
+        // Exercise Cards at bottom - with background images
+        Positioned(
+          bottom: 20,
+          left: 0,
+          right: 0,
+          child: _buildExerciseCards(),
+        ),
+      ],
+    );
+  }
+
+  /// Exercise cards - frosted glass style matching xunlian-2.jpg exactly
+  Widget _buildExerciseCards() {
+    return SizedBox(
+      height: 100,
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        itemCount: _workoutCards.length,
+        itemBuilder: (context, index) {
+          final card = _workoutCards[index];
+          final isSelected = index == _selectedExerciseIndex;
+
+          return GestureDetector(
+            onTap: () => _selectExercise(index),
+            child: Container(
+              margin: const EdgeInsets.only(right: 12),
+              width: 200,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: Stack(
+                  children: [
+                    // Background Image
+                    Positioned.fill(
+                      child: Image.network(
+                        card.previewImage.isNotEmpty && !card.previewImage.contains('default')
+                            ? card.previewImage
+                            : 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) => Container(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [
+                                const Color(0xFF6B7280),
+                                const Color(0xFF374151),
+                              ],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    // Frosted glass overlay
+                    Positioned.fill(
+                      child: Container(
+                        decoration: BoxDecoration(
+                          // Frosted glass effect - semi-transparent with blur simulation
+                          color: isSelected
+                              ? Colors.black.withOpacity(0.55)
+                              : Colors.black.withOpacity(0.35),
+                          border: isSelected
+                              ? Border.all(color: Colors.white.withOpacity(0.5), width: 1.5)
+                              : Border.all(color: Colors.white.withOpacity(0.15), width: 1),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
+
+                    // Content
+                    Positioned.fill(
+                      child: Padding(
+                        padding: const EdgeInsets.all(12),
+                        child: Row(
+                          children: [
+                            // Exercise thumbnail - rounded rectangle like reference
+                            Container(
+                              width: 70,
+                              height: 70,
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(10),
+                                color: Colors.white.withOpacity(0.15),
+                              ),
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(10),
+                                child: Image.network(
+                                  card.previewImage.isNotEmpty && !card.previewImage.contains('default')
+                                      ? card.previewImage
+                                      : 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80',
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (context, error, stackTrace) => Container(
+                                    color: Colors.white.withOpacity(0.1),
+                                    child: const Icon(Icons.fitness_center, color: Colors.white54, size: 28),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+
+                            // Exercise info - matching reference format exactly
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  // Exercise number and name - "01 臀部强化" style
+                                  Text(
+                                    '${(index + 1).toString().padLeft(2, '0')} ${card.name}',
+                                    style: const TextStyle(
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.white,
+                                      height: 1.2,
+                                      shadows: [
+                                        Shadow(
+                                          color: Colors.black54,
+                                          offset: Offset(0, 1),
+                                          blurRadius: 2,
+                                        ),
+                                      ],
+                                    ),
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  const SizedBox(height: 8),
+
+                                  // Duration and calories - "12分钟 | 66千卡" style
+                                  Text(
+                                    '${card.duration ~/ 60}min | ${(card.duration * 0.055).toStringAsFixed(0)}cal',
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w400,
+                                      color: Colors.white.withOpacity(0.9),
+                                      shadows: const [
+                                        Shadow(
+                                          color: Colors.black54,
+                                          offset: Offset(0, 1),
+                                          blurRadius: 2,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  /// Bottom details section - matching xunlian-2.jpg style exactly
+  Widget _buildBottomDetailsSection() {
+    return Container(
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(20),
+          topRight: Radius.circular(20),
+        ),
+      ),
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(20, 24, 20, 32),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Exercise name - bold title like reference
+            Text(
+              _selectedCard.name,
+              style: const TextStyle(
+                fontSize: 26,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF1A1A1A),
+                height: 1.2,
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            // Tags - matching reference style exactly
+            _buildTagsSection(),
+            const SizedBox(height: 20),
+
+            // Description/Benefits text
+            Text(
+              _selectedCard.benefits,
+              style: const TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w400,
+                color: Color(0xFF666666),
+                height: 1.6,
+              ),
+            ),
+            const SizedBox(height: 24),
+
+            // Info cards - matching reference exactly (Level, Time, Calories)
+            _buildInfoCards(),
+            const SizedBox(height: 28),
+
+            // Target muscles section with yellow accent bar like reference
+            _buildTargetMusclesSection(),
+            const SizedBox(height: 28),
+
+            // Key Points Section
+            if (_selectedCard.safetyTips.isNotEmpty) ...[
+              _buildSectionWithAccent('Key Points'),
+              const SizedBox(height: 12),
+              ..._selectedCard.safetyTips.take(3).toList().asMap().entries.map((entry) {
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        width: 24,
+                        height: 24,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF2D2D2D),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Center(
+                          child: Text(
+                            '${entry.key + 1}',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          entry.value.replaceAll('⚠️ ', ''),
+                          style: const TextStyle(
+                            fontSize: 14,
+                            height: 1.5,
+                            color: Color(0xFF333333),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }),
+              const SizedBox(height: 24),
+            ],
+
+            // Safety Tips Section
+            if (_selectedCard.safetyTips.isNotEmpty) ...[
+              _buildSectionWithAccent('Safety Tips'),
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFFF8E7),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: _selectedCard.safetyTips.map((warning) {
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Icon(
+                            Icons.warning_amber_rounded,
+                            color: Color(0xFFE5A000),
+                            size: 18,
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              warning.replaceAll('⚠️ ', ''),
+                              style: const TextStyle(
+                                fontSize: 14,
+                                height: 1.5,
+                                color: Color(0xFF5C5C5C),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ),
+              const SizedBox(height: 28),
+            ],
+
+            // Start button - dark bg with golden text like reference
+            _buildStartButton(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Section title with yellow accent bar like reference "练习部位"
+  Widget _buildSectionWithAccent(String title) {
+    return Row(
+      children: [
+        Container(
+          width: 4,
+          height: 18,
+          decoration: BoxDecoration(
+            color: const Color(0xFFE5A000),
+            borderRadius: BorderRadius.circular(2),
+          ),
+        ),
+        const SizedBox(width: 10),
+        Text(
+          title,
+          style: const TextStyle(
+            fontSize: 17,
+            fontWeight: FontWeight.w600,
+            color: Color(0xFF1A1A1A),
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// Tags section - matching reference style exactly (first dark, others light orange)
+  Widget _buildTagsSection() {
+    final tags = _selectedCard.tags;
+    return Wrap(
+      spacing: 10,
+      runSpacing: 10,
+      children: tags.asMap().entries.map((entry) {
+        final index = entry.key;
+        final tag = entry.value;
+        final isDark = index == 0; // First tag is dark like reference
+
+        return Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+          decoration: BoxDecoration(
+            color: isDark ? const Color(0xFF2D2D2D) : const Color(0xFFFFF3E0),
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Text(
+            tag,
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w500,
+              color: isDark ? Colors.white : const Color(0xFFE07800),
+            ),
+          ),
+        );
+      }).toList(),
+    );
+  }
+
+  /// Info cards (Level, Time, Calories) - matching reference xunlian-2.jpg exactly
+  Widget _buildInfoCards() {
+    return Row(
+      children: [
+        // Level card - light cream/beige like reference
+        Expanded(
+          child: _buildInfoCard(
+            icon: Icons.bar_chart_rounded,
+            label: 'Level',
+            value: _selectedCard.difficulty.name[0].toUpperCase() + _selectedCard.difficulty.name.substring(1),
+            backgroundColor: const Color(0xFFFFF8F0),
+          ),
+        ),
+        const SizedBox(width: 10),
+
+        // Time card - light gray like reference
+        Expanded(
+          child: _buildInfoCard(
+            icon: Icons.schedule_rounded,
+            label: 'Time',
+            value: '${_selectedCard.duration ~/ 60}',
+            unit: '/min',
+            backgroundColor: const Color(0xFFF5F5F5),
+          ),
+        ),
+        const SizedBox(width: 10),
+
+        // Calories card - light pink/rose like reference
+        Expanded(
+          child: _buildInfoCard(
+            icon: Icons.local_fire_department_rounded,
+            label: 'Burn',
+            value: '${(_selectedCard.duration * 0.055).toStringAsFixed(0)}',
+            unit: '/cal',
+            backgroundColor: const Color(0xFFFFF0F0),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildInfoCard({
+    required IconData icon,
+    required String label,
+    required String value,
+    required Color backgroundColor,
+    String? unit,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+      decoration: BoxDecoration(
+        color: backgroundColor,
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Column(
+        children: [
+          // Icon with label
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, size: 18, color: const Color(0xFF666666)),
+              const SizedBox(width: 4),
+              Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w400,
+                  color: Color(0xFF666666),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          // Value with optional unit
+          RichText(
+            text: TextSpan(
+              children: [
+                TextSpan(
+                  text: value,
+                  style: const TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF1A1A1A),
+                  ),
+                ),
+                if (unit != null)
+                  TextSpan(
+                    text: unit,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w400,
+                      color: Color(0xFF888888),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Target muscles section - matching reference "练习部位" exactly
+  Widget _buildTargetMusclesSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildSectionWithAccent('Target Muscles'),
+        const SizedBox(height: 16),
+
+        // Muscle icons row - matching reference simple icon style
+        Row(
+          mainAxisAlignment: MainAxisAlignment.start,
+          children: [
+            _buildMuscleIcon(Icons.accessibility_new, 'Abs'),
+            const SizedBox(width: 12),
+            _buildMuscleIcon(Icons.directions_run, 'Legs'),
+            const SizedBox(width: 12),
+            _buildMuscleIcon(Icons.sports_gymnastics, 'Glutes'),
+            const SizedBox(width: 12),
+            _buildMuscleIcon(Icons.sports_kabaddi, 'Arms'),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMuscleIcon(IconData icon, String label) {
+    return Column(
+      children: [
+        Container(
+          width: 56,
+          height: 56,
+          decoration: BoxDecoration(
+            color: const Color(0xFFF8F8F8),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Icon(icon, size: 28, color: const Color(0xFF888888)),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w400,
+            color: Color(0xFF888888),
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// Section title helper (kept for compatibility)
+  Widget _buildSectionTitle(String title) {
+    return Text(
+      title,
+      style: const TextStyle(
+        fontSize: 17,
+        fontWeight: FontWeight.w600,
+        color: Color(0xFF1A1A1A),
+      ),
+    );
+  }
+
+  /// Start button - matching reference "开练" exactly (dark bg + golden text)
+  Widget _buildStartButton() {
+    return SizedBox(
+      width: double.infinity,
+      height: 54,
+      child: ElevatedButton(
+        onPressed: _startWorkout,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: const Color(0xFF2D2D2D),
+          foregroundColor: const Color(0xFFD4A574),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(27),
+          ),
+          elevation: 0,
+          shadowColor: Colors.transparent,
+        ),
+        child: const Text(
+          'Start Workout',
+          style: TextStyle(
+            fontSize: 17,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 0.5,
+          ),
+        ),
+      ),
+    );
   }
 
   Widget _buildLoadingState() {
@@ -1230,14 +1983,14 @@ class _ModernWorkoutResultPageState extends State<ModernWorkoutResultPage>
       demoVideoUrl: 'https://sample-videos.com/zip/10/mp4/SampleVideo_1280x720_1mb.mp4',
     )).toList();
 
-    // Navigate to professional workout video page (Windows compatible version)
+    // Navigate to professional workout video page with selected exercise
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => ProfessionalWorkoutVideoPageV2(
-          exercise: exercises.first,
+          exercise: exercises[_selectedExerciseIndex],
           exercises: exercises,
-          currentExerciseIndex: 0,
+          currentExerciseIndex: _selectedExerciseIndex,
         ),
       ),
     );

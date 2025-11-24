@@ -25,6 +25,7 @@ import {
   OtpLoginDto,
   VerifyOtpDto,
   RefreshTokenDto,
+  GoogleOAuthDto,
 } from './dto/auth.dto';
 import {
   AuthResponseDto,
@@ -193,6 +194,44 @@ export class AuthController {
     } catch (error) {
       logger.error(`验证OTP失败: ${verifyOtpDto.email}`, error.stack);
       throw new ResponseError(ErrorCodes.AUTH.OTP_VERIFICATION_FAILED, error, { email: verifyOtpDto.email });
+    }
+  }
+
+  /**
+   * Google OAuth 登录
+   */
+  @Post('google')
+  @ApiOperation({
+    summary: 'Google OAuth 登录',
+    description: '使用 Google ID Token 进行用户认证和登录',
+  })
+  @ApiBody({ type: GoogleOAuthDto })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Google 登录成功',
+    type: AuthResponseDto,
+  })
+  @ApiResponse({
+    status: HttpStatus.UNAUTHORIZED,
+    description: 'Google Token 验证失败',
+  })
+  @ApiResponse({
+    status: HttpStatus.BAD_REQUEST,
+    description: '请求参数错误',
+  })
+  @ApiResponse({
+    status: HttpStatus.INTERNAL_SERVER_ERROR,
+    description: '服务器内部错误',
+  })
+  async googleOAuthLogin(@Body() googleOAuthDto: GoogleOAuthDto): Promise<AuthResponseDto> {
+    try {
+      logger.info('Google OAuth 登录请求');
+      const result = await this.supabaseAuthService.googleOAuthLogin(googleOAuthDto);
+      logger.info('Google OAuth 登录成功');
+      return result;
+    } catch (error) {
+      logger.error('Google OAuth 登录失败', error.stack);
+      throw new ResponseError(ErrorCodes.AUTH.INVALID_CREDENTIALS, error);
     }
   }
 

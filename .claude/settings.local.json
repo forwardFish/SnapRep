@@ -28,7 +28,10 @@
       "Bash(git checkout:*)",
       "Bash(cat:*)",
       "Bash(flutter analyze:*)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(tree:*)",
+      "Bash(del \"d:\\lyh\\AI\\SnapRep\\docs\\前端开发指南-claude.md\")",
+      "Bash(python:*)"
     ],
     "deny": [],
     "ask": []

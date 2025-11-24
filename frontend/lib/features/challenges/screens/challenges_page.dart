@@ -5,6 +5,27 @@ import '../../../core/models/challenge_item_dto.dart';
 import '../../../core/services/challenges_service.dart';
 import '../../../routes/app_routes.dart';
 
+// Helper function to validate and sanitize image URLs
+bool _isValidImageUrl(String? url) {
+  if (url == null || url.isEmpty) return false;
+
+  // Check if URL is well-formed
+  try {
+    final uri = Uri.parse(url);
+    if (!uri.hasScheme || (!uri.scheme.startsWith('http'))) return false;
+  } catch (e) {
+    return false;
+  }
+
+  // Blacklist known problematic domains
+  const problematicDomains = ['cdn.snaprep.com'];
+  for (final domain in problematicDomains) {
+    if (url.contains(domain)) return false;
+  }
+
+  return true;
+}
+
 class ChallengesPage extends StatefulWidget {
   const ChallengesPage({super.key});
 
@@ -17,10 +38,33 @@ class _ChallengesPageState extends State<ChallengesPage> {
   bool isLoading = false;
   String? error;
 
+  // Parameters received from navigation
+  String? exerciseId;
+  String? exerciseName;
+  bool fromRecommended = false;
+
   @override
   void initState() {
     super.initState();
     _loadChallenges();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+
+    // Get navigation arguments
+    final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+    if (args != null) {
+      exerciseId = args['exerciseId'] as String?;
+      exerciseName = args['exerciseName'] as String?;
+      fromRecommended = args['fromRecommended'] as bool? ?? false;
+
+      if (fromRecommended && exerciseId != null) {
+        debugPrint('📍 Challenges page loaded with exercise: $exerciseName (ID: $exerciseId)');
+        // TODO: Load specific exercise details or create workout session
+      }
+    }
   }
 
   Future<void> _loadChallenges() async {
@@ -57,7 +101,70 @@ class _ChallengesPageState extends State<ChallengesPage> {
           ? const Center(child: CircularProgressIndicator())
           : error != null
               ? _buildErrorState()
-              : _buildChallengeContent(),
+              : fromRecommended && exerciseId != null
+                  ? _buildSingleExerciseView()
+                  : _buildChallengeContent(),
+    );
+  }
+
+  Widget _buildSingleExerciseView() {
+    // Display a message when coming from recommended exercises
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(exerciseName ?? 'Exercise Details'),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+      ),
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(
+                Icons.fitness_center,
+                size: 64,
+                color: Color(0xFF6C5CE7),
+              ),
+              const SizedBox(height: 24),
+              Text(
+                exerciseName ?? 'Exercise',
+                style: const TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                '🚧 This feature is coming soon!\n\nFor now, explore our Challenge Items below.',
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Colors.grey,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 32),
+              ElevatedButton(
+                onPressed: () {
+                  setState(() {
+                    fromRecommended = false;
+                    exerciseId = null;
+                  });
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF6C5CE7),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 32,
+                    vertical: 16,
+                  ),
+                ),
+                child: const Text('View Challenge Items'),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
@@ -327,7 +434,7 @@ class _ChallengesPageState extends State<ChallengesPage> {
     final emoji = challenge.emoji;
 
     // Use image from API or fallback to gradient
-    final backgroundImage = challenge.imageUrl;
+    final backgroundImage = _isValidImageUrl(challenge.imageUrl) ? challenge.imageUrl : null;
     final difficulties = challenge.difficulty; // Use difficulty from API
     final rarity = _getRarityFromString(challenge.baseRarity); // Convert string to enum
 
@@ -373,18 +480,22 @@ class _ChallengesPageState extends State<ChallengesPage> {
                               ),
                             ),
                           ),
-                          errorWidget: (context, url, error) => Container(
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                colors: [
-                                  _getRarityColor(rarity).withOpacity(0.8),
-                                  _getRarityColor(rarity).withOpacity(0.6),
-                                ],
+                          errorWidget: (context, url, error) {
+                            // Debug logging
+                            debugPrint('🔥 Image loading failed for URL: $url');
+                            debugPrint('🔥 Error: $error');
+                            return Container(
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  colors: [
+                                    _getRarityColor(rarity).withOpacity(0.8),
+                                    _getRarityColor(rarity).withOpacity(0.6),
+                                  ],
                                 begin: Alignment.topLeft,
                                 end: Alignment.bottomRight,
                               ),
-                            ),
-                          ),
+                            ));
+                          },
                         )
                       : Container(
                           decoration: BoxDecoration(

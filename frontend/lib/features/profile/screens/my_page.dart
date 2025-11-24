@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/providers/my_page_provider.dart';
+import '../../../core/services/supabase_service.dart';
 import '../../../shared/widgets/bottom_navigation_bar.dart';
 import '../../../routes/app_routes.dart';
+import 'dart:async';
 
 /// 我的页面 - 按照HTML参考文件设计 (07-my-page.html)
 /// 包含：Profile Header + Achievement Progress + Calendar + Collection
@@ -19,6 +22,7 @@ class MyPage extends StatefulWidget {
 class _MyPageState extends State<MyPage> {
   final ScrollController _scrollController = ScrollController();
   int _currentNavIndex = 2; // Profile page is index 2
+  StreamSubscription<AuthState>? _authSubscription;
 
   @override
   void initState() {
@@ -27,11 +31,26 @@ class _MyPageState extends State<MyPage> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<MyPageProvider>().initializeMyPage();
     });
+
+    // Listen to auth state changes
+    _authSubscription = SupabaseService.instance.client.auth.onAuthStateChange.listen((data) {
+      final AuthChangeEvent event = data.event;
+      if (event == AuthChangeEvent.signedIn) {
+        debugPrint('✅ User signed in, refreshing profile data');
+        // Reload user data when signed in
+        context.read<MyPageProvider>().refreshAll();
+      } else if (event == AuthChangeEvent.signedOut) {
+        debugPrint('ℹ️ User signed out, clearing profile data');
+        // Reset provider when signed out
+        context.read<MyPageProvider>().reset();
+      }
+    });
   }
 
   @override
   void dispose() {
     _scrollController.dispose();
+    _authSubscription?.cancel();
     super.dispose();
   }
 
@@ -49,10 +68,12 @@ class _MyPageState extends State<MyPage> {
               backgroundColor: Colors.white,
               elevation: 0,
               pinned: false,
-              automaticallyImplyLeading: false, // Remove back button as requested
+              automaticallyImplyLeading:
+                  false, // Remove back button as requested
               toolbarHeight: 44,
               flexibleSpace: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -154,7 +175,7 @@ class _MyPageState extends State<MyPage> {
                   children: [
                     Expanded(
                       child: Text(
-                        'To avoid losing your personal data, please login',
+                        'Please login',
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: 14,
@@ -168,7 +189,8 @@ class _MyPageState extends State<MyPage> {
                         Navigator.pushNamed(context, AppRoutes.googleLogin);
                       },
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 20, vertical: 8),
                         decoration: BoxDecoration(
                           color: const Color(0xFFFFD700),
                           borderRadius: BorderRadius.circular(20),
@@ -190,111 +212,115 @@ class _MyPageState extends State<MyPage> {
               // User profile card - 只在已登录时显示
               Container(
                 padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.04),
-                    blurRadius: 10,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: Row(
-                children: [
-                  // Avatar with real user avatar or default
-                  Container(
-                    width: 60,
-                    height: 60,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: const Color(0xFF2C2C2C),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.04),
+                      blurRadius: 10,
+                      offset: const Offset(0, 2),
                     ),
-                    child: ClipOval(
-                      child: provider.avatarUrl != null && provider.avatarUrl!.isNotEmpty
-                          ? CachedNetworkImage(
-                              imageUrl: provider.avatarUrl!,
-                              fit: BoxFit.cover,
-                              placeholder: (context, url) => const Center(
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    // Avatar with real user avatar or default
+                    Container(
+                      width: 60,
+                      height: 60,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: const Color(0xFF2C2C2C),
+                      ),
+                      child: ClipOval(
+                        child: provider.avatarUrl != null &&
+                                provider.avatarUrl!.isNotEmpty
+                            ? CachedNetworkImage(
+                                imageUrl: provider.avatarUrl!,
+                                fit: BoxFit.cover,
+                                placeholder: (context, url) => const Center(
+                                  child: Icon(
+                                    Icons.person,
+                                    color: Color(0xFFFFD700),
+                                    size: 32,
+                                  ),
+                                ),
+                                errorWidget: (context, url, error) =>
+                                    const Center(
+                                  child: Icon(
+                                    Icons.person,
+                                    color: Color(0xFFFFD700),
+                                    size: 32,
+                                  ),
+                                ),
+                              )
+                            : const Center(
                                 child: Icon(
                                   Icons.person,
                                   color: Color(0xFFFFD700),
                                   size: 32,
                                 ),
                               ),
-                              errorWidget: (context, url, error) => const Center(
-                                child: Icon(
-                                  Icons.person,
-                                  color: Color(0xFFFFD700),
-                                  size: 32,
-                                ),
-                              ),
-                            )
-                          : const Center(
-                              child: Icon(
-                                Icons.person,
-                                color: Color(0xFFFFD700),
-                                size: 32,
-                              ),
+                      ),
+                    ),
+
+                    const SizedBox(width: 16),
+
+                    // User Info - 显示真实的用户数据
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // User Name
+                          Text(
+                            provider.userName ??
+                                provider.userEmail?.split('@').first ??
+                                'Anonymous User',
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.black,
                             ),
-                    ),
-                  ),
-
-                  const SizedBox(width: 16),
-
-                  // User Info - 显示真实的用户数据
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // User Name
-                        Text(
-                          provider.userName ?? provider.userEmail?.split('@').first ?? 'Anonymous User',
-                          style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.black,
                           ),
-                        ),
-                        const SizedBox(height: 4),
-                        // User Email or fitness journey info
-                        Text(
-                          provider.userEmail ?? 'Day 1 of your fitness journey',
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Colors.grey[600],
+                          const SizedBox(height: 4),
+                          // User Email or fitness journey info
+                          Text(
+                            provider.userEmail ??
+                                'Day 1 of your fitness journey',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.grey[600],
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
 
-                  // Red dot indicator
-                  Container(
-                    width: 8,
-                    height: 8,
-                    decoration: BoxDecoration(
-                      color: Colors.red,
-                      shape: BoxShape.circle,
-                    ),
-                  ),
-
-                  const SizedBox(width: 8),
-
-                  GestureDetector(
-                    onTap: () {
-                      // TODO: Navigate to profile settings
-                    },
-                    child: Icon(
-                      Icons.arrow_forward_ios,
-                      color: Colors.grey[400],
-                      size: 16,
-                    ),
-                  ),
-                ],
+                    // MVP阶段: 移除红点和箭头，不可点击更改
+                    // TODO: MVP后恢复编辑功能
+                    // Container(
+                    //   width: 8,
+                    //   height: 8,
+                    //   decoration: BoxDecoration(
+                    //     color: Colors.red,
+                    //     shape: BoxShape.circle,
+                    //   ),
+                    // ),
+                    // const SizedBox(width: 8),
+                    // GestureDetector(
+                    //   onTap: () {
+                    //     Navigator.pushNamed(context, AppRoutes.profileSettings);
+                    //   },
+                    //   child: Icon(
+                    //     Icons.arrow_forward_ios,
+                    //     color: Colors.grey[400],
+                    //     size: 16,
+                    //   ),
+                    // ),
+                  ],
+                ),
               ),
-            ),
             ], // <- 添加缺失的关闭方括号
           ],
         );
@@ -338,7 +364,8 @@ class _MyPageState extends State<MyPage> {
                 Navigator.pushNamed(context, AppRoutes.achievementDetails);
               },
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
                   color: const Color(0xFFFFD700).withOpacity(0.1),
                   borderRadius: BorderRadius.circular(20),
@@ -659,6 +686,7 @@ class _MyPageState extends State<MyPage> {
       ],
     );
   }
+
   /// Modern Achievement Badge - 现代化成就徽章设计
   Widget _buildModernAchievementBadge({
     required String icon,
@@ -676,33 +704,33 @@ class _MyPageState extends State<MyPage> {
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         gradient: isMainAchievement
-          ? LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                color.withOpacity(0.05),
-                color.withOpacity(0.02),
-              ],
-            )
-          : null,
+            ? LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  color.withOpacity(0.05),
+                  color.withOpacity(0.02),
+                ],
+              )
+            : null,
         color: isMainAchievement ? null : Colors.white.withOpacity(0.5),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
           color: isMainAchievement
-            ? color.withOpacity(0.2)
-            : Colors.grey.withOpacity(0.1),
+              ? color.withOpacity(0.2)
+              : Colors.grey.withOpacity(0.1),
           width: 1.5,
         ),
         boxShadow: isMainAchievement
-          ? [
-              BoxShadow(
-                color: color.withOpacity(0.15),
-                blurRadius: 16,
-                spreadRadius: 0,
-                offset: const Offset(0, 4),
-              ),
-            ]
-          : null,
+            ? [
+                BoxShadow(
+                  color: color.withOpacity(0.15),
+                  blurRadius: 16,
+                  spreadRadius: 0,
+                  offset: const Offset(0, 4),
+                ),
+              ]
+            : null,
       ),
       child: Column(
         children: [
@@ -750,7 +778,8 @@ class _MyPageState extends State<MyPage> {
                           ),
                         ),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 10, vertical: 4),
                           decoration: BoxDecoration(
                             color: color.withOpacity(0.1),
                             borderRadius: BorderRadius.circular(12),
@@ -901,7 +930,8 @@ class _MyPageState extends State<MyPage> {
   /// Calendar Section - Weekly view centered on today
   Widget _buildCalendarSection() {
     final today = DateTime.now();
-    final startOfWeek = today.subtract(Duration(days: 3)); // 3 days before today
+    final startOfWeek =
+        today.subtract(Duration(days: 3)); // 3 days before today
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -982,7 +1012,8 @@ class _MyPageState extends State<MyPage> {
     final dayHeaders = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
     // Generate 7 days starting from startOfWeek
-    final weekDays = List.generate(7, (index) => startOfWeek.add(Duration(days: index)));
+    final weekDays =
+        List.generate(7, (index) => startOfWeek.add(Duration(days: index)));
 
     // Sample workout days (you can replace this with actual data from provider)
     final workoutDays = {
@@ -1019,15 +1050,18 @@ class _MyPageState extends State<MyPage> {
         Row(
           children: weekDays.map((date) {
             final isToday = _isSameDay(date, today);
-            final hasWorkout = workoutDays.any((workoutDate) => _isSameDay(date, workoutDate));
+            final hasWorkout =
+                workoutDays.any((workoutDate) => _isSameDay(date, workoutDate));
 
             return Expanded(
               child: GestureDetector(
-                onTap: hasWorkout ? () {
-                  // Navigate to workout details for this date
-                  Navigator.pushNamed(context, '/workout-details',
-                    arguments: {'date': date, 'isToday': isToday});
-                } : null,
+                onTap: hasWorkout
+                    ? () {
+                        // Navigate to workout details for this date
+                        Navigator.pushNamed(context, '/workout-details',
+                            arguments: {'date': date, 'isToday': isToday});
+                      }
+                    : null,
                 child: _buildWeeklyCalendarDay(date.day, hasWorkout, isToday),
               ),
             );
@@ -1043,14 +1077,12 @@ class _MyPageState extends State<MyPage> {
       margin: const EdgeInsets.symmetric(horizontal: 2),
       decoration: BoxDecoration(
         color: isToday
-          ? const Color(0xFFFFD700).withOpacity(0.2)
-          : (hasWorkout
-              ? const Color(0xFFFFD700).withOpacity(0.1)
-              : null),
+            ? const Color(0xFFFFD700).withOpacity(0.2)
+            : (hasWorkout ? const Color(0xFFFFD700).withOpacity(0.1) : null),
         borderRadius: BorderRadius.circular(12),
         border: isToday
-          ? Border.all(color: const Color(0xFFFFD700), width: 2)
-          : null,
+            ? Border.all(color: const Color(0xFFFFD700), width: 2)
+            : null,
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -1060,9 +1092,8 @@ class _MyPageState extends State<MyPage> {
             style: TextStyle(
               fontSize: 16,
               fontWeight: isToday ? FontWeight.w700 : FontWeight.w600,
-              color: isToday
-                ? const Color(0xFFFFD700)
-                : const Color(0xFF2C3E50),
+              color:
+                  isToday ? const Color(0xFFFFD700) : const Color(0xFF2C3E50),
             ),
           ),
           if (hasWorkout && !isToday) ...[
@@ -1112,8 +1143,19 @@ class _MyPageState extends State<MyPage> {
 
   String _getMonthName(int month) {
     const months = [
-      '', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+      '',
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec'
     ];
     return months[month];
   }
@@ -1125,8 +1167,8 @@ class _MyPageState extends State<MyPage> {
 
   bool _isSameDay(DateTime date1, DateTime date2) {
     return date1.year == date2.year &&
-           date1.month == date2.month &&
-           date1.day == date2.day;
+        date1.month == date2.month &&
+        date1.day == date2.day;
   }
 
   /// My Collection Section - 只显示3个卡片，可点击查看更多
@@ -1169,15 +1211,18 @@ class _MyPageState extends State<MyPage> {
           child: Row(
             children: [
               Expanded(
-                child: _buildCollectionCard('Chair Squats', 'FINE', 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80'),
+                child: _buildCollectionCard('Chair Squats', 'FINE',
+                    'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80'),
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: _buildCollectionCard('Push-ups', 'COMMON', 'https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80'),
+                child: _buildCollectionCard('Push-ups', 'COMMON',
+                    'https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80'),
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: _buildCollectionCard('Bag Lifts', 'RARE', 'https://images.unsplash.com/photo-1548036328-c9fa89d128fa?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80'),
+                child: _buildCollectionCard('Bag Lifts', 'RARE',
+                    'https://images.unsplash.com/photo-1548036328-c9fa89d128fa?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80'),
               ),
             ],
           ),
@@ -1188,7 +1233,10 @@ class _MyPageState extends State<MyPage> {
 
   Widget _buildCollectionCard(String title, String rarity, String imageUrl) {
     final rarityColors = {
-      'COMMON': {'bg': const Color(0xFFE8F5E8), 'text': const Color(0xFF2E7D32)},
+      'COMMON': {
+        'bg': const Color(0xFFE8F5E8),
+        'text': const Color(0xFF2E7D32)
+      },
       'FINE': {'bg': const Color(0xFFE3F2FD), 'text': const Color(0xFF1565C0)},
       'RARE': {'bg': const Color(0xFFF3E5F5), 'text': const Color(0xFF7B1FA2)},
       'EPIC': {'bg': const Color(0xFFFFF3E0), 'text': const Color(0xFFF57C00)},
@@ -1230,7 +1278,8 @@ class _MyPageState extends State<MyPage> {
                       top: 12,
                       left: 12,
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
                           color: colors['bg'],
                           borderRadius: BorderRadius.circular(12),

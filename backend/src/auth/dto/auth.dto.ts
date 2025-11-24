@@ -94,3 +94,25 @@ export class RefreshTokenDto {
   @IsString()
   refreshToken: string;
 }
+
+/**
+ * Google OAuth 登录 DTO
+ */
+export class GoogleOAuthDto {
+  @ApiProperty({
+    description: 'Google ID Token',
+    example: 'eyJhbGciOiJSUzI1NiIsImtpZCI6IjFiZj...',
+  })
+  @IsNotEmpty()
+  @IsString()
+  idToken: string;
+
+  @ApiProperty({
+    description: 'Google Access Token (可选)',
+    example: 'ya29.a0AfH6SMBx...',
+    required: false,
+  })
+  @IsOptional()
+  @IsString()
+  accessToken?: string;
+}

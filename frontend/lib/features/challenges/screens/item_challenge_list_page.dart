@@ -4,6 +4,28 @@ import '../../../core/models/challenge_item_dto.dart';
 import '../../../core/services/challenges_service.dart';
 import '../../../core/services/exercise_service.dart';
 import '../../../routes/app_routes.dart';
+import 'challenges_page.dart';
+
+// Helper function to validate and sanitize image URLs
+bool _isValidImageUrl(String? url) {
+  if (url == null || url.isEmpty) return false;
+
+  // Check if URL is well-formed
+  try {
+    final uri = Uri.parse(url);
+    if (!uri.hasScheme || (!uri.scheme.startsWith('http'))) return false;
+  } catch (e) {
+    return false;
+  }
+
+  // Blacklist known problematic domains
+  const problematicDomains = ['cdn.snaprep.com'];
+  for (final domain in problematicDomains) {
+    if (url.contains(domain)) return false;
+  }
+
+  return true;
+}
 
 class ItemChallengeListPage extends StatefulWidget {
   const ItemChallengeListPage({super.key});
@@ -327,7 +349,7 @@ class _ItemChallengeListPageState extends State<ItemChallengeListPage> {
     final emoji = challenge.emoji;
 
     // Use image from API or fallback to default gradient
-    final backgroundImage = challenge.imageUrl;
+    final backgroundImage = _isValidImageUrl(challenge.imageUrl) ? challenge.imageUrl : null;
     final difficulties = challenge.difficulty; // Use difficulty from API
     final rarity = _getRarityFromString(challenge.baseRarity); // Convert string to enum
 
@@ -373,18 +395,22 @@ class _ItemChallengeListPageState extends State<ItemChallengeListPage> {
                               ),
                             ),
                           ),
-                          errorWidget: (context, url, error) => Container(
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                colors: [
-                                  _getRarityColor(rarity).withOpacity(0.8),
-                                  _getRarityColor(rarity).withOpacity(0.6),
+                          errorWidget: (context, url, error) {
+                            // Debug logging
+                            debugPrint('🔥 Image loading failed for URL: $url');
+                            debugPrint('🔥 Error: $error');
+                            return Container(
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  colors: [
+                                    _getRarityColor(rarity).withOpacity(0.8),
+                                    _getRarityColor(rarity).withOpacity(0.6),
                                 ],
                                 begin: Alignment.topLeft,
                                 end: Alignment.bottomRight,
                               ),
-                            ),
-                          ),
+                            ));
+                          },
                         )
                       : Container(
                           decoration: BoxDecoration(
