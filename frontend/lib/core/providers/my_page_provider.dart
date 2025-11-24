@@ -31,6 +31,7 @@ class MyPageProvider with ChangeNotifier {
   List<WorkoutSession> _workoutHistory = [];
   Map<DateTime, List<WorkoutSession>> _calendarData = {};
   DateTime _selectedDate = DateTime.now();
+  Set<DateTime> _workoutDates = {}; // 用户完成训练的日期集合
 
   // 加载状态
   bool _isLoadingUser = false;
@@ -60,6 +61,7 @@ class MyPageProvider with ChangeNotifier {
   List<WorkoutSession> get workoutHistory => _workoutHistory;
   Map<DateTime, List<WorkoutSession>> get calendarData => _calendarData;
   DateTime get selectedDate => _selectedDate;
+  Set<DateTime> get workoutDates => _workoutDates; // 训练日期集合getter
 
   bool get isLoadingUser => _isLoadingUser;
   bool get isLoadingCards => _isLoadingCards;
@@ -100,6 +102,7 @@ class MyPageProvider with ChangeNotifier {
       await Future.wait([
         loadCardCollection(),
         loadWorkoutHistory(),
+        loadWorkoutDates(), // 加载训练日期
       ]);
     }
   }
@@ -245,6 +248,28 @@ class MyPageProvider with ChangeNotifier {
     } finally {
       _isLoadingHistory = false;
       notifyListeners();
+    }
+  }
+
+  /// 加载用户训练日期（用于日历显示）
+  Future<void> loadWorkoutDates() async {
+    debugPrint('📅 Loading workout dates for calendar');
+
+    // 未登录用户不加载训练日期
+    if (!isUserLoggedIn) {
+      debugPrint('ℹ️ User not logged in, skipping workout dates load');
+      _workoutDates = {};
+      return;
+    }
+
+    try {
+      // 调用API获取用户的训练日期集合
+      final dates = await _apiService.getUserWorkoutDates();
+      _workoutDates = dates;
+      debugPrint('✅ Workout dates loaded: ${_workoutDates.length} unique dates');
+    } catch (e) {
+      debugPrint('❌ Failed to load workout dates: $e');
+      _workoutDates = {};
     }
   }
 
@@ -412,78 +437,8 @@ class MyPageProvider with ChangeNotifier {
       loadUserInfo(),
       loadCardCollection(),
       loadWorkoutHistory(),
+      loadWorkoutDates(),
     ]);
-  }
-
-  // 临时模拟数据方法
-  void _setMockUserData() {
-    _userId = 'user-123';
-    _userEmail = 'user@example.com';
-    _userName = 'SnapRep用户';
-    _totalWorkouts = 45;
-    _currentStreak = 7;
-  }
-
-  void _setMockCardData() {
-    _allCards = List.generate(12, (index) => _generateMockCard(index));
-  }
-
-  ShareCard _generateMockCard(int index) {
-    final rarities = RarityLevel.values;
-    final series = EquipmentSeries.values;
-    final rarity = rarities[index % rarities.length];
-    final equipmentSeries = series[index % series.length];
-
-    return ShareCard(
-      id: 'card-$index',
-      userId: _userId ?? 'user-123',
-      workoutSessionId: 'session-$index',
-      imageUrl: 'https://example.com/card-$index.png',
-      rarity: CardRarity(
-        level: rarity,
-        score: 0.5 - (index * 0.1),
-        equipmentSeries: equipmentSeries,
-        specialTags: index % 3 == 0 ? ['静音完成'] : [],
-      ),
-      template: 'classic',
-      shareText: '我刚完成了训练，获得了${rarity.displayName}卡片！',
-      deepLink: 'snaprep://card/$index',
-      metadata: {
-        'totalDuration': 180,
-        'exercisesCompleted': 3,
-        'streak': _currentStreak,
-        'equipmentUsed': ['chair', 'wall'],
-        'scenario': 'office',
-        'difficulty': 'BEGINNER',
-        'benefits': ['缓解颈部僵硬', '改善体态'],
-      },
-      generatedAt: DateTime.now().subtract(Duration(days: index)),
-      createdAt: DateTime.now().subtract(Duration(days: index)),
-    );
-  }
-
-  void _setMockHistoryData() {
-    _workoutHistory = List.generate(30, (index) => _generateMockSession(index));
-  }
-
-  WorkoutSession _generateMockSession(int index) {
-    return WorkoutSession(
-      id: 'session-$index',
-      userId: _userId ?? 'user-123',
-      status: WorkoutSessionStatus.completed,
-      intent: WorkoutIntent.values[index % WorkoutIntent.values.length],
-      scenarioCode: 'office',
-      equipmentCodes: ['chair', 'wall'],
-      targetMuscles: [TargetMuscle.neckShoulder],
-      exercises: [],
-      plannedDurationSec: 180,
-      actualDurationSec: 165,
-      completedExerciseCount: 3,
-      skippedExerciseCount: 0,
-      createdAt: DateTime.now().subtract(Duration(days: index)),
-      startedAt: DateTime.now().subtract(Duration(days: index, minutes: 3)),
-      completedAt: DateTime.now().subtract(Duration(days: index, minutes: 1)),
-    );
   }
 
   /// 重置状态

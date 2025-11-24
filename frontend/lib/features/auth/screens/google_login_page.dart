@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import '../../../core/services/supabase_service.dart';
+import '../../../core/services/token_service.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../shared/widgets/bottom_navigation_bar.dart';
 
@@ -738,6 +739,20 @@ class _GoogleLoginPageState extends State<GoogleLoginPage>
       final data = jsonDecode(response.body);
       debugPrint('✅ Login successful');
 
+      // 保存token到本地存储
+      final accessToken = data['accessToken'];
+      final refreshToken = data['refreshToken'];
+      final expiresIn = data['expiresIn'] ?? 3600;
+
+      if (accessToken != null && refreshToken != null) {
+        await TokenService.instance.saveTokens(
+          accessToken: accessToken,
+          refreshToken: refreshToken,
+          expiresIn: expiresIn,
+        );
+        debugPrint('💾 Tokens saved to local storage');
+      }
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -799,6 +814,20 @@ class _GoogleLoginPageState extends State<GoogleLoginPage>
     if (response.statusCode == 200 || response.statusCode == 201) {
       final data = jsonDecode(response.body);
       debugPrint('✅ Registration successful');
+
+      // 保存token到本地存储
+      final accessToken = data['accessToken'];
+      final refreshToken = data['refreshToken'];
+      final expiresIn = data['expiresIn'] ?? 3600;
+
+      if (accessToken != null && refreshToken != null) {
+        await TokenService.instance.saveTokens(
+          accessToken: accessToken,
+          refreshToken: refreshToken,
+          expiresIn: expiresIn,
+        );
+        debugPrint('💾 Tokens saved to local storage');
+      }
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

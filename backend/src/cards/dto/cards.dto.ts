@@ -1,4 +1,5 @@
 import { IsString, IsOptional, IsBoolean, IsArray, IsNumber, Min, Max, IsEnum, IsUUID } from 'class-validator';
+import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { RarityLevel } from '../../common/types/prisma-enums';
 
@@ -182,6 +183,7 @@ export class CardsQueryDto {
     maximum: 100
   })
   @IsOptional()
+  @Type(() => Number)
   @IsNumber()
   @Min(1)
   @Max(100)
@@ -193,6 +195,7 @@ export class CardsQueryDto {
     minimum: 0
   })
   @IsOptional()
+  @Type(() => Number)
   @IsNumber()
   @Min(0)
   offset?: number = 0;

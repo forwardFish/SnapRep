@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { AvatarGenerator } from '../common/utils/avatar-generator.util';
 import { JwtService } from '@nestjs/jwt';
 import { SupabaseApiService } from '../common/services/supabase-api.service';
 import { RegisterDto, LoginDto, OtpLoginDto, VerifyOtpDto, GoogleOAuthDto } from './dto/auth.dto';
@@ -44,19 +45,41 @@ export class SupabaseAuthService {
         },
       });
 
+      // 打印完整响应用于调试
+      logger.info(`Supabase signup response: ${JSON.stringify(authResponse)}`);
+
+      // 检查是否有错误
       if (authResponse.error_code || authResponse.error || authResponse.msg) {
+        logger.error(`Supabase signup error: ${JSON.stringify(authResponse)}`);
         throw new ResponseError(ErrorCodes.AUTH.REGISTRATION_FAILED);
+      }
+
+      // Supabase signup API 直接返回 user 对象，不是嵌套的 { user: {...} }
+      const userFromSupabase = authResponse.user || authResponse;
+
+      // 检查用户 ID 是否存在
+      if (!userFromSupabase.id) {
+        logger.error(`Supabase signup response missing user id: ${JSON.stringify(authResponse)}`);
+        throw new ResponseError(ErrorCodes.AUTH.REGISTRATION_FAILED);
+      }
+
+      // 检查邮箱确认状态
+      if (userFromSupabase.email_confirmed_at === null || userFromSupabase.confirmed_at === null) {
+        logger.warn(`⚠️ 用户邮箱未确认: ${registerDto.email}，Supabase可能要求邮箱确认后才能登录`);
       }
 
       // 创建或更新用户记录到我们的数据库
       const user = await this.createOrUpdateUser({
-        id: authResponse.user.id,
-        email: authResponse.user.email,
-        name: registerDto.name || authResponse.user.user_metadata?.name,
+        id: userFromSupabase.id,
+        email: userFromSupabase.email,
+        name: registerDto.name || userFromSupabase.user_metadata?.name,
       });
 
       // 生成我们自己的 JWT token
       const tokens = this.generateTokens({ userId: user.id });
+
+      // 如果用户没有头像，自动生成一个基于首字母的头像
+      const avatarUrl = user.avatar_url || AvatarGenerator.generateAvatarUrl(user.name, user.email);
 
       logger.info(`用户注册成功: ${registerDto.email}`);
 
@@ -66,7 +89,7 @@ export class SupabaseAuthService {
           id: user.id,
           email: user.email,
           name: user.name,
-          avatarUrl: user.avatar_url,
+          avatarUrl: avatarUrl,
         },
         expiresIn: 3600, // 1小时
       };
@@ -90,11 +113,16 @@ export class SupabaseAuthService {
       });
 
       if (authResponse.error_code || authResponse.error || authResponse.msg) {
+        logger.error(`❌ Supabase login failed for ${loginDto.email}`);
+        logger.error(`Error details: ${JSON.stringify(authResponse)}`);
         throw new ResponseError(ErrorCodes.AUTH.INVALID_CREDENTIALS);
       }
 
+      // Supabase token API 可能返回 { user: {...} } 或直接返回 user 对象
+      const userFromSupabase = authResponse.user || authResponse;
+
       // 获取用户信息
-      const user = await this.getUserFromDatabase(authResponse.user.id);
+      const user = await this.getUserFromDatabase(userFromSupabase.id);
 
       if (!user) {
         throw new ResponseError(ErrorCodes.AUTH.USER_ACCOUNT_NOT_FOUND);
@@ -102,6 +130,9 @@ export class SupabaseAuthService {
 
       // 生成我们自己的 JWT token
       const tokens = this.generateTokens({ userId: user.id });
+
+      // 如果用户没有头像，自动生成一个基于首字母的头像
+      const avatarUrl = user.avatar_url || AvatarGenerator.generateAvatarUrl(user.name, user.email);
 
       logger.info(`用户登录成功: ${loginDto.email}`);
 
@@ -111,7 +142,7 @@ export class SupabaseAuthService {
           id: user.id,
           email: user.email,
           name: user.name,
-          avatarUrl: user.avatar_url,
+          avatarUrl: avatarUrl,
         },
         expiresIn: 3600,
       };
@@ -174,11 +205,14 @@ export class SupabaseAuthService {
         throw new ResponseError(ErrorCodes.AUTH.OTP_VERIFICATION_FAILED);
       }
 
+      // Supabase verify API 可能返回 { user: {...} } 或直接返回 user 对象
+      const userFromSupabase = authResponse.user || authResponse;
+
       // 创建或获取用户信息
       const user = await this.createOrUpdateUser({
-        id: authResponse.user.id,
-        email: authResponse.user.email,
-        name: authResponse.user.user_metadata?.name,
+        id: userFromSupabase.id,
+        email: userFromSupabase.email,
+        name: userFromSupabase.user_metadata?.name,
       });
 
       // 生成我们自己的 JWT token
@@ -225,12 +259,15 @@ export class SupabaseAuthService {
         throw new ResponseError(ErrorCodes.AUTH.INVALID_CREDENTIALS);
       }
 
+      // Supabase token API 可能返回 { user: {...} } 或直接返回 user 对象
+      const userFromSupabase = authResponse.user || authResponse;
+
       // 创建或更新用户信息
       const user = await this.createOrUpdateUser({
-        id: authResponse.user.id,
-        email: authResponse.user.email,
-        name: authResponse.user.user_metadata?.name || authResponse.user.user_metadata?.full_name,
-        avatarUrl: authResponse.user.user_metadata?.avatar_url || authResponse.user.user_metadata?.picture,
+        id: userFromSupabase.id,
+        email: userFromSupabase.email,
+        name: userFromSupabase.user_metadata?.name || userFromSupabase.user_metadata?.full_name,
+        avatarUrl: userFromSupabase.user_metadata?.avatar_url || userFromSupabase.user_metadata?.picture,
       });
 
       // 生成我们自己的 JWT token
@@ -299,11 +336,14 @@ export class SupabaseAuthService {
         throw new ResponseError(ErrorCodes.AUTH.USER_ACCOUNT_NOT_FOUND);
       }
 
+      // 如果用户没有头像，自动生成一个基于首字母的头像
+      const avatarUrl = user.avatar_url || AvatarGenerator.generateAvatarUrl(user.name, user.email);
+
       return {
         id: user.id,
         email: user.email,
         name: user.name,
-        avatarUrl: user.avatar_url,
+        avatarUrl: avatarUrl,
         createdAt: user.created_at,
         updatedAt: user.updated_at,
       };
@@ -338,7 +378,14 @@ export class SupabaseAuthService {
       body: JSON.stringify(data),
     });
 
-    return await response.json();
+    const jsonResponse = await response.json();
+
+    // 添加详细日志
+    logger.info(`Supabase API call to ${endpoint}`);
+    logger.info(`HTTP Status: ${response.status}`);
+    logger.info(`Response: ${JSON.stringify(jsonResponse)}`);
+
+    return jsonResponse;
   }
 
   /**

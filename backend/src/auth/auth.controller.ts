@@ -313,14 +313,22 @@ export class AuthController {
   })
   async getCurrentUser(@Request() req): Promise<UserResponseDto> {
     try {
-      const userId = req.user.userId;
+      // req.user 是整个用户对象，不是 { userId: ... }
+      const userId = req.user?.id || req.user?.userId;
       logger.info(`获取用户信息请求: ${userId}`);
+
+      if (!userId) {
+        logger.error('❌ 无法从 req.user 获取用户ID');
+        logger.error(`req.user: ${JSON.stringify(req.user)}`);
+        throw new ResponseError(ErrorCodes.AUTH.USER_ACCOUNT_NOT_FOUND);
+      }
+
       const result = await this.supabaseAuthService.getCurrentUser(userId);
       logger.info(`获取用户信息成功: ${userId}`);
       return result;
     } catch (error) {
-      logger.error(`获取用户信息失败: ${req.user?.userId}`, error.stack);
-      throw new ResponseError(ErrorCodes.AUTH.GET_USER_INFO_FAILED, error, { userId: req.user?.userId });
+      logger.error(`获取用户信息失败: ${req.user?.id || req.user?.userId}`, error.stack);
+      throw new ResponseError(ErrorCodes.AUTH.GET_USER_INFO_FAILED, error, { userId: req.user?.id || req.user?.userId });
     }
   }
 

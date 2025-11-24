@@ -4,6 +4,8 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/providers/my_page_provider.dart';
 import '../../../core/services/supabase_service.dart';
+import '../../../core/widgets/initial_avatar.dart';
+import '../../../core/models/share_card.dart';
 import '../../../shared/widgets/bottom_navigation_bar.dart';
 import '../../../routes/app_routes.dart';
 import 'dart:async';
@@ -225,44 +227,12 @@ class _MyPageState extends State<MyPage> {
                 ),
                 child: Row(
                   children: [
-                    // Avatar with real user avatar or default
-                    Container(
-                      width: 60,
-                      height: 60,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: const Color(0xFF2C2C2C),
-                      ),
-                      child: ClipOval(
-                        child: provider.avatarUrl != null &&
-                                provider.avatarUrl!.isNotEmpty
-                            ? CachedNetworkImage(
-                                imageUrl: provider.avatarUrl!,
-                                fit: BoxFit.cover,
-                                placeholder: (context, url) => const Center(
-                                  child: Icon(
-                                    Icons.person,
-                                    color: Color(0xFFFFD700),
-                                    size: 32,
-                                  ),
-                                ),
-                                errorWidget: (context, url, error) =>
-                                    const Center(
-                                  child: Icon(
-                                    Icons.person,
-                                    color: Color(0xFFFFD700),
-                                    size: 32,
-                                  ),
-                                ),
-                              )
-                            : const Center(
-                                child: Icon(
-                                  Icons.person,
-                                  color: Color(0xFFFFD700),
-                                  size: 32,
-                                ),
-                              ),
-                      ),
+                    // Avatar with real user avatar or initial avatar fallback
+                    UserAvatar(
+                      avatarUrl: provider.avatarUrl,
+                      name: provider.userName ?? 'User',
+                      email: provider.userEmail,
+                      size: 60,
                     ),
 
                     const SizedBox(width: 16),
@@ -1015,59 +985,58 @@ class _MyPageState extends State<MyPage> {
     final weekDays =
         List.generate(7, (index) => startOfWeek.add(Duration(days: index)));
 
-    // Sample workout days (you can replace this with actual data from provider)
-    final workoutDays = {
-      DateTime(today.year, today.month, today.day - 2),
-      DateTime(today.year, today.month, today.day - 1),
-      DateTime(today.year, today.month, today.day),
-      DateTime(today.year, today.month, today.day + 1),
-    };
+    return Consumer<MyPageProvider>(
+      builder: (context, provider, child) {
+        // 从 provider 获取真实的训练日期
+        final workoutDates = provider.workoutDates;
 
-    return Column(
-      children: [
-        // Day headers based on actual dates
-        Row(
-          children: weekDays.map((date) {
-            final dayName = _getDayName(date.weekday);
-            return Expanded(
-              child: Center(
-                child: Text(
-                  dayName,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: Color(0xFF90A4AE),
+        return Column(
+          children: [
+            // Day headers based on actual dates
+            Row(
+              children: weekDays.map((date) {
+                final dayName = _getDayName(date.weekday);
+                return Expanded(
+                  child: Center(
+                    child: Text(
+                      dayName,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF90A4AE),
+                      ),
+                    ),
                   ),
-                ),
-              ),
-            );
-          }).toList(),
-        ),
+                );
+              }).toList(),
+            ),
 
-        const SizedBox(height: 8),
+            const SizedBox(height: 8),
 
-        // Calendar days row
-        Row(
-          children: weekDays.map((date) {
-            final isToday = _isSameDay(date, today);
-            final hasWorkout =
-                workoutDays.any((workoutDate) => _isSameDay(date, workoutDate));
+            // Calendar days row
+            Row(
+              children: weekDays.map((date) {
+                final isToday = _isSameDay(date, today);
+                // 检查这个日期是否有训练记录
+                final hasWorkout = workoutDates.any((workoutDate) => _isSameDay(date, workoutDate));
 
-            return Expanded(
-              child: GestureDetector(
-                onTap: hasWorkout
-                    ? () {
-                        // Navigate to workout details for this date
-                        Navigator.pushNamed(context, '/workout-details',
-                            arguments: {'date': date, 'isToday': isToday});
-                      }
-                    : null,
-                child: _buildWeeklyCalendarDay(date.day, hasWorkout, isToday),
-              ),
-            );
-          }).toList(),
-        ),
-      ],
+                return Expanded(
+                  child: GestureDetector(
+                    onTap: hasWorkout
+                        ? () {
+                            // Navigate to workout details for this date
+                            Navigator.pushNamed(context, '/workout-details',
+                                arguments: {'date': date, 'isToday': isToday});
+                          }
+                        : null,
+                    child: _buildWeeklyCalendarDay(date.day, hasWorkout, isToday),
+                  ),
+                );
+              }).toList(),
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -1173,76 +1142,136 @@ class _MyPageState extends State<MyPage> {
 
   /// My Collection Section - 只显示3个卡片，可点击查看更多
   Widget _buildCollectionSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            const Text(
-              'My Collection (12 Cards)',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-                color: Color(0xFF2C3E50),
-              ),
-            ),
-            GestureDetector(
-              onTap: () {
-                Navigator.pushNamed(context, AppRoutes.collectionDetails);
-              },
-              child: const Text(
-                'View All',
+    return Consumer<MyPageProvider>(
+      builder: (context, provider, _) {
+        // 如果用户未登录或没有卡片，显示空状态
+        if (!provider.isUserLoggedIn || provider.allCards.isEmpty) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'My Collection (0 Cards)',
                 style: TextStyle(
-                  fontSize: 14,
+                  fontSize: 18,
                   fontWeight: FontWeight.w600,
-                  color: Color(0xFFFFD700),
+                  color: Color(0xFF2C3E50),
                 ),
+              ),
+              const SizedBox(height: 16),
+              Container(
+                height: 160,
+                decoration: BoxDecoration(
+                  color: Colors.grey[100],
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.collections_outlined,
+                        size: 48,
+                        color: Colors.grey[400],
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        provider.isUserLoggedIn
+                            ? 'No cards collected yet'
+                            : 'Login to view your collection',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.grey[600],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          );
+        }
+
+        // 显示真实的卡片数据（最多3个）
+        final displayCards = provider.allCards.take(3).toList();
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'My Collection (${provider.totalCards} Cards)',
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF2C3E50),
+                  ),
+                ),
+                GestureDetector(
+                  onTap: () {
+                    Navigator.pushNamed(context, AppRoutes.collectionDetails);
+                  },
+                  child: const Text(
+                    'View All',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFFFFD700),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 16),
+
+            // 显示真实的卡片（最多3个）
+            SizedBox(
+              height: 160,
+              child: Row(
+                children: [
+                  for (int i = 0; i < displayCards.length; i++) ...[
+                    if (i > 0) const SizedBox(width: 12),
+                    Expanded(
+                      child: _buildRealCollectionCard(displayCards[i]),
+                    ),
+                  ],
+                ],
               ),
             ),
           ],
-        ),
-
-        const SizedBox(height: 16),
-
-        // 只显示3个卡片
-        SizedBox(
-          height: 160, // 固定高度
-          child: Row(
-            children: [
-              Expanded(
-                child: _buildCollectionCard('Chair Squats', 'FINE',
-                    'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80'),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _buildCollectionCard('Push-ups', 'COMMON',
-                    'https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80'),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _buildCollectionCard('Bag Lifts', 'RARE',
-                    'https://images.unsplash.com/photo-1548036328-c9fa89d128fa?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80'),
-              ),
-            ],
-          ),
-        ),
-      ],
+        );
+      },
     );
   }
 
-  Widget _buildCollectionCard(String title, String rarity, String imageUrl) {
+  /// 构建真实的卡片显示
+  Widget _buildRealCollectionCard(ShareCard card) {
     final rarityColors = {
-      'COMMON': {
+      RarityLevel.common: {
         'bg': const Color(0xFFE8F5E8),
         'text': const Color(0xFF2E7D32)
       },
-      'FINE': {'bg': const Color(0xFFE3F2FD), 'text': const Color(0xFF1565C0)},
-      'RARE': {'bg': const Color(0xFFF3E5F5), 'text': const Color(0xFF7B1FA2)},
-      'EPIC': {'bg': const Color(0xFFFFF3E0), 'text': const Color(0xFFF57C00)},
+      RarityLevel.uncommon: {
+        'bg': const Color(0xFFE3F2FD),
+        'text': const Color(0xFF1565C0)
+      },
+      RarityLevel.rare: {
+        'bg': const Color(0xFFF3E5F5),
+        'text': const Color(0xFF7B1FA2)
+      },
+      RarityLevel.epic: {
+        'bg': const Color(0xFFFFF3E0),
+        'text': const Color(0xFFF57C00)
+      },
+      RarityLevel.legendary: {
+        'bg': const Color(0xFFFFEBEE),
+        'text': const Color(0xFFC62828)
+      },
     };
 
-    final colors = rarityColors[rarity] ?? rarityColors['COMMON']!;
+    final colors = rarityColors[card.rarity.level] ?? rarityColors[RarityLevel.common]!;
 
     return Container(
       decoration: BoxDecoration(
@@ -1251,79 +1280,79 @@ class _MyPageState extends State<MyPage> {
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.08),
-            blurRadius: 32,
-            offset: const Offset(0, 8),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(20),
-        child: Column(
-          children: [
-            // Image Area (70%)
-            Expanded(
-              flex: 7,
-              child: Container(
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  image: DecorationImage(
-                    image: NetworkImage(imageUrl),
-                    fit: BoxFit.cover,
-                  ),
-                ),
-                child: Stack(
-                  children: [
-                    // Rarity Badge
-                    Positioned(
-                      top: 12,
-                      left: 12,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: colors['bg'],
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Text(
-                          rarity,
-                          style: TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w600,
-                            color: colors['text'],
-                            letterSpacing: 0.5,
-                          ),
-                        ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Card Image
+          Expanded(
+            child: Container(
+              decoration: BoxDecoration(
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+                color: Colors.grey[200],
+              ),
+              child: card.imageUrl.isNotEmpty
+                  ? ClipRRect(
+                      borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+                      child: Image.network(
+                        card.imageUrl,
+                        fit: BoxFit.cover,
+                        width: double.infinity,
+                        errorBuilder: (context, error, stackTrace) {
+                          return Center(
+                            child: Icon(
+                              Icons.fitness_center,
+                              size: 40,
+                              color: Colors.grey[400],
+                            ),
+                          );
+                        },
+                      ),
+                    )
+                  : Center(
+                      child: Icon(
+                        Icons.fitness_center,
+                        size: 40,
+                        color: Colors.grey[400],
                       ),
                     ),
-                  ],
-                ),
-              ),
             ),
-            // Title Area (30%)
-            Expanded(
-              flex: 3,
-              child: Container(
-                padding: const EdgeInsets.all(12),
-                child: Center(
+          ),
+
+          // Card Info
+          Padding(
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Rarity Badge
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: colors['bg'],
+                    borderRadius: BorderRadius.circular(8),
+                  ),
                   child: Text(
-                    title,
-                    style: const TextStyle(
-                      fontSize: 12,
+                    card.rarity.level.displayName.toUpperCase(),
+                    style: TextStyle(
+                      fontSize: 10,
                       fontWeight: FontWeight.w600,
-                      color: Color(0xFF2C3E50),
+                      color: colors['text'],
                     ),
-                    textAlign: TextAlign.center,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
-              ),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
+
 
   String _getCurrentTime() {
     final now = DateTime.now();

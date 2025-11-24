@@ -41,6 +41,7 @@ import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
     GqlAuthGuard,
     JwtAuthGuard,       // 添加JwtAuthGuard
     PasswordService,
+    ConfigService,      // 提供 ConfigService
   ],
   exports: [
     GqlAuthGuard,
