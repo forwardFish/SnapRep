@@ -8,6 +8,14 @@ function mapToHttpStatus(error: ResponseError): HttpStatus {
   if (error.httpStatus) return error.httpStatus;
 
   const statusMap: Record<number, HttpStatus> = {
+    // Recommendation (10000-10999)
+    10000: HttpStatus.INTERNAL_SERVER_ERROR, // RECOMMENDATION_GENERATION_FAILED
+    10001: HttpStatus.NOT_FOUND,             // RECOMMENDATION_NO_EXERCISES_FOUND
+    10002: HttpStatus.BAD_REQUEST,           // RECOMMENDATION_INVALID_PARAMETERS
+    10003: HttpStatus.INTERNAL_SERVER_ERROR, // RECOMMENDATION_REPLACE_FAILED
+    10004: HttpStatus.NOT_FOUND,             // RECOMMENDATION_SESSION_NOT_FOUND
+    10005: HttpStatus.INTERNAL_SERVER_ERROR, // RECOMMENDATION_ALGORITHM_ERROR
+
     // Equipment
     8000: HttpStatus.NOT_FOUND,
     8001: HttpStatus.CONFLICT,

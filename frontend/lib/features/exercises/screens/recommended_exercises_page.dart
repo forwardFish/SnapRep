@@ -410,8 +410,56 @@ class _RecommendedExercisesPageState extends State<RecommendedExercisesPage> {
     debugPrint(
         '📍 Navigating to reference workout page for: ${popularExercise.name} (ID: ${popularExercise.id})');
 
-    // 将 PopularExerciseDto 转换为 Exercise 对象
-    // 因为 ReferenceWorkoutPage 需要 Exercise 类型
+    // Convert PopularExerciseDto to Exercise object using REAL DATA from backend
+    // Parse primaryMuscle and intentType
+    TargetMuscle primaryMuscle;
+    try {
+      primaryMuscle = TargetMuscle.values.firstWhere(
+        (m) => m.name.toLowerCase() == popularExercise.primaryMuscle.toLowerCase() ||
+               m.code.toLowerCase() == popularExercise.primaryMuscle.toLowerCase(),
+        orElse: () => TargetMuscle.fullBody,
+      );
+    } catch (e) {
+      primaryMuscle = TargetMuscle.fullBody;
+    }
+
+    WorkoutIntent intentType;
+    try {
+      intentType = WorkoutIntent.values.firstWhere(
+        (i) => i.name.toLowerCase() == popularExercise.intentType.toLowerCase() ||
+               i.code.toLowerCase() == popularExercise.intentType.toLowerCase(),
+        orElse: () => WorkoutIntent.stretch,
+      );
+    } catch (e) {
+      intentType = WorkoutIntent.stretch;
+    }
+
+    ExerciseDifficulty difficulty;
+    try {
+      difficulty = ExerciseDifficulty.values.firstWhere(
+        (d) => d.name.toLowerCase() == popularExercise.difficulty.toLowerCase(),
+        orElse: () => ExerciseDifficulty.intermediate,
+      );
+    } catch (e) {
+      difficulty = ExerciseDifficulty.intermediate;
+    }
+
+    // Parse tags
+    List<ExerciseTag> parsedTags = popularExercise.tags.map((tag) {
+      try {
+        return ExerciseTag.values.firstWhere(
+          (t) => t.name.toLowerCase() == tag.toLowerCase(),
+          orElse: () => ExerciseTag.handsFreee,
+        );
+      } catch (e) {
+        return ExerciseTag.handsFreee;
+      }
+    }).toList();
+
+    if (parsedTags.isEmpty) {
+      parsedTags = [ExerciseTag.handsFreee];
+    }
+
     final exercise = Exercise(
       id: popularExercise.id,
       code: popularExercise.code,
@@ -419,56 +467,55 @@ class _RecommendedExercisesPageState extends State<RecommendedExercisesPage> {
       description: popularExercise.description.isNotEmpty
           ? popularExercise.description
           : 'An effective training exercise that helps improve your fitness',
-      primaryMuscle: TargetMuscle.fullBody, // 默认值,可以根据实际情况调整
-      secondaryMuscles: [],
-      intentType: WorkoutIntent.stretch,
-      difficulty: ExerciseDifficulty.intermediate,
+      primaryMuscle: primaryMuscle,
+      secondaryMuscles: popularExercise.secondaryMuscles.map((muscle) {
+        try {
+          return TargetMuscle.values.firstWhere(
+            (m) => m.name.toLowerCase() == muscle.toLowerCase(),
+            orElse: () => TargetMuscle.fullBody,
+          );
+        } catch (e) {
+          return TargetMuscle.fullBody;
+        }
+      }).toList(),
+      intentType: intentType,
+      difficulty: difficulty,
       durationSeconds: popularExercise.durationSeconds,
-      sets: 3,
-      repetitions: 12,
-      thumbnailUrl:
-          popularExercise.thumbnailUrl ?? popularExercise.demoImageUrl,
+      sets: popularExercise.sets,
+      repetitions: popularExercise.sets * 10, // Estimate based on sets
+      thumbnailUrl: popularExercise.thumbnailUrl ?? popularExercise.demoImageUrl,
       demoImageUrl: popularExercise.demoImageUrl,
-      demoVideoUrl: null, // PopularExerciseDto 没有视频URL
-      keyPoints: [
-        'Maintain proper posture throughout the exercise',
-        'Breathe evenly and avoid holding your breath',
-        'Focus on form rather than speed',
-        'Progress gradually and listen to your body',
-      ],
-      safetyWarnings: [
-        'Stop immediately if you feel any discomfort or pain',
-        'Protect your joints by avoiding hyperextension',
-        'Avoid overtraining - rest is important for recovery',
-        'Warm up properly before starting the exercise',
-      ],
-      benefits:
-          'Improves physical fitness, enhances overall strength, increases flexibility, and promotes better body awareness',
-      tags: [ExerciseTag.handsFreee],
+      demoVideoUrl: popularExercise.demoVideoUrl,
+      keyPoints: popularExercise.keyPoints.isNotEmpty
+          ? popularExercise.keyPoints
+          : [
+              'Maintain proper posture throughout the exercise',
+              'Breathe evenly and avoid holding your breath',
+              'Focus on form rather than speed',
+              'Progress gradually and listen to your body',
+            ],
+      safetyWarnings: popularExercise.safetyWarnings.isNotEmpty
+          ? popularExercise.safetyWarnings
+          : [
+              'Stop immediately if you feel any discomfort or pain',
+              'Protect your joints by avoiding hyperextension',
+              'Avoid overtraining - rest is important for recovery',
+              'Warm up properly before starting the exercise',
+            ],
+      benefits: popularExercise.benefits,
+      tags: parsedTags,
     );
 
-    // 直接跳转到 ModernWorkoutResultPage (合并后的统一页面)
+    // Navigate to ModernWorkoutResultPage with real exercise data
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => ModernWorkoutResultPage(
           exercise: exercise,
-          exercises: [exercise], // 单个动作也可以作为列表传入
+          exercises: [exercise],
           currentExerciseIndex: 0,
         ),
       ),
     );
-
-    // 之前测试的 ModernWorkoutPage (来自 modern_workout_page_fixed.dart)
-    // Navigator.push(
-    //   context,
-    //   MaterialPageRoute(
-    //     builder: (context) => ModernWorkoutPage(
-    //       exercise: exercise,
-    //       exercises: [exercise],
-    //       currentExerciseIndex: 0,
-    //     ),
-    //   ),
-    // );
   }
 }

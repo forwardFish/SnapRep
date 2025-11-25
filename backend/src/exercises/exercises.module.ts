@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { ExercisesService } from './exercises.service';
 // import { ExercisesResolver } from './exercises.resolver';  // Commented out - using REST API instead of GraphQL
 import { ExercisesController } from './exercises.controller';
+import { ExercisesCrudController } from './exercises-crud.controller';
 import { ExercisesDao } from './exercises.dao';
 import { WorkoutRecommendationService } from './services/workout-recommendation.service';
 import { ExerciseMatchingService } from './services/exercise-matching.service';
@@ -16,7 +17,7 @@ import { CommonModule } from '../common/common.module';
     WorkoutRecommendationService,
     ExerciseMatchingService,
   ],
-  controllers: [ExercisesController],
+  controllers: [ExercisesController, ExercisesCrudController],
   exports: [ExercisesService, WorkoutRecommendationService],
 })
 export class ExercisesModule {}

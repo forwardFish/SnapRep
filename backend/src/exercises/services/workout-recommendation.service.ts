@@ -1,7 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ExercisesDao } from '../exercises.dao';
+import { SupabaseApiService } from '../../common/services/supabase-api.service';
 import { QuickRecommendationDto, Difficulty, IntentType, PrimaryMuscle } from '../dto/exercise-recommendation.dto';
 import { logger } from '../../common/logger/logger';
+import { ResponseError } from '../../exception/response-error';
+import { ErrorCodes } from '../../exception/error-codes';
 
 
 interface ExerciseWithScore {
@@ -31,7 +34,10 @@ interface UserPreferences {
 export class WorkoutRecommendationService {
   // private readonly logger = new Logger(WorkoutRecommendationService.name);
 
-  constructor(private readonly exercisesDao: ExercisesDao) {}
+  constructor(
+    private readonly exercisesDao: ExercisesDao,
+    private readonly supabaseApi: SupabaseApiService,
+  ) {}
 
   /**
    * 生成快速推荐
@@ -54,19 +60,53 @@ export class WorkoutRecommendationService {
       // 支持 scenarioCode 和 scenario 两种字段名（向后兼容）
       const scenario = dto.scenarioCode || dto.scenario;
 
-      // 2. 筛选可用动作
-      const availableExercises = await this.exercisesDao.findBySmartCriteria({
+      // 2. 直接使用 supabaseApi 筛选可用动作
+      const availableExercises = await this.findExercisesBySmartCriteria({
         intent: primaryIntent || undefined,
         equipment: equipment,
         scenario: scenario,
         targetMuscles: dto.targetMuscles,
         difficulty: dto.difficulty,
         excludeIds: dto.excludeExerciseIds,
-        limit: 50 // 获取更多候选以便智能选择
+        limit: 50
       });
 
       if (availableExercises.length === 0) {
-        throw new Error('No exercises found matching the criteria');
+        // 提供详细的错误信息,帮助用户理解为什么没有匹配结果
+        const errorDetails = {
+          intent: primaryIntent,
+          equipment: equipment,
+          scenario: scenario,
+          targetMuscles: dto.targetMuscles,
+          difficulty: dto.difficulty,
+        };
+
+        const suggestions = [];
+        if (scenario) suggestions.push('尝试选择不同的场景');
+        if (equipment && equipment.length > 0 && !equipment.includes('none')) {
+          suggestions.push('尝试选择其他器材或选择"无器材"');
+        }
+        if (dto.targetMuscles && dto.targetMuscles.length > 0) {
+          suggestions.push('尝试选择不同的目标部位');
+        }
+        if (dto.difficulty) {
+          suggestions.push('尝试选择不同的难度等级');
+        }
+
+        logger.warn(`未找到匹配的训练动作: ${JSON.stringify(errorDetails)}`);
+
+        // ✅ 使用 ResponseError 和 ErrorCodes
+        // 注意：第二个参数传递字符串（而不是 new Error），这样详细错误信息会成为 ResponseError 的 message
+        throw new ResponseError(
+          ErrorCodes.RECOMMENDATION.NO_EXERCISES_FOUND,
+          undefined,
+          {
+            operation: 'generateQuickRecommendation',
+            resource: 'exercises',
+            ...errorDetails,
+            suggestions,
+          }
+        );
       }
 
       // 3. 智能选择算法
@@ -92,7 +132,216 @@ export class WorkoutRecommendationService {
       return this.formatRecommendationResponse(selectedExercises, alternatives, dto);
 
     } catch (error) {
-      logger.error(`生成快速推荐失败: ${error.message}`, error.stack);
+      // ✅ 如果是 ResponseError，直接重新抛出，不做任何包装
+      if (error instanceof ResponseError) {
+        throw error;
+      }
+
+      // ✅ 其他未知错误，包装成系统错误
+      logger.error(`生成快速推荐失败（未知错误）: ${error.message}`, error.stack);
+      throw new ResponseError(
+        ErrorCodes.RECOMMENDATION.GENERATION_FAILED,
+        error.message || '未知错误',
+        {
+          operation: 'generateQuickRecommendation',
+          originalError: error.name,
+          dto
+        }
+      );
+    }
+  }
+
+  /**
+   * 使用 supabaseApi 智能筛选练习动作
+   * 类似于 getPopularExercisesFromDB 的查询方式
+   */
+  private async findExercisesBySmartCriteria(criteria: {
+    intent?: string;
+    equipment?: string[];
+    scenario?: string;
+    targetMuscles?: string[];
+    difficulty?: string;
+    excludeIds?: string[];
+    limit?: number;
+  }): Promise<any[]> {
+    try {
+      logger.info(`智能筛选动作: ${JSON.stringify(criteria)}`);
+
+      // 复合肌群映射表
+      const compositeMuscleMap: Record<string, string[]> = {
+        'CHEST_BACK': ['CHEST', 'BACK'],
+        'NECK_SHOULDER': ['NECK_SHOULDER'],
+        'ARMS': ['ARMS'],
+        'LEGS': ['LEGS'],
+        'CORE': ['CORE'],
+        'GLUTES': ['GLUTES'],
+        'FULL_BODY': ['FULL_BODY'],
+      };
+
+      // 1. 展开复合肌群
+      let expandedMuscles: string[] = [];
+      if (criteria.targetMuscles && criteria.targetMuscles.length > 0) {
+        expandedMuscles = criteria.targetMuscles.flatMap(muscle =>
+          compositeMuscleMap[muscle] || [muscle]
+        );
+        logger.info(`Expanded target muscles: ${criteria.targetMuscles} -> ${expandedMuscles}`);
+      }
+
+      // 2. 获取 scenario 关联的 exercise_ids
+      let exerciseIdsFromScenario: string[] | null = null;
+      if (criteria.scenario) {
+        const scenarioRecords = await this.supabaseApi.get('scenarios', {
+          code: `eq.${criteria.scenario}`,
+          is_active: true,
+        });
+
+        if (scenarioRecords.length > 0) {
+          const scenarioId = scenarioRecords[0].id;
+          const exerciseScenarios = await this.supabaseApi.get('exercise_scenarios', {
+            scenario_id: `eq.${scenarioId}`,
+          });
+          exerciseIdsFromScenario = exerciseScenarios.map((es: any) => es.exercise_id);
+          logger.info(`Found ${exerciseIdsFromScenario.length} exercises for scenario: ${criteria.scenario}`);
+        } else{
+          exerciseIdsFromScenario = [];
+        }
+      }
+
+      // 3. 获取 equipment 关联的 exercise_ids
+      let exerciseIdsFromEquipment: string[] | null = null;
+      if (criteria.equipment && criteria.equipment.length > 0) {
+        const equipmentRecords = await this.supabaseApi.get('equipment', {
+          code: `in.(${criteria.equipment.join(',')})`,
+          is_active: true,
+        });
+
+        if (equipmentRecords.length > 0) {
+          const equipmentIds = equipmentRecords.map((eq: any) => eq.id);
+          const exerciseEquipment = await this.supabaseApi.get('exercise_equipment', {
+            equipment_id: `in.(${equipmentIds.join(',')})`,
+          });
+          exerciseIdsFromEquipment = exerciseEquipment.map((ee: any) => ee.exercise_id);
+          logger.info(`Found ${exerciseIdsFromEquipment.length} exercises for equipment: ${criteria.equipment.join(',')}`);
+        }
+      }
+
+      // 4. 合并 scenario 和 equipment 的 exercise_ids (取交集或并集)
+      let finalExerciseIds: string[] | null = null;
+      if (exerciseIdsFromScenario && exerciseIdsFromEquipment) {
+        finalExerciseIds = exerciseIdsFromScenario.filter(id =>
+          exerciseIdsFromEquipment!.includes(id)
+        );
+        logger.info(`Intersection: ${finalExerciseIds.length} exercises`);
+
+        // 如果交集为空,放宽为并集
+        if (finalExerciseIds.length === 0 && exerciseIdsFromEquipment) {
+          logger.warn('No intersection, using equipment only');
+          finalExerciseIds = exerciseIdsFromEquipment;
+        }
+      } else if (exerciseIdsFromScenario) {
+        finalExerciseIds = exerciseIdsFromScenario;
+      } else if (exerciseIdsFromEquipment) {
+        finalExerciseIds = exerciseIdsFromEquipment;
+      }
+
+      // 5. 构建 supabaseApi 查询 filters
+      const filters: Record<string, any> = {
+        is_active: 'eq.true',
+      };
+
+      if (finalExerciseIds && finalExerciseIds.length > 0) {
+        filters.id = `in.(${finalExerciseIds.join(',')})`;
+      } else if (finalExerciseIds && finalExerciseIds.length === 0) {
+        logger.warn('No exercises match scenario+equipment');
+        return [];
+      }
+
+      if (criteria.intent) {
+        filters.intent_type = `eq.${criteria.intent}`;
+      }
+
+      if (criteria.difficulty) {
+        filters.difficulty = `eq.${criteria.difficulty}`;
+      }
+
+      if (expandedMuscles.length > 0) {
+        filters.primary_muscle = `in.(${expandedMuscles.join(',')})`;
+      }
+
+      // 6. 使用 supabaseApi.get() 查询 exercises 表
+      let exercises = await this.supabaseApi.get(
+        'exercises',
+        filters,
+        {
+          orderBy: 'created_at.desc',
+          limit: criteria.limit || 50,
+        }
+      );
+
+      logger.info(`Found ${exercises.length} exercises from supabaseApi`);
+
+      // 7. 后处理: secondary_muscles 过滤
+      if (expandedMuscles.length > 0 && exercises.length > 0) {
+        exercises = exercises.filter((ex: any) => {
+          const primaryMatch = expandedMuscles.includes(ex.primary_muscle);
+          const secondaryMatch = ex.secondary_muscles && Array.isArray(ex.secondary_muscles) &&
+            ex.secondary_muscles.some((sm: string) => expandedMuscles.includes(sm));
+          return primaryMatch || secondaryMatch;
+        });
+        logger.info(`After secondary_muscles filtering: ${exercises.length} exercises`);
+      }
+
+      // 8. 如果仍然没有结果,放宽条件(去掉intent和difficulty)
+      if (exercises.length === 0 && (criteria.intent || criteria.difficulty)) {
+        logger.warn('Relaxing constraints (removing intent/difficulty)');
+
+        const relaxedFilters: Record<string, any> = {
+          is_active: 'eq.true',
+        };
+
+        if (finalExerciseIds && finalExerciseIds.length > 0) {
+          relaxedFilters.id = `in.(${finalExerciseIds.join(',')})`;
+        }
+
+        if (expandedMuscles.length > 0) {
+          relaxedFilters.primary_muscle = `in.(${expandedMuscles.join(',')})`;
+        }
+
+        exercises = await this.supabaseApi.get(
+          'exercises',
+          relaxedFilters,
+          {
+            orderBy: 'created_at.desc',
+            limit: criteria.limit || 50,
+          }
+        );
+
+        logger.info(`After relaxed query: ${exercises.length} exercises`);
+      }
+
+      // 9. 转换数据格式 (统一 camelCase)
+      return exercises.map((exercise: any) => ({
+        id: exercise.id,
+        code: exercise.code,
+        name: exercise.name,
+        description: exercise.description,
+        primaryMuscle: exercise.primary_muscle,
+        secondaryMuscles: exercise.secondary_muscles || [],
+        intentType: exercise.intent_type,
+        difficulty: exercise.difficulty,
+        defaultDuration: exercise.default_duration || 60,
+        defaultSets: exercise.default_sets || 1,
+        durationType: exercise.duration_type || 'SECONDS',
+        demoImageUrl: exercise.demo_image_url,
+        demoVideoUrl: exercise.demo_video_url,
+        tags: exercise.tags || [],
+        isActive: exercise.is_active,
+        createdAt: exercise.created_at,
+        updatedAt: exercise.updated_at,
+      }));
+
+    } catch (error) {
+      logger.error(`智能筛选失败: ${error.message}`);
       throw error;
     }
   }

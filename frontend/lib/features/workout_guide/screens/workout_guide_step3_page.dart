@@ -13,6 +13,9 @@ class WorkoutGuideStep3Page extends StatefulWidget {
 }
 
 class _WorkoutGuideStep3PageState extends State<WorkoutGuideStep3Page> {
+  // 跟踪每个独立身体部位的选择状态
+  final Set<String> _selectedBodyParts = {};
+
   @override
   void initState() {
     super.initState();
@@ -267,28 +270,29 @@ class _WorkoutGuideStep3PageState extends State<WorkoutGuideStep3Page> {
   /// Build body parts selection list (right side)
   Widget _buildBodyPartsList(WorkoutGuideProvider provider) {
     final bodyParts = [
-      {'name': 'Neck', 'value': 'NECK_SHOULDER'},
-      {'name': 'Pecs', 'value': 'CHEST_BACK'},
-      {'name': 'Arms', 'value': 'ARMS'},
-      {'name': 'Belly', 'value': 'CORE'},
-      {'name': 'Back', 'value': 'CHEST_BACK'},
-      {'name': 'Legs', 'value': 'LEGS'},
-      {'name': 'Knees', 'value': 'LEGS'},
-      {'name': 'Lower back', 'value': 'CORE'},
+      {'name': 'Neck', 'value': 'NECK_SHOULDER', 'uniqueId': 'neck'},
+      {'name': 'Pecs', 'value': 'CHEST_BACK', 'uniqueId': 'pecs'},
+      {'name': 'Arms', 'value': 'ARMS', 'uniqueId': 'arms'},
+      {'name': 'Belly', 'value': 'CORE', 'uniqueId': 'belly'},
+      {'name': 'Back', 'value': 'CHEST_BACK', 'uniqueId': 'back'},
+      {'name': 'Legs', 'value': 'LEGS', 'uniqueId': 'legs'},
+      {'name': 'Knees', 'value': 'LEGS', 'uniqueId': 'knees'},
+      {'name': 'Lower back', 'value': 'CORE', 'uniqueId': 'lower_back'},
     ];
 
     return SingleChildScrollView(
       child: Column(
         children: bodyParts.map((part) {
-          final isSelected = _isBodyPartSelected(provider, part['value']!);
+          final isSelected = _selectedBodyParts.contains(part['uniqueId']!);
           return Container(
             width: double.infinity,
             margin: const EdgeInsets.only(bottom: 10),
             child: _buildBodyPartButton(
               name: part['name']!,
               value: part['value']!,
+              uniqueId: part['uniqueId']!,
               isSelected: isSelected,
-              onTap: () => _onBodyPartTapped(provider, part['value']!),
+              onTap: () => _onBodyPartTapped(provider, part['value']!, part['uniqueId']!),
             ),
           );
         }).toList(),
@@ -300,6 +304,7 @@ class _WorkoutGuideStep3PageState extends State<WorkoutGuideStep3Page> {
   Widget _buildBodyPartButton({
     required String name,
     required String value,
+    required String uniqueId,
     required bool isSelected,
     required VoidCallback onTap,
   }) {
@@ -342,26 +347,35 @@ class _WorkoutGuideStep3PageState extends State<WorkoutGuideStep3Page> {
 
   /// Check if body part is selected
   bool _isBodyPartSelected(WorkoutGuideProvider provider, String bodyPartValue) {
-    // Map body part values to TargetMuscle enum values
+    // Map body part values to TargetMuscle enum name (camelCase)
     final targetMuscleEnumMap = {
-      'NECK_SHOULDER': ['NECK_SHOULDER'],
-      'CHEST_BACK': ['CHEST_BACK'],
-      'ARMS': ['ARMS'],
-      'CORE': ['CORE'],
-      'LEGS': ['LEGS'],
-      'FULL_BODY': ['FULL_BODY'],
-      'GLUTES': ['GLUTES'],
-      'CALVES': ['CALVES'],
+      'NECK_SHOULDER': ['neckShoulder'],  // ✅ 使用小驼峰
+      'CHEST_BACK': ['chestBack'],
+      'ARMS': ['arms'],
+      'CORE': ['core'],
+      'LEGS': ['legs'],
+      'FULL_BODY': ['fullBody'],
+      'GLUTES': ['glutes'],
+      'CALVES': ['calves'],
     };
 
-    final enumValues = targetMuscleEnumMap[bodyPartValue] ?? [];
+    final enumNames = targetMuscleEnumMap[bodyPartValue] ?? [];
     return provider.selectedTargetMuscles.any(
-      (muscle) => enumValues.contains(muscle.name),
+      (muscle) => enumNames.contains(muscle.name),
     );
   }
 
   /// Handle body part tap
-  void _onBodyPartTapped(WorkoutGuideProvider provider, String bodyPartValue) {
+  void _onBodyPartTapped(WorkoutGuideProvider provider, String bodyPartValue, String uniqueId) {
+    setState(() {
+      // 切换本地选择状态
+      if (_selectedBodyParts.contains(uniqueId)) {
+        _selectedBodyParts.remove(uniqueId);
+      } else {
+        _selectedBodyParts.add(uniqueId);
+      }
+    });
+
     // Map body part values to TargetMuscle enum values
     final targetMuscleEnumMap = {
       'NECK_SHOULDER': 'neckShoulder',
@@ -411,45 +425,60 @@ class _WorkoutGuideStep3PageState extends State<WorkoutGuideStep3Page> {
     final isEnabled = provider.canGenerateWorkout;
     final isGenerating = provider.isGeneratingWorkout;
 
-    return ElevatedButton(
-      onPressed: isEnabled && !isGenerating ? () => _generateWorkout(provider) : null,
-      style: ElevatedButton.styleFrom(
-        backgroundColor: isEnabled ? const Color(0xFFFFD700) : Colors.grey.shade300,
-        foregroundColor: isEnabled ? Colors.white : Colors.grey.shade500,
-        elevation: isEnabled ? 8 : 0,
-        shadowColor: isEnabled ? const Color(0xFFFFD700).withOpacity(0.3) : null,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(28),
-        ),
-        minimumSize: const Size(0, 56),
-      ),
-      child: isGenerating
-        ? const SizedBox(
-            width: 20,
-            height: 20,
-            child: CircularProgressIndicator(
-              color: Colors.white,
-              strokeWidth: 2,
+    // 🔍 临时调试信息
+    debugPrint('🔍 Generate button state:');
+    debugPrint('  isStep1Valid: ${provider.isStep1Valid}');
+    debugPrint('  isStep2Valid: ${provider.isStep2Valid}');
+    debugPrint('  isStep3Valid: ${provider.isStep3Valid}');
+    debugPrint('  canGenerateWorkout: $isEnabled');
+    debugPrint('  selectedIntents: ${provider.selectedIntents.map((i) => i.displayName).toList()}');
+    debugPrint('  selectedScenario: ${provider.selectedScenario?.name}');
+    debugPrint('  selectedEquipment: ${provider.selectedEquipment.map((e) => e.name).toList()}');
+    debugPrint('  selectedTargetMuscles: ${provider.selectedTargetMuscles.map((m) => m.displayName).toList()}');
+
+    return Column(
+      children: [
+        ElevatedButton(
+          onPressed: isEnabled && !isGenerating ? () => _generateWorkout(provider) : null,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: isEnabled ? const Color(0xFFFFD700) : Colors.grey.shade300,
+            foregroundColor: isEnabled ? Colors.white : Colors.grey.shade500,
+            elevation: isEnabled ? 8 : 0,
+            shadowColor: isEnabled ? const Color(0xFFFFD700).withOpacity(0.3) : null,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(28),
             ),
-          )
-        : Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(
-                Icons.auto_awesome,
-                size: 18,
-              ),
-              const SizedBox(width: 8),
-              Text(
-                'Generate Plan',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: isEnabled ? Colors.white : Colors.grey.shade500,
-                ),
-              ),
-            ],
+            minimumSize: const Size(0, 56),
           ),
+          child: isGenerating
+            ? const SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(
+                  color: Colors.white,
+                  strokeWidth: 2,
+                ),
+              )
+            : Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(
+                    Icons.auto_awesome,
+                    size: 18,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Generate Plan',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: isEnabled ? Colors.white : Colors.grey.shade500,
+                    ),
+                  ),
+                ],
+              ),
+        ),
+      ],
     );
   }
 
@@ -457,15 +486,28 @@ class _WorkoutGuideStep3PageState extends State<WorkoutGuideStep3Page> {
   Future<void> _generateWorkout(WorkoutGuideProvider provider) async {
     // Validate current step
     if (!provider.canGenerateWorkout) {
-      _showErrorSnackBar('Please select at least one target area');
+      _showErrorSnackBar('请至少选择一个目标部位');
       return;
     }
 
     try {
+      // Clear any previous errors
+      provider.setError(null);
+
       // Generate workout recommendation
       final workoutSession = await provider.generateWorkoutRecommendation();
 
-      if (workoutSession != null) {
+      if (workoutSession != null && workoutSession['exercises'] != null) {
+        final exercises = workoutSession['exercises'] as List;
+
+        if (exercises.isEmpty) {
+          // 没有找到训练动作 - 显示友好提示
+          _showWarningSnackBar(
+            '未找到符合您选择的训练动作\n建议：尝试调整场景、器材或目标部位',
+          );
+          return;
+        }
+
         // Navigate to workout result page
         if (mounted) {
           AppRoutes.pushToWorkoutResult(
@@ -477,9 +519,18 @@ class _WorkoutGuideStep3PageState extends State<WorkoutGuideStep3Page> {
             }
           });
         }
+      } else {
+        // 检查provider的error状态
+        final error = provider.error;
+        if (error != null && error.isNotEmpty) {
+          _showErrorSnackBar(error);
+        } else {
+          _showErrorSnackBar('生成训练计划失败，请重试');
+        }
       }
     } catch (e) {
-      _showErrorSnackBar('Failed to generate workout plan, please try again');
+      debugPrint('❌ Error in _generateWorkout: $e');
+      _showErrorSnackBar('生成训练计划时发生错误，请重试');
     }
   }
 
@@ -495,6 +546,36 @@ class _WorkoutGuideStep3PageState extends State<WorkoutGuideStep3Page> {
             borderRadius: BorderRadius.circular(8),
           ),
           margin: const EdgeInsets.all(16),
+          duration: const Duration(seconds: 4),
+        ),
+      );
+    }
+  }
+
+  /// Show warning snackbar (for no results)
+  void _showWarningSnackBar(String message) {
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              const Icon(Icons.info_outline, color: Colors.white),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  message,
+                  style: const TextStyle(fontSize: 14),
+                ),
+              ),
+            ],
+          ),
+          backgroundColor: Colors.orange.shade600,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+          ),
+          margin: const EdgeInsets.all(16),
+          duration: const Duration(seconds: 5),
         ),
       );
     }

@@ -1190,4 +1190,144 @@ LEFT JOIN challenge_completions cc ON ci.id = cc.challenge_item_id
 GROUP BY ci.id, ci.title, e.name, e.category, ci.time_limit, ci.target_count
 ORDER BY ci.display_order;
 
+-- ==========================================
+-- ==========================================
+-- 补充数据区域 - scenario_equipment 和 theme_weeks
+-- 这些表在之前的数据初始化中被跳过，现在补充
+-- ==========================================
+-- ==========================================
+
+-- ==========================================
+-- 补充 1: 场景-器材关联表 (ScenarioEquipment)
+-- 这是核心关联数据，定义了每个场景中可用的器材
+-- ==========================================
+
+INSERT INTO scenario_equipment (scenario_id, equipment_id, is_common, created_at)
+VALUES
+  -- 办公室场景 (cuid_scenario_office) - 常用器材
+  ('cuid_scenario_office', 'cuid_equipment_none', true, NOW()),
+  ('cuid_scenario_office', 'cuid_equipment_chair', true, NOW()),
+  ('cuid_scenario_office', 'cuid_equipment_desk', true, NOW()),
+  ('cuid_scenario_office', 'cuid_equipment_wall', true, NOW()),
+  ('cuid_scenario_office', 'cuid_equipment_water_bottle', true, NOW()),
+  -- 办公室场景 - 不常见器材
+  ('cuid_scenario_office', 'cuid_equipment_backpack', false, NOW()),
+  ('cuid_scenario_office', 'cuid_equipment_book', false, NOW()),
+
+  -- 居家客厅场景 (cuid_scenario_home) - 常用器材
+  ('cuid_scenario_home', 'cuid_equipment_none', true, NOW()),
+  ('cuid_scenario_home', 'cuid_equipment_sofa', true, NOW()),
+  ('cuid_scenario_home', 'cuid_equipment_chair', true, NOW()),
+  ('cuid_scenario_home', 'cuid_equipment_wall', true, NOW()),
+  ('cuid_scenario_home', 'cuid_equipment_towel', true, NOW()),
+  ('cuid_scenario_home', 'cuid_equipment_stairs', true, NOW()),
+  -- 居家客厅场景 - 不常见器材
+  ('cuid_scenario_home', 'cuid_equipment_water_bottle', false, NOW()),
+  ('cuid_scenario_home', 'cuid_equipment_book', false, NOW()),
+
+  -- 公园户外场景 (cuid_scenario_park) - 常用器材
+  ('cuid_scenario_park', 'cuid_equipment_none', true, NOW()),
+  ('cuid_scenario_park', 'cuid_equipment_bench', true, NOW()),
+  ('cuid_scenario_park', 'cuid_equipment_tree', true, NOW()),
+  ('cuid_scenario_park', 'cuid_equipment_rock', true, NOW()),
+  ('cuid_scenario_park', 'cuid_equipment_water_bottle', true, NOW()),
+  -- 公园户外场景 - 不常见器材
+  ('cuid_scenario_park', 'cuid_equipment_backpack', false, NOW()),
+  ('cuid_scenario_park', 'cuid_equipment_towel', false, NOW()),
+
+  -- 健身房场景 (cuid_scenario_gym) - 常用器材
+  ('cuid_scenario_gym', 'cuid_equipment_none', true, NOW()),
+  ('cuid_scenario_gym', 'cuid_equipment_wall', true, NOW()),
+  ('cuid_scenario_gym', 'cuid_equipment_bench', true, NOW()),
+  ('cuid_scenario_gym', 'cuid_equipment_water_bottle', true, NOW()),
+  ('cuid_scenario_gym', 'cuid_equipment_towel', true, NOW()),
+  -- 健身房场景 - 不常见器材
+  ('cuid_scenario_gym', 'cuid_equipment_backpack', false, NOW()),
+
+  -- 酒店房间场景 (cuid_scenario_hotel) - 常用器材
+  ('cuid_scenario_hotel', 'cuid_equipment_none', true, NOW()),
+  ('cuid_scenario_hotel', 'cuid_equipment_bed', true, NOW()),
+  ('cuid_scenario_hotel', 'cuid_equipment_chair', true, NOW()),
+  ('cuid_scenario_hotel', 'cuid_equipment_wall', true, NOW()),
+  ('cuid_scenario_hotel', 'cuid_equipment_towel', true, NOW()),
+  -- 酒店房间场景 - 不常见器材
+  ('cuid_scenario_hotel', 'cuid_equipment_suitcase', false, NOW()),
+  ('cuid_scenario_hotel', 'cuid_equipment_water_bottle', false, NOW())
+ON CONFLICT (scenario_id, equipment_id) DO NOTHING;
+
+-- ==========================================
+-- 补充 2: 主题周数据 (ThemeWeeks)
+-- 包含5个主题周：1个进行中，2个即将开始，2个已完成
+-- ==========================================
+
+INSERT INTO theme_weeks (id, title, code, description, equipment_code, target_exercise_count, start_date, end_date, reward_type, reward_data, status, is_visible, display_order, total_participants, total_completions, completion_rate, created_at, updated_at)
+VALUES
+  -- Currently active theme week
+  ('cuid_themeweek_chair', '#Chair Day', 'chair_week', 'Do 3 chair exercises to unlock a sticker skin', 'chair', 3,
+   (NOW() - INTERVAL '2 days')::date, (NOW() + INTERVAL '5 days')::date, 'skin',
+   '{"skin_name": "Chair Master", "skin_color": "#8B4513", "rarity": "RARE"}', 'ACTIVE', true, 1, 128, 67, 52.3, NOW(), NOW()),
+
+  -- Upcoming theme week
+  ('cuid_themeweek_bottle', '#Water Bottle Week', 'bottle_week', 'Turn your everyday bottle into workout gear', 'water_bottle', 3,
+   (NOW() + INTERVAL '5 days')::date, (NOW() + INTERVAL '12 days')::date, 'badge',
+   '{"badge_name": "Bottle Warrior", "badge_icon": "bottle-badge", "description": "Complete the water bottle workout series"}', 'UPCOMING', true, 2, 0, 0, 0.0, NOW(), NOW()),
+
+  -- Future theme week
+  ('cuid_themeweek_backpack', '#Backpack Week', 'backpack_week', 'Stay fit even while traveling', 'backpack', 5,
+   (NOW() + INTERVAL '12 days')::date, (NOW() + INTERVAL '19 days')::date, 'rarity_boost',
+   '{"boost_multiplier": 1.5, "duration_days": 7, "description": "Increase all card rarities by 50%"}', 'UPCOMING', true, 3, 0, 0, 0.0, NOW(), NOW()),
+
+  -- Past theme weeks
+  ('cuid_themeweek_wall', '#Wall Week', 'wall_week', 'Get a great workout using just a wall', 'wall', 3,
+   (NOW() - INTERVAL '14 days')::date, (NOW() - INTERVAL '7 days')::date, 'skin',
+   '{"skin_name": "Wall Master", "skin_color": "#C0C0C0", "rarity": "UNCOMMON"}', 'COMPLETED', false, 4, 89, 72, 80.9, NOW(), NOW()),
+
+  ('cuid_themeweek_none', '#No-Equipment Week', 'none_week', 'Bodyweight training challenge', 'none', 7,
+   (NOW() - INTERVAL '21 days')::date, (NOW() - INTERVAL '14 days')::date, 'badge',
+   '{"badge_name": "Minimalist", "badge_icon": "minimalist-badge", "description": "Completed the no-equipment training week"}', 'COMPLETED', false, 5, 156, 134, 85.9, NOW(), NOW())
+ON CONFLICT (code) DO NOTHING;
+
+-- ==========================================
+-- 补充数据验证查询
+-- ==========================================
+
+-- 验证scenario_equipment数据插入
+SELECT
+  '补充数据验证 - scenario_equipment' as check_name,
+  COUNT(*) as total_records,
+  COUNT(CASE WHEN is_common THEN 1 END) as common_equipment_count,
+  COUNT(CASE WHEN NOT is_common THEN 1 END) as uncommon_equipment_count
+FROM scenario_equipment;
+
+-- 验证theme_weeks数据插入
+SELECT
+  '补充数据验证 - theme_weeks' as check_name,
+  COUNT(*) as total_theme_weeks,
+  COUNT(CASE WHEN status = 'ACTIVE' THEN 1 END) as active_weeks,
+  COUNT(CASE WHEN status = 'UPCOMING' THEN 1 END) as upcoming_weeks,
+  COUNT(CASE WHEN status = 'COMPLETED' THEN 1 END) as completed_weeks
+FROM theme_weeks;
+
+-- 验证scenario_equipment与scenarios的关联
+SELECT
+  'scenario_equipment关联统计' as check_name,
+  s.name as scenario_name,
+  s.code as scenario_code,
+  COUNT(se.equipment_id) as equipment_count,
+  COUNT(CASE WHEN se.is_common THEN 1 END) as common_count,
+  COUNT(CASE WHEN NOT se.is_common THEN 1 END) as uncommon_count
+FROM scenarios s
+LEFT JOIN scenario_equipment se ON s.id = se.scenario_id
+GROUP BY s.id, s.name, s.code
+ORDER BY equipment_count DESC;
+
+-- ==========================================
+-- 数据补充完成提示
+-- ==========================================
+
+SELECT
+  '✅ 数据补充完成' as status,
+  'scenario_equipment 和 theme_weeks 表数据已成功追加到 complete-test-data.sql' as message,
+  NOW() as completed_at;
+
 COMMIT;

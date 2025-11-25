@@ -3,10 +3,14 @@ import '../models/workout_intent.dart';
 import '../models/target_muscle.dart';
 import '../models/scenario.dart';
 import '../models/equipment.dart';
+import '../services/exercise_service.dart';
+import '../utils/error_handler.dart';
 
 /// 引导页状态管理Provider
 /// 管理3步引导流程的状态和数据传递
 class WorkoutGuideProvider with ChangeNotifier {
+  // Services
+  final ExerciseService _exerciseService = ExerciseService();
   // Step 1: 运动意图选择
   List<WorkoutIntent> _selectedIntents = [];
 
@@ -46,7 +50,7 @@ class WorkoutGuideProvider with ChangeNotifier {
   bool get isStep2Valid => _selectedScenario != null && _selectedEquipment.isNotEmpty;
   bool get canProceedToStep3 => isStep2Valid;
   bool get isStep3Valid => _selectedTargetMuscles.isNotEmpty;
-  bool get canGenerateWorkout => isStep3Valid;
+  bool get canGenerateWorkout => isStep1Valid && isStep2Valid && isStep3Valid; // ✅ 必须所有步骤都完成
   bool get isAllStepsValid => isStep1Valid && isStep2Valid && isStep3Valid;
 
   // Mock data getters for Step2 and Step3 pages
@@ -361,23 +365,87 @@ class WorkoutGuideProvider with ChangeNotifier {
   Future<Map<String, dynamic>?> generateWorkoutRecommendation() async {
     debugPrint('🚀 Generating workout recommendation');
 
-    if (!canGenerateWorkout) {
-      setError('请完成所有步骤的选择');
+    // 详细验证每个步骤
+    if (!isStep1Valid) {
+      setError('请先在 Step 1 选择运动意图');
+      return null;
+    }
+
+    if (!isStep2Valid) {
+      if (_selectedScenario == null) {
+        setError('请先在 Step 2 选择训练场景');
+      } else if (_selectedEquipment.isEmpty) {
+        setError('请先在 Step 2 选择至少一个器材');
+      }
+      return null;
+    }
+
+    if (!isStep3Valid) {
+      setError('请至少选择一个目标部位');
       return null;
     }
 
     setLoading(true);
 
     try {
-      // Simulate API call delay
-      await Future.delayed(const Duration(seconds: 2));
+      // Get first selected intent (required)
+      final selectedIntent = _selectedIntents.first;
 
-      final recommendationParams = getCurrentGuideData();
-      debugPrint('✅ Generated recommendation params: $recommendationParams');
+      // Get equipment codes
+      final equipmentCodes = _selectedEquipment.map((eq) => eq.code).toList();
+
+      // Get scenario code (required) - 现在已经确保不为 null
+      final scenarioCode = _selectedScenario!.code;
+
+      debugPrint('📤 Request params: intent=${selectedIntent.code}, equipment=$equipmentCodes, scenario=$scenarioCode, muscles=${_selectedTargetMuscles.map((m) => m.code).toList()}');
+
+      // Call backend API for quick recommendation
+      final response = await _exerciseService.getQuickRecommendation(
+        intent: selectedIntent,
+        equipmentCodes: equipmentCodes,
+        scenarioCode: scenarioCode,
+        targetMuscles: _selectedTargetMuscles,
+      );
+
+      debugPrint('✅ Generated recommendation from backend: $response');
+
+      // Transform API response to the format expected by WorkoutResult
+      final recommendationParams = {
+        // Original guide data
+        'intents': _selectedIntents.map((intent) => intent.code).toList(),
+        'scenario': _selectedScenario?.code,
+        'equipment': equipmentCodes,
+        'targetMuscles': _selectedTargetMuscles.map((muscle) => muscle.code).toList(),
+        'currentStep': _currentStep,
+
+        // Backend API response data
+        'apiResponse': response,
+        'exercises': response['exercises'] ?? [],
+        'alternatives': response['alternatives'] ?? [],
+        'intent': response['intent'] ?? selectedIntent.code,
+        'totalDuration': response['totalDuration'] ?? 0,
+        'difficulty': response['difficulty'] ?? 'GREEN',
+      };
 
       return recommendationParams;
     } catch (e) {
-      setError('生成推荐失败: $e');
+      debugPrint('❌ Failed to generate workout recommendation: $e');
+
+      // ✅ 使用统一的错误处理器
+      String errorMessage;
+
+      if (e is ErrorInfo) {
+        // 如果是 ErrorInfo 对象，直接使用其 message
+        errorMessage = e.message;
+        debugPrint('📋 Error code: ${e.code}, category: ${e.category}');
+        debugPrint('📋 Original message: ${e.originalMessage}');
+      } else {
+        // 其他未知错误
+        errorMessage = '操作失败，请稍后重试';
+        debugPrint('⚠️ Unknown error type: ${e.runtimeType}');
+      }
+
+      setError(errorMessage);
       return null;
     } finally {
       setLoading(false);

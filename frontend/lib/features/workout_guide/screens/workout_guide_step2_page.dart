@@ -188,7 +188,7 @@ class _WorkoutGuideStep2PageState extends State<WorkoutGuideStep2Page> {
             height: 6,
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(3),
-              color: const Color(0xFFFFD700),
+              color: const Color(0xFFE0E0E0), // Step 2 not completed yet
             ),
           ),
         ),
@@ -222,7 +222,7 @@ class _WorkoutGuideStep2PageState extends State<WorkoutGuideStep2Page> {
               ),
               child: const Center(
                 child: Text(
-                  '2',
+                  '1',
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 16,
@@ -233,7 +233,7 @@ class _WorkoutGuideStep2PageState extends State<WorkoutGuideStep2Page> {
             ),
             const SizedBox(width: 16),
             const Text(
-              'STEP 2',
+              'STEP 1',
               style: TextStyle(
                 color: Color(0xFFFFD700),
                 fontSize: 14,
@@ -338,6 +338,9 @@ class _WorkoutGuideStep2PageState extends State<WorkoutGuideStep2Page> {
 
   /// Build bottom button area
   Widget _buildBottomButtonArea() {
+    // ✅ 修正验证：需要选择场景 AND 至少一个器材
+    final bool canContinue = _selectedScenario != null && _selectedEquipment.isNotEmpty;
+
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -355,12 +358,12 @@ class _WorkoutGuideStep2PageState extends State<WorkoutGuideStep2Page> {
         child: SizedBox(
           width: double.infinity,
           child: ElevatedButton(
-            onPressed: (_selectedScenario != null) ? _onContinuePressed : null,
+            onPressed: canContinue ? _onContinuePressed : null,
             style: ElevatedButton.styleFrom(
-              backgroundColor: (_selectedScenario != null) ? const Color(0xFFFFD700) : Colors.grey.shade300,
-              foregroundColor: (_selectedScenario != null) ? Colors.white : Colors.grey.shade500,
-              elevation: (_selectedScenario != null) ? 8 : 0,
-              shadowColor: (_selectedScenario != null) ? const Color(0xFFFFD700).withOpacity(0.3) : null,
+              backgroundColor: canContinue ? const Color(0xFFFFD700) : Colors.grey.shade300,
+              foregroundColor: canContinue ? Colors.white : Colors.grey.shade500,
+              elevation: canContinue ? 8 : 0,
+              shadowColor: canContinue ? const Color(0xFFFFD700).withOpacity(0.3) : null,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(28),
               ),
@@ -663,8 +666,9 @@ class _WorkoutGuideStep2PageState extends State<WorkoutGuideStep2Page> {
       _selectedScenario = scenarioId;
     });
 
-    // Note: This would need the actual scenario object in a real implementation
-    debugPrint('Selected scenario: $scenarioId');
+    // ✅ 保存到 Provider
+    context.read<WorkoutGuideProvider>().selectScenarioByCode(scenarioId);
+    debugPrint('✅ Saved scenario to Provider: $scenarioId');
   }
 
   void _onEquipmentToggled(String equipmentId) {
@@ -676,20 +680,23 @@ class _WorkoutGuideStep2PageState extends State<WorkoutGuideStep2Page> {
       }
     });
 
-    // Update provider
-    debugPrint('Selected equipment: $_selectedEquipment');
+    // ✅ 保存到 Provider
+    context.read<WorkoutGuideProvider>().toggleEquipmentByCode(equipmentId);
+    debugPrint('✅ Toggled equipment in Provider: $equipmentId');
+    debugPrint('✅ Current equipment list: $_selectedEquipment');
   }
 
   void _onContinuePressed() {
     if (_selectedScenario != null) {
-      debugPrint('Continue to Step 3');
+      debugPrint('Continue to Step 2 (Workout Mode Selection)');
       debugPrint('Selected scenario: $_selectedScenario');
       debugPrint('Selected equipment: $_selectedEquipment');
 
-      // Navigate to step 3
-      AppRoutes.navigateToWorkoutGuideStep3(
+      // Navigate to step 2 (workout mode selection)
+      AppRoutes.navigateTo(
         context,
-        guideData: {
+        AppRoutes.workoutModeSelection,
+        arguments: {
           'selectedScenario': _selectedScenario,
           'selectedEquipment': _selectedEquipment,
         },

@@ -259,20 +259,46 @@ export class ExercisesController {
         return [];
       }
 
-      return popularExercises.map((exercise: any, index: number) => ({
-        id: exercise.id,
-        code: exercise.code,
-        name: exercise.name, // 使用name字段而不是title
-        description: typeof exercise.description === 'object'
-          ? JSON.stringify(exercise.description)
-          : exercise.description || '',
-        primaryMuscle: exercise.primary_muscle,
-        difficulty: exercise.difficulty || 'BEGINNER',
-        durationSeconds: exercise.default_duration || 60,
-        demoImageUrl: exercise.demo_image_url,
-        thumbnailUrl: exercise.demo_image_url, // 使用demo_image_url作为缩略图
-        popularityScore: 100 - (index * 5), // 根据排序给予评分，递减幅度小一点
-      }));
+      return popularExercises.map((exercise: any, index: number) => {
+        // Parse JSONB description field
+        let description = '';
+        let keyPoints = [];
+        let steps = [];
+        let warnings = [];
+
+        if (exercise.description) {
+          if (typeof exercise.description === 'object') {
+            description = JSON.stringify(exercise.description);
+            keyPoints = exercise.description.keyPoints || [];
+            steps = exercise.description.steps || [];
+            warnings = exercise.description.warnings || [];
+          } else {
+            description = exercise.description;
+          }
+        }
+
+        return {
+          id: exercise.id,
+          code: exercise.code,
+          name: exercise.name,
+          description: description,
+          primaryMuscle: exercise.primary_muscle,
+          secondaryMuscles: exercise.secondary_muscles || [],
+          intentType: exercise.intent_type,
+          difficulty: exercise.difficulty || 'BEGINNER',
+          durationSeconds: exercise.default_duration || 60,
+          sets: exercise.default_sets || 3,
+          durationType: exercise.duration_type,
+          demoImageUrl: exercise.demo_image_url,
+          demoVideoUrl: exercise.demo_video_url,
+          thumbnailUrl: exercise.demo_image_url, // 使用demo_image_url作为缩略图
+          tags: exercise.tags || [],
+          keyPoints: keyPoints,
+          steps: steps,
+          safetyWarnings: warnings,
+          popularityScore: 100 - (index * 5), // 根据排序给予评分，递减幅度小一点
+        };
+      });
 
     } catch (error) {
       logger.error(`查询热门推荐动作失败: ${error.message}`);

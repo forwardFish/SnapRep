@@ -3,6 +3,7 @@ import '../features/splash/splash_screen.dart';
 import '../features/home/screens/home_page.dart';
 import '../features/workout_guide/screens/camera_detection_page.dart';
 import '../features/workout_guide/screens/workout_mode_selection_page.dart';
+import '../features/workout_guide/screens/workout_guide_step2_page.dart';
 import '../features/workout_guide/screens/environment_confirmation_page.dart';
 import '../features/workout_guide/screens/workout_guide_step3_page.dart';
 import '../features/workout_result/screens/modern_workout_result_page.dart';
@@ -44,8 +45,14 @@ class AppRoutes {
   /// [旧版] Step 2: 运动模式选择页 - 选择运动意图(拉伸/力量/有氧等)
   /// 功能: 根据Step1识别的器材,选择训练意图
   /// 跳转来源: cameraDetection 或 environmentConfirmation
-  /// 下一步: workoutGuideStep3 (重点部位选择)
+  /// 下一步: scenarioEquipmentSelection (场景器材选择)
   static const String workoutModeSelection = '/workout-mode-selection';
+
+  /// 场景和器材选择页 - 选择训练场景和可用器材
+  /// 功能: 选择训练场景(家/办公室/健身房)和可用器材(椅子/墙壁/哑铃等)
+  /// 跳转来源: workoutModeSelection (运动意图选择后)
+  /// 下一步: workoutGuideStep3 (目标肌群选择)
+  static const String scenarioEquipmentSelection = '/scenario-equipment-selection';
 
   /// [旧版] 环境确认页 - 用户手动确认或修改AI识别的场景和器材
   /// 功能: 显示AI识别结果,允许用户调整
@@ -56,12 +63,12 @@ class AppRoutes {
   /// [旧版] Step 1 别名 - 指向 cameraDetection,保持命名一致性
   static const String workoutGuideStep1 = '/camera-detection';
 
-  /// [旧版] Step 2 别名 - 指向 workoutModeSelection,保持命名一致性
-  static const String workoutGuideStep2 = '/workout-mode-selection';
+  /// [旧版] Step 2 别名 - 现在指向 cameraDetection (场景器材选择)
+  static const String workoutGuideStep2 = '/camera-detection';
 
   /// [旧版] Step 3: 重点部位选择页 - 选择想要锻炼的目标肌群
   /// 功能: 选择训练的目标部位(如腿部、腰腹、手臂等)
-  /// 跳转来源: workoutModeSelection
+  /// 跳转来源: scenarioEquipmentSelection
   /// 下一步: modernWorkoutResult (训练动作推荐结果)
   static const String workoutGuideStep3 = '/workout-guide-step3';
 
@@ -179,16 +186,20 @@ class AppRoutes {
     return {
       splash: (context) => const SplashScreen(),
       home: (context) => const HomePage(),
-      cameraDetection: (context) => const CameraDetectionPage(), // New Step 1: Camera AI Detection
+      cameraDetection: (context) => const CameraDetectionPage(),
       workoutModeSelection: (context) {
         final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
-        return WorkoutModeSelectionPage(guideData: args); // New Step 2: Mode Selection
+        return WorkoutModeSelectionPage(guideData: args);
+      },
+      scenarioEquipmentSelection: (context) {
+        final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+        return const WorkoutGuideStep2Page(); // 场景和器材选择页
       },
       environmentConfirmation: (context) {
         final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
-        return EnvironmentConfirmationPage(guideData: args); // Environment Confirmation
+        return EnvironmentConfirmationPage(guideData: args);
       },
-      workoutGuideStep3: (context) => const WorkoutGuideStep3Page(), // Step 3: Target Muscle Selection
+      workoutGuideStep3: (context) => const WorkoutGuideStep3Page(),
       workoutResult: (context) {
         final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
         return ModernWorkoutResultPage(recommendationParams: args?['recommendationParams']);

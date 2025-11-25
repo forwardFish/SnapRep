@@ -15,17 +15,44 @@ class PopularExerciseDto {
   /// 主要锻炼部位
   final String primaryMuscle;
 
+  /// 次要锻炼部位
+  final List<String> secondaryMuscles;
+
+  /// 意图类型
+  final String intentType;
+
   /// 难度等级
   final String difficulty;
 
   /// 持续时间（秒）
   final int durationSeconds;
 
+  /// 组数
+  final int sets;
+
+  /// 时长类型
+  final String durationType;
+
   /// 示例图片URL
   final String? demoImageUrl;
 
+  /// 示例视频URL
+  final String? demoVideoUrl;
+
   /// 缩略图URL
   final String? thumbnailUrl;
+
+  /// 标签
+  final List<String> tags;
+
+  /// 关键要点
+  final List<String> keyPoints;
+
+  /// 动作步骤
+  final List<String> steps;
+
+  /// 安全警告
+  final List<String> safetyWarnings;
 
   /// 热门程度评分
   final int popularityScore;
@@ -36,10 +63,19 @@ class PopularExerciseDto {
     required this.name,
     required this.description,
     required this.primaryMuscle,
+    this.secondaryMuscles = const [],
+    this.intentType = 'STRENGTH',
     required this.difficulty,
     required this.durationSeconds,
+    this.sets = 3,
+    this.durationType = 'REPS',
     this.demoImageUrl,
+    this.demoVideoUrl,
     this.thumbnailUrl,
+    this.tags = const [],
+    this.keyPoints = const [],
+    this.steps = const [],
+    this.safetyWarnings = const [],
     required this.popularityScore,
   });
 
@@ -51,10 +87,25 @@ class PopularExerciseDto {
       name: json['name'] as String,
       description: json['description'] as String? ?? '',
       primaryMuscle: json['primaryMuscle'] as String,
+      secondaryMuscles: json['secondaryMuscles'] != null
+          ? List<String>.from(json['secondaryMuscles'])
+          : [],
+      intentType: json['intentType'] as String? ?? 'STRENGTH',
       difficulty: json['difficulty'] as String,
       durationSeconds: json['durationSeconds'] as int,
+      sets: json['sets'] as int? ?? 3,
+      durationType: json['durationType'] as String? ?? 'REPS',
       demoImageUrl: json['demoImageUrl'] as String?,
+      demoVideoUrl: json['demoVideoUrl'] as String?,
       thumbnailUrl: json['thumbnailUrl'] as String?,
+      tags: json['tags'] != null ? List<String>.from(json['tags']) : [],
+      keyPoints: json['keyPoints'] != null
+          ? List<String>.from(json['keyPoints'])
+          : [],
+      steps: json['steps'] != null ? List<String>.from(json['steps']) : [],
+      safetyWarnings: json['safetyWarnings'] != null
+          ? List<String>.from(json['safetyWarnings'])
+          : [],
       popularityScore: json['popularityScore'] as int? ?? 0,
     );
   }
@@ -67,10 +118,19 @@ class PopularExerciseDto {
       'name': name,
       'description': description,
       'primaryMuscle': primaryMuscle,
+      'secondaryMuscles': secondaryMuscles,
+      'intentType': intentType,
       'difficulty': difficulty,
       'durationSeconds': durationSeconds,
+      'sets': sets,
+      'durationType': durationType,
       'demoImageUrl': demoImageUrl,
+      'demoVideoUrl': demoVideoUrl,
       'thumbnailUrl': thumbnailUrl,
+      'tags': tags,
+      'keyPoints': keyPoints,
+      'steps': steps,
+      'safetyWarnings': safetyWarnings,
       'popularityScore': popularityScore,
     };
   }
@@ -79,10 +139,13 @@ class PopularExerciseDto {
   String get difficultyText {
     switch (difficulty.toUpperCase()) {
       case 'BEGINNER':
+      case 'GREEN':
         return 'Beginner';
       case 'INTERMEDIATE':
+      case 'BLUE':
         return 'Intermediate';
       case 'ADVANCED':
+      case 'RED':
         return 'Advanced';
       case 'EXPERT':
         return 'Expert';
@@ -95,10 +158,13 @@ class PopularExerciseDto {
   String get difficultyColor {
     switch (difficulty.toUpperCase()) {
       case 'BEGINNER':
+      case 'GREEN':
         return '#4CAF50';
       case 'INTERMEDIATE':
+      case 'BLUE':
         return '#FF9800';
       case 'ADVANCED':
+      case 'RED':
         return '#FF5722';
       case 'EXPERT':
         return '#F44336';
@@ -144,5 +210,13 @@ class PopularExerciseDto {
   /// 获取持续时间显示文本
   String get durationText {
     return '${durationSeconds}s';
+  }
+
+  /// 生成benefits文本（从keyPoints提取）
+  String get benefits {
+    if (keyPoints.isEmpty) {
+      return 'Improves physical fitness, enhances overall strength, increases flexibility, and promotes better body awareness';
+    }
+    return keyPoints.join('. ');
   }
 }

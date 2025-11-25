@@ -154,6 +154,11 @@ class _CameraDetectionPageState extends State<CameraDetectionPage>
     super.initState();
     _initializeCamera();
     _setupAnimations();
+
+    // Initialize Step 1 (Step 2 is now Step 1 - scenario/equipment selection)
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<WorkoutGuideProvider>().initializeStep2();
+    });
   }
 
   @override
@@ -1457,6 +1462,10 @@ class _CameraDetectionPageState extends State<CameraDetectionPage>
     setState(() {
       _selectedScenario = scenarioId;
     });
+
+    // ✅ 保存到 Provider
+    context.read<WorkoutGuideProvider>().selectScenarioByCode(scenarioId);
+    debugPrint('✅ Saved scenario to Provider: $scenarioId');
   }
 
   void _onEquipmentToggled(String equipmentId) {
@@ -1467,14 +1476,26 @@ class _CameraDetectionPageState extends State<CameraDetectionPage>
         _selectedEquipment.add(equipmentId);
       }
     });
+
+    // ✅ 保存到 Provider
+    context.read<WorkoutGuideProvider>().toggleEquipmentByCode(equipmentId);
+    debugPrint('✅ Toggled equipment in Provider: $equipmentId');
+    debugPrint('✅ Current equipment list: $_selectedEquipment');
   }
 
   void _onContinuePressed() {
     if (_detectedScene != null && _detectedEquipment.isNotEmpty) {
-      // Navigate to step 2 with AI detection data
-      AppRoutes.navigateToWorkoutGuideStep2(
+      // Save AI detection data to Provider first
+      context.read<WorkoutGuideProvider>().selectScenarioByCode(_detectedScene!);
+      for (var equipmentId in _detectedEquipment) {
+        context.read<WorkoutGuideProvider>().toggleEquipmentByCode(equipmentId);
+      }
+
+      // Navigate to Step 2 (Workout Mode Selection) with AI detection data
+      Navigator.pushNamed(
         context,
-        guideData: {
+        AppRoutes.workoutModeSelection,
+        arguments: {
           'detectionMethod': 'ai_camera',
           'detectedScene': _detectedScene,
           'detectedEquipment': _detectedEquipment,
@@ -1485,10 +1506,12 @@ class _CameraDetectionPageState extends State<CameraDetectionPage>
 
   void _onSelectionContinuePressed() {
     if (_selectedScenario != null) {
-      // Navigate to step 2 with manual selection data
-      AppRoutes.navigateToWorkoutGuideStep2(
+      // Data already saved to Provider by _onScenarioSelected and _onEquipmentToggled
+      // Navigate to Step 2 (Workout Mode Selection) with manual selection data
+      Navigator.pushNamed(
         context,
-        guideData: {
+        AppRoutes.workoutModeSelection,
+        arguments: {
           'detectionMethod': 'manual_selection',
           'detectedScene': _selectedScenario,
           'detectedEquipment': _selectedEquipment,

@@ -35,7 +35,9 @@
       "Bash(timeout /t 5 /nobreak)",
       "Bash(timeout /t 30 /nobreak)",
       "Bash(call restart-all.bat)",
-      "Bash(timeout /t 10 /nobreak)"
+      "Bash(timeout /t 10 /nobreak)",
+      "Bash(restart-all.bat)",
+      "Bash(flutter attach:*)"
     ],
     "deny": [],
     "ask": []

@@ -143,8 +143,8 @@ class _HomePageState extends State<HomePage> {
 
   void _onEquipmentPressed(Equipment equipment) {
     debugPrint('Equipment pressed: ${equipment.name}');
-    // 直接跳转到训练指南步骤2
-    AppRoutes.navigateTo(context, AppRoutes.workoutGuideStep2);
+    // Navigate to camera detection page (Step 1)
+    AppRoutes.navigateTo(context, AppRoutes.cameraDetection);
   }
 
   void _onChallengesPressed() {

@@ -31,7 +31,7 @@ class _WorkoutModeSelectionPageState extends State<WorkoutModeSelectionPage> {
     }
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<WorkoutGuideProvider>().initializeStep2();
+      context.read<WorkoutGuideProvider>().initializeStep2(); // ✅ 修正：这现在是 Step 2
     });
   }
 
@@ -558,7 +558,7 @@ class _WorkoutModeSelectionPageState extends State<WorkoutModeSelectionPage> {
 
   void _onContinuePressed() {
     if (_selectedMode != null) {
-      // Navigate to step 3 (which will be the old step2 - scene/equipment selection)
+      // ✅ 正确导航：Step 2 完成后去 Step 3 选择目标肌群
       AppRoutes.navigateToWorkoutGuideStep3(
         context,
         guideData: {

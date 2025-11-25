@@ -127,7 +127,8 @@ export class ExercisesDao extends PrismaBaseDao<any> {
   }
 
   /**
-   * 智能筛选练习动作
+   * 智能筛选练习动作 - 增强版
+   * 支持复合肌群匹配、场景关联查询、分级放宽策略
    * @param criteria 筛选条件
    * @returns 匹配的动作列表
    */
@@ -141,9 +142,53 @@ export class ExercisesDao extends PrismaBaseDao<any> {
     limit?: number;
   }): Promise<any[]> {
     try {
-      logger.info('Using SupabaseApiService due to database connection issue');
+      logger.info(`智能筛选动作: ${JSON.stringify(criteria)}`);
 
-      // 1. 如果指定了equipment，先通过 exercise_equipment 表查找符合条件的 exercise_ids
+      // 复合肌群映射表
+      const compositeMuscleMap: Record<string, string[]> = {
+        'CHEST_BACK': ['CHEST', 'BACK'],
+        'NECK_SHOULDER': ['NECK_SHOULDER'], // 单一部位
+        'ARMS': ['ARMS'],
+        'LEGS': ['LEGS'],
+        'CORE': ['CORE'],
+        'GLUTES': ['GLUTES'],
+        'FULL_BODY': ['FULL_BODY'],
+      };
+
+      // 1. 处理复合肌群 - 展开为单一肌群
+      let expandedMuscles: string[] = [];
+      if (criteria.targetMuscles && criteria.targetMuscles.length > 0) {
+        expandedMuscles = criteria.targetMuscles.flatMap(muscle =>
+          compositeMuscleMap[muscle] || [muscle]
+        );
+        logger.info(`Expanded target muscles: ${criteria.targetMuscles} -> ${expandedMuscles}`);
+      }
+
+      // 2. 如果指定了scenario，先通过 exercise_scenarios 表查找符合条件的 exercise_ids
+      let exerciseIdsFromScenario: string[] | null = null;
+      if (criteria.scenario) {
+        // 查询 scenarios 表获取 scenario_id
+        const scenarioRecords = await this.supabaseApi.get('scenarios', {
+          code: `eq.${criteria.scenario}`,
+          is_active: true,
+        });
+
+        if (scenarioRecords.length > 0) {
+          const scenarioId = scenarioRecords[0].id;
+
+          // 查询 exercise_scenarios 表获取关联的 exercise_ids
+          const exerciseScenarios = await this.supabaseApi.get('exercise_scenarios', {
+            scenario_id: `eq.${scenarioId}`,
+          });
+
+          exerciseIdsFromScenario = exerciseScenarios.map((es: any) => es.exercise_id);
+          logger.info(`Found ${exerciseIdsFromScenario.length} exercises matching scenario: ${criteria.scenario}`);
+        } else {
+          logger.warn(`No scenario found with code: ${criteria.scenario}`);
+        }
+      }
+
+      // 3. 如果指定了equipment，先通过 exercise_equipment 表查找符合条件的 exercise_ids
       let exerciseIdsFromEquipment: string[] | null = null;
       if (criteria.equipment && criteria.equipment.length > 0) {
         // 查询 equipment 表获取 equipment_ids
@@ -162,59 +207,130 @@ export class ExercisesDao extends PrismaBaseDao<any> {
 
           exerciseIdsFromEquipment = exerciseEquipment.map((ee: any) => ee.exercise_id);
           logger.info(`Found ${exerciseIdsFromEquipment.length} exercises matching equipment: ${criteria.equipment.join(',')}`);
-
-          // 如果没有找到匹配的exercises，直接返回空数组
-          if (exerciseIdsFromEquipment.length === 0) {
-            logger.warn(`No exercises found for equipment: ${criteria.equipment.join(',')}`);
-            return [];
-          }
         } else {
           logger.warn(`No equipment found with codes: ${criteria.equipment.join(',')}`);
-          return [];
         }
+      }
+
+      // 4. 合并 scenario 和 equipment 的 exercise_ids (取交集)
+      let finalExerciseIds: string[] | null = null;
+      if (exerciseIdsFromScenario && exerciseIdsFromEquipment) {
+        // 取交集
+        finalExerciseIds = exerciseIdsFromScenario.filter(id =>
+          exerciseIdsFromEquipment!.includes(id)
+        );
+        logger.info(`Intersection of scenario and equipment: ${finalExerciseIds.length} exercises`);
+      } else if (exerciseIdsFromScenario) {
+        finalExerciseIds = exerciseIdsFromScenario;
+      } else if (exerciseIdsFromEquipment) {
+        finalExerciseIds = exerciseIdsFromEquipment;
+      }
+
+      // 如果交集为空,尝试放宽条件 (先去掉scenario约束)
+      if (finalExerciseIds && finalExerciseIds.length === 0 && exerciseIdsFromEquipment) {
+        logger.warn('No intersection found, relaxing scenario constraint');
+        finalExerciseIds = exerciseIdsFromEquipment;
       }
 
       const filters: Record<string, any> = {
         is_active: true,
       };
 
-      // 2. 如果有equipment筛选结果，添加到filters
-      if (exerciseIdsFromEquipment && exerciseIdsFromEquipment.length > 0) {
-        filters.id = `in.(${exerciseIdsFromEquipment.join(',')})`;
+      // 5. 如果有exercise_ids筛选结果，添加到filters
+      if (finalExerciseIds && finalExerciseIds.length > 0) {
+        filters.id = `in.(${finalExerciseIds.join(',')})`;
+      } else if (finalExerciseIds && finalExerciseIds.length === 0) {
+        // 如果明确知道没有匹配的exercise_ids,直接返回空
+        logger.warn('No exercises match scenario+equipment criteria');
+        return [];
       }
 
-      // 3. 意图筛选
+      // 6. 意图筛选
       if (criteria.intent) {
-        filters.intent_type = criteria.intent;
+        filters.intent_type = `eq.${criteria.intent}`;
       }
 
-      // 4. 难度筛选
+      // 7. 难度筛选
       if (criteria.difficulty) {
-        filters.difficulty = criteria.difficulty;
+        filters.difficulty = `eq.${criteria.difficulty}`;
       }
 
-      // 5. 目标肌群筛选 - 简化版，只查primary muscle
-      if (criteria.targetMuscles && criteria.targetMuscles.length > 0) {
-        filters.primary_muscle = `in.(${criteria.targetMuscles.join(',')})`;
+      // 8. 目标肌群筛选 - 支持复合肌群和secondary_muscles
+      if (expandedMuscles.length > 0) {
+        // 查询 primary_muscle 或 secondary_muscles 包含目标肌群
+        filters.primary_muscle = `in.(${expandedMuscles.join(',')})`;
+        // Note: Supabase PostgREST doesn't support OR queries directly
+        // We'll filter secondary_muscles in post-processing
       }
 
-      // 6. 排除特定IDs
+      // 9. 排除特定IDs
       if (criteria.excludeIds && criteria.excludeIds.length > 0) {
         // Supabase使用 not.in 语法
-        filters.id = filters.id
-          ? `${filters.id},not.in.(${criteria.excludeIds.join(',')})`
-          : `not.in.(${criteria.excludeIds.join(',')})`;
+        if (filters.id) {
+          // 需要单独处理,不能直接追加
+          const currentIds = filters.id.match(/in\.\((.*?)\)/)?.[1]?.split(',') || [];
+          const filteredIds = currentIds.filter(id => !criteria.excludeIds!.includes(id));
+          filters.id = `in.(${filteredIds.join(',')})`;
+        } else {
+          filters.id = `not.in.(${criteria.excludeIds.join(',')})`;
+        }
       }
 
-      // 7. 获取基础练习数据
-      const exercises = await this.supabaseApi.get('exercises', filters, {
+      // 10. 获取基础练习数据
+      let exercises = await this.supabaseApi.get('exercises', filters, {
         limit: criteria.limit || 50,
         orderBy: 'created_at.desc',
       });
 
       logger.info(`Found ${exercises.length} exercises from Supabase after all filters`);
 
-      // 8. 转换数据格式（将 snake_case 转换为 camelCase）
+      // 11. 后处理: 如果有目标肌群要求,进一步筛选 secondary_muscles
+      if (expandedMuscles.length > 0 && exercises.length > 0) {
+        exercises = exercises.filter((ex: any) => {
+          // 检查 primary_muscle 或 secondary_muscles 是否匹配
+          const primaryMatch = expandedMuscles.includes(ex.primary_muscle);
+          const secondaryMatch = ex.secondary_muscles && Array.isArray(ex.secondary_muscles) &&
+            ex.secondary_muscles.some((sm: string) => expandedMuscles.includes(sm));
+          return primaryMatch || secondaryMatch;
+        });
+        logger.info(`After secondary_muscles filtering: ${exercises.length} exercises`);
+      }
+
+      // 12. 如果仍然没有结果,尝试最后的放宽策略(去掉intent和difficulty约束)
+      if (exercises.length === 0 && (criteria.intent || criteria.difficulty)) {
+        logger.warn('No results with all constraints, trying without intent/difficulty filters');
+
+        const relaxedFilters: Record<string, any> = {
+          is_active: true,
+        };
+
+        if (finalExerciseIds && finalExerciseIds.length > 0) {
+          relaxedFilters.id = `in.(${finalExerciseIds.join(',')})`;
+        }
+
+        if (expandedMuscles.length > 0) {
+          relaxedFilters.primary_muscle = `in.(${expandedMuscles.join(',')})`;
+        }
+
+        if (criteria.excludeIds && criteria.excludeIds.length > 0) {
+          if (relaxedFilters.id) {
+            const currentIds = relaxedFilters.id.match(/in\.\((.*?)\)/)?.[1]?.split(',') || [];
+            const filteredIds = currentIds.filter(id => !criteria.excludeIds!.includes(id));
+            relaxedFilters.id = `in.(${filteredIds.join(',')})`;
+          } else {
+            relaxedFilters.id = `not.in.(${criteria.excludeIds.join(',')})`;
+          }
+        }
+
+        exercises = await this.supabaseApi.get('exercises', relaxedFilters, {
+          limit: criteria.limit || 50,
+          orderBy: 'created_at.desc',
+        });
+
+        logger.info(`After relaxed query: ${exercises.length} exercises found`);
+      }
+
+      // 13. 转换数据格式（将 snake_case 转换为 camelCase）
       return exercises.map((exercise: any) => ({
         id: exercise.id,
         code: exercise.code,

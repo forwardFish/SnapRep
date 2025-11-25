@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../../../core/providers/my_page_provider.dart';
+import '../../../core/models/share_card.dart';
 
 /// My Collection Details Page - 收藏卡片详情页面
 /// 显示用户收集的所有运动卡片，支持筛选和搜索
@@ -10,7 +13,7 @@ class CollectionDetailsPage extends StatefulWidget {
 }
 
 class _CollectionDetailsPageState extends State<CollectionDetailsPage> {
-  String _selectedRarity = 'ALL';
+  RarityLevel? _selectedRarity;
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
 
@@ -20,158 +23,151 @@ class _CollectionDetailsPageState extends State<CollectionDetailsPage> {
     super.dispose();
   }
 
-  // Sample collection data - replace with actual provider data
-  final List<Map<String, dynamic>> _allCards = [
-    {'title': 'Chair Squats', 'rarity': 'FINE', 'category': 'Legs', 'imageUrl': 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80'},
-    {'title': 'Push-ups', 'rarity': 'COMMON', 'category': 'Chest', 'imageUrl': 'https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80'},
-    {'title': 'Bag Lifts', 'rarity': 'RARE', 'category': 'Arms', 'imageUrl': 'https://images.unsplash.com/photo-1548036328-c9fa89d128fa?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80'},
-    {'title': 'Wall Push', 'rarity': 'COMMON', 'category': 'Chest', 'imageUrl': 'https://images.unsplash.com/photo-1631679706909-1844bbd07221?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80'},
-    {'title': 'Bottle Press', 'rarity': 'FINE', 'category': 'Arms', 'imageUrl': 'https://images.unsplash.com/photo-1523362628745-0c100150b504?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80'},
-    {'title': 'Luggage Lift', 'rarity': 'EPIC', 'category': 'Back', 'imageUrl': 'https://images.unsplash.com/photo-1544427920-c49ccfb85579?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80'},
-    {'title': 'Desk Stretch', 'rarity': 'COMMON', 'category': 'Flexibility', 'imageUrl': 'https://images.unsplash.com/photo-1588286840104-8957b019727f?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80'},
-    {'title': 'Water Jug Curls', 'rarity': 'FINE', 'category': 'Arms', 'imageUrl': 'https://images.unsplash.com/photo-1574680096145-d05b474e2155?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80'},
-    {'title': 'Towel Resistance', 'rarity': 'RARE', 'category': 'Full Body', 'imageUrl': 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80'},
-    {'title': 'Book Balancing', 'rarity': 'EPIC', 'category': 'Core', 'imageUrl': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80'},
-    {'title': 'Stair Climbs', 'rarity': 'COMMON', 'category': 'Cardio', 'imageUrl': 'https://images.unsplash.com/photo-1571902943202-507ec2618e8f?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80'},
-    {'title': 'Pillow Presses', 'rarity': 'FINE', 'category': 'Core', 'imageUrl': 'https://images.unsplash.com/photo-1520877880798-5ee002cf65d5?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80'},
-  ];
-
   @override
   Widget build(BuildContext context) {
-    final filteredCards = _getFilteredCards();
+    return Consumer<MyPageProvider>(
+      builder: (context, provider, child) {
+        final filteredCards = _getFilteredCards(provider.allCards);
 
-    return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: Colors.black),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: const Text(
-          'My Collection',
-          style: TextStyle(
-            color: Colors.black,
-            fontSize: 18,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        centerTitle: true,
-      ),
-      body: Column(
-        children: [
-          // Search and Filter Section
-          Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
-                  blurRadius: 10,
-                  offset: const Offset(0, 2),
-                ),
-              ],
+        return Scaffold(
+          backgroundColor: Colors.white,
+          appBar: AppBar(
+            backgroundColor: Colors.white,
+            elevation: 0,
+            leading: IconButton(
+              icon: const Icon(Icons.arrow_back_ios, color: Colors.black),
+              onPressed: () => Navigator.pop(context),
             ),
-            child: Column(
-              children: [
-                // Search Bar
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF5F7FA),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: TextField(
-                    controller: _searchController,
-                    onChanged: (value) {
-                      setState(() {
-                        _searchQuery = value;
-                      });
-                    },
-                    decoration: const InputDecoration(
-                      hintText: 'Search exercises...',
-                      hintStyle: TextStyle(color: Color(0xFF9E9E9E)),
-                      prefixIcon: Icon(Icons.search, color: Color(0xFF9E9E9E)),
-                      border: InputBorder.none,
+            title: const Text(
+              'My Collection',
+              style: TextStyle(
+                color: Colors.black,
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            centerTitle: true,
+          ),
+          body: Column(
+            children: [
+              // Search and Filter Section
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.05),
+                      blurRadius: 10,
+                      offset: const Offset(0, 2),
                     ),
-                  ),
+                  ],
                 ),
-
-                const SizedBox(height: 16),
-
-                // Filter Chips
-                SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Row(
-                    children: [
-                      _buildFilterChip('ALL', 'All'),
-                      const SizedBox(width: 8),
-                      _buildFilterChip('COMMON', 'Common'),
-                      const SizedBox(width: 8),
-                      _buildFilterChip('FINE', 'Fine'),
-                      const SizedBox(width: 8),
-                      _buildFilterChip('RARE', 'Rare'),
-                      const SizedBox(width: 8),
-                      _buildFilterChip('EPIC', 'Epic'),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          // Collection Stats
-          Container(
-            padding: const EdgeInsets.all(20),
-            child: Row(
-              children: [
-                Text(
-                  '${filteredCards.length} Cards Found',
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: Color(0xFF2C3E50),
-                  ),
-                ),
-                const Spacer(),
-                _buildStatsChip(),
-              ],
-            ),
-          ),
-
-          // Cards Grid
-          Expanded(
-            child: filteredCards.isEmpty
-                ? _buildEmptyState()
-                : GridView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
-                      crossAxisSpacing: 16,
-                      mainAxisSpacing: 16,
-                      childAspectRatio: 0.75,
+                child: Column(
+                  children: [
+                    // Search Bar
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF5F7FA),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: TextField(
+                        controller: _searchController,
+                        onChanged: (value) {
+                          setState(() {
+                            _searchQuery = value;
+                          });
+                        },
+                        decoration: const InputDecoration(
+                          hintText: 'Search cards...',
+                          hintStyle: TextStyle(color: Color(0xFF9E9E9E)),
+                          prefixIcon: Icon(Icons.search, color: Color(0xFF9E9E9E)),
+                          border: InputBorder.none,
+                        ),
+                      ),
                     ),
-                    itemCount: filteredCards.length,
-                    itemBuilder: (context, index) {
-                      final card = filteredCards[index];
-                      return _buildCollectionCard(
-                        card['title'],
-                        card['rarity'],
-                        card['category'],
-                        card['imageUrl'],
-                      );
-                    },
-                  ),
+
+                    const SizedBox(height: 16),
+
+                    // Filter Chips
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        children: [
+                          _buildFilterChip(null, 'All'),
+                          const SizedBox(width: 8),
+                          _buildFilterChip(RarityLevel.common, 'Common'),
+                          const SizedBox(width: 8),
+                          _buildFilterChip(RarityLevel.uncommon, 'Uncommon'),
+                          const SizedBox(width: 8),
+                          _buildFilterChip(RarityLevel.rare, 'Rare'),
+                          const SizedBox(width: 8),
+                          _buildFilterChip(RarityLevel.epic, 'Epic'),
+                          const SizedBox(width: 8),
+                          _buildFilterChip(RarityLevel.legendary, 'Legendary'),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              // Collection Stats
+              Container(
+                padding: const EdgeInsets.all(20),
+                child: Row(
+                  children: [
+                    Text(
+                      '${filteredCards.length} Cards Found',
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF2C3E50),
+                      ),
+                    ),
+                    const Spacer(),
+                    _buildStatsChip(provider),
+                  ],
+                ),
+              ),
+
+              // Loading/Error/Empty States
+              Expanded(
+                child: provider.isLoadingCards
+                    ? const Center(
+                        child: CircularProgressIndicator(
+                          valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFFFD700)),
+                        ),
+                      )
+                    : provider.cardsError != null
+                        ? _buildErrorState(provider.cardsError!, () => provider.loadCardCollection())
+                        : filteredCards.isEmpty
+                            ? _buildEmptyState()
+                            : GridView.builder(
+                                padding: const EdgeInsets.symmetric(horizontal: 20),
+                                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount: 2,
+                                  crossAxisSpacing: 16,
+                                  mainAxisSpacing: 16,
+                                  childAspectRatio: 0.75,
+                                ),
+                                itemCount: filteredCards.length,
+                                itemBuilder: (context, index) {
+                                  final card = filteredCards[index];
+                                  return _buildCollectionCard(card);
+                                },
+                              ),
+              ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 
   /// Build filter chip
-  Widget _buildFilterChip(String value, String label) {
+  Widget _buildFilterChip(RarityLevel? value, String label) {
     final isSelected = _selectedRarity == value;
     return GestureDetector(
       onTap: () {
@@ -201,8 +197,8 @@ class _CollectionDetailsPageState extends State<CollectionDetailsPage> {
   }
 
   /// Build stats chip
-  Widget _buildStatsChip() {
-    final rarityCount = _getRarityCount();
+  Widget _buildStatsChip(MyPageProvider provider) {
+    final rareCount = provider.rareCards + provider.epicCards + provider.legendaryCards;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
@@ -215,11 +211,62 @@ class _CollectionDetailsPageState extends State<CollectionDetailsPage> {
           const Icon(Icons.stars, color: Color(0xFF4CAF50), size: 16),
           const SizedBox(width: 4),
           Text(
-            '${rarityCount['RARE']! + rarityCount['EPIC']!} Rare+',
+            '$rareCount Rare+',
             style: const TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w600,
               color: Color(0xFF4CAF50),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Build error state
+  Widget _buildErrorState(String error, VoidCallback onRetry) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.error_outline,
+            size: 64,
+            color: Colors.red[400],
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'Failed to load cards',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+              color: Colors.grey[600],
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            error,
+            style: TextStyle(
+              fontSize: 14,
+              color: Colors.grey[500],
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 16),
+          ElevatedButton(
+            onPressed: onRetry,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFFFD700),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            child: const Text(
+              'Retry',
+              style: TextStyle(
+                color: Colors.black,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
         ],
@@ -234,13 +281,13 @@ class _CollectionDetailsPageState extends State<CollectionDetailsPage> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(
-            Icons.search_off,
+            Icons.collections_bookmark_outlined,
             size: 64,
             color: Colors.grey[400],
           ),
           const SizedBox(height: 16),
           Text(
-            'No cards found',
+            'No cards in your collection',
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w600,
@@ -249,7 +296,7 @@ class _CollectionDetailsPageState extends State<CollectionDetailsPage> {
           ),
           const SizedBox(height: 8),
           Text(
-            'Try adjusting your search or filter',
+            'Complete workouts to earn cards',
             style: TextStyle(
               fontSize: 14,
               color: Colors.grey[500],
@@ -261,19 +308,13 @@ class _CollectionDetailsPageState extends State<CollectionDetailsPage> {
   }
 
   /// Build collection card
-  Widget _buildCollectionCard(String title, String rarity, String category, String imageUrl) {
-    final rarityColors = {
-      'COMMON': {'bg': const Color(0xFFE8F5E8), 'text': const Color(0xFF2E7D32)},
-      'FINE': {'bg': const Color(0xFFE3F2FD), 'text': const Color(0xFF1565C0)},
-      'RARE': {'bg': const Color(0xFFF3E5F5), 'text': const Color(0xFF7B1FA2)},
-      'EPIC': {'bg': const Color(0xFFFFF3E0), 'text': const Color(0xFFF57C00)},
-    };
-
-    final colors = rarityColors[rarity] ?? rarityColors['COMMON']!;
+  Widget _buildCollectionCard(ShareCard card) {
+    final rarity = card.rarity.level;
+    final rarityColors = _getRarityColors(rarity);
 
     return GestureDetector(
       onTap: () {
-        _showCardDetails(title, rarity, category, imageUrl);
+        _showCardDetails(card);
       },
       child: Container(
         decoration: BoxDecoration(
@@ -294,38 +335,61 @@ class _CollectionDetailsPageState extends State<CollectionDetailsPage> {
               // Image Area (65%)
               Expanded(
                 flex: 65,
-                child: Container(
-                  width: double.infinity,
-                  decoration: BoxDecoration(
-                    image: DecorationImage(
-                      image: NetworkImage(imageUrl),
-                      fit: BoxFit.cover,
-                    ),
-                  ),
-                  child: Stack(
-                    children: [
-                      // Rarity Badge
-                      Positioned(
-                        top: 8,
-                        left: 8,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: colors['bg'],
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Text(
-                            rarity,
-                            style: TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.w700,
-                              color: colors['text'],
+                child: Stack(
+                  children: [
+                    // Background Image
+                    Positioned.fill(
+                      child: Image.network(
+                        card.imageUrl,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) {
+                          return Container(
+                            color: Colors.grey[200],
+                            child: const Icon(
+                              Icons.image_not_supported,
+                              color: Colors.grey,
+                              size: 32,
                             ),
+                          );
+                        },
+                        loadingBuilder: (context, child, loadingProgress) {
+                          if (loadingProgress == null) return child;
+                          return Container(
+                            color: Colors.grey[200],
+                            child: Center(
+                              child: CircularProgressIndicator(
+                                value: loadingProgress.expectedTotalBytes != null
+                                    ? loadingProgress.cumulativeBytesLoaded /
+                                        loadingProgress.expectedTotalBytes!
+                                    : null,
+                                valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFFFFD700)),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                    // Rarity Badge
+                    Positioned(
+                      top: 8,
+                      left: 8,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: rarityColors['bg'],
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          rarity.displayName,
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w700,
+                            color: rarityColors['text'],
                           ),
                         ),
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
               // Content Area (35%)
@@ -337,7 +401,7 @@ class _CollectionDetailsPageState extends State<CollectionDetailsPage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        title,
+                        card.displaySummary,
                         style: const TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
@@ -348,7 +412,7 @@ class _CollectionDetailsPageState extends State<CollectionDetailsPage> {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        category,
+                        card.rarity.equipmentSeries.displayName,
                         style: TextStyle(
                           fontSize: 12,
                           color: Colors.grey[600],
@@ -366,7 +430,10 @@ class _CollectionDetailsPageState extends State<CollectionDetailsPage> {
   }
 
   /// Show card details modal
-  void _showCardDetails(String title, String rarity, String category, String imageUrl) {
+  void _showCardDetails(ShareCard card) {
+    final rarity = card.rarity.level;
+    final rarityColors = _getRarityColors(rarity);
+
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
@@ -400,10 +467,18 @@ class _CollectionDetailsPageState extends State<CollectionDetailsPage> {
                       ClipRRect(
                         borderRadius: BorderRadius.circular(12),
                         child: Image.network(
-                          imageUrl,
+                          card.imageUrl,
                           width: 80,
                           height: 80,
                           fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) {
+                            return Container(
+                              width: 80,
+                              height: 80,
+                              color: Colors.grey[200],
+                              child: const Icon(Icons.image_not_supported),
+                            );
+                          },
                         ),
                       ),
                       const SizedBox(width: 16),
@@ -412,7 +487,9 @@ class _CollectionDetailsPageState extends State<CollectionDetailsPage> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              title,
+                              card.displaySummary.isNotEmpty
+                                  ? card.displaySummary
+                                  : 'Workout Card',
                               style: const TextStyle(
                                 fontSize: 20,
                                 fontWeight: FontWeight.w700,
@@ -421,7 +498,7 @@ class _CollectionDetailsPageState extends State<CollectionDetailsPage> {
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              category,
+                              card.rarity.equipmentSeries.displayName,
                               style: TextStyle(
                                 fontSize: 14,
                                 color: Colors.grey[600],
@@ -431,15 +508,15 @@ class _CollectionDetailsPageState extends State<CollectionDetailsPage> {
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                               decoration: BoxDecoration(
-                                color: _getRarityColor(rarity)['bg'],
+                                color: rarityColors['bg'],
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: Text(
-                                rarity,
+                                card.rarity.description,
                                 style: TextStyle(
                                   fontSize: 12,
                                   fontWeight: FontWeight.w600,
-                                  color: _getRarityColor(rarity)['text'],
+                                  color: rarityColors['text'],
                                 ),
                               ),
                             ),
@@ -450,7 +527,7 @@ class _CollectionDetailsPageState extends State<CollectionDetailsPage> {
                   ),
                   const SizedBox(height: 20),
                   const Text(
-                    'Exercise Description',
+                    'Card Details',
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
@@ -458,39 +535,83 @@ class _CollectionDetailsPageState extends State<CollectionDetailsPage> {
                     ),
                   ),
                   const SizedBox(height: 8),
-                  const Text(
-                    'This exercise helps strengthen your muscles and improve your overall fitness. Perfect for home workouts with minimal equipment.',
+                  if (card.totalDuration != null)
+                    Text(
+                      'Duration: ${(card.totalDuration! / 60).round()} minutes',
+                      style: const TextStyle(fontSize: 14, color: Color(0xFF666666)),
+                    ),
+                  if (card.exercisesCompleted != null)
+                    Text(
+                      'Exercises completed: ${card.exercisesCompleted}',
+                      style: const TextStyle(fontSize: 14, color: Color(0xFF666666)),
+                    ),
+                  if (card.equipmentUsed != null && card.equipmentUsed!.isNotEmpty)
+                    Text(
+                      'Equipment: ${card.equipmentUsed!.join(', ')}',
+                      style: const TextStyle(fontSize: 14, color: Color(0xFF666666)),
+                    ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Created: ${card.createdAt.toString().substring(0, 16)}',
                     style: TextStyle(
-                      fontSize: 14,
-                      color: Color(0xFF666666),
-                      height: 1.5,
+                      fontSize: 12,
+                      color: Colors.grey[500],
                     ),
                   ),
                   const SizedBox(height: 20),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        Navigator.pop(context);
-                        // TODO: Start exercise
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFFFD700),
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: () {
+                            Navigator.pop(context);
+                            // TODO: Share card functionality
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.white,
+                            side: const BorderSide(color: Color(0xFFFFD700)),
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            elevation: 0,
+                          ),
+                          child: const Text(
+                            'Share',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFFFFD700),
+                            ),
+                          ),
                         ),
-                        elevation: 0,
                       ),
-                      child: const Text(
-                        'Start Exercise',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.black,
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: () {
+                            Navigator.pop(context);
+                            // TODO: View workout details
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFFFFD700),
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            elevation: 0,
+                          ),
+                          child: const Text(
+                            'View Workout',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.black,
+                            ),
+                          ),
                         ),
                       ),
-                    ),
+                    ],
                   ),
                   const SizedBox(height: 20),
                 ],
@@ -503,36 +624,34 @@ class _CollectionDetailsPageState extends State<CollectionDetailsPage> {
   }
 
   /// Get filtered cards
-  List<Map<String, dynamic>> _getFilteredCards() {
-    var filtered = _allCards.where((card) {
-      final matchesRarity = _selectedRarity == 'ALL' || card['rarity'] == _selectedRarity;
+  List<ShareCard> _getFilteredCards(List<ShareCard> cards) {
+    return cards.where((card) {
+      // Rarity filter
+      final matchesRarity = _selectedRarity == null || card.rarity.level == _selectedRarity;
+
+      // Search filter
       final matchesSearch = _searchQuery.isEmpty ||
-          card['title'].toLowerCase().contains(_searchQuery.toLowerCase()) ||
-          card['category'].toLowerCase().contains(_searchQuery.toLowerCase());
+          card.displaySummary.toLowerCase().contains(_searchQuery.toLowerCase()) ||
+          card.rarity.equipmentSeries.displayName.toLowerCase().contains(_searchQuery.toLowerCase()) ||
+          card.shareText.toLowerCase().contains(_searchQuery.toLowerCase());
+
       return matchesRarity && matchesSearch;
     }).toList();
-
-    return filtered;
   }
 
-  /// Get rarity count
-  Map<String, int> _getRarityCount() {
-    final count = {'COMMON': 0, 'FINE': 0, 'RARE': 0, 'EPIC': 0};
-    for (final card in _allCards) {
-      final rarity = card['rarity'] as String;
-      count[rarity] = (count[rarity] ?? 0) + 1;
+  /// Get rarity colors
+  Map<String, Color> _getRarityColors(RarityLevel rarity) {
+    switch (rarity) {
+      case RarityLevel.common:
+        return {'bg': const Color(0xFFE8F5E8), 'text': const Color(0xFF2E7D32)};
+      case RarityLevel.uncommon:
+        return {'bg': const Color(0xFFE3F2FD), 'text': const Color(0xFF1565C0)};
+      case RarityLevel.rare:
+        return {'bg': const Color(0xFFF3E5F5), 'text': const Color(0xFF7B1FA2)};
+      case RarityLevel.epic:
+        return {'bg': const Color(0xFFFFF3E0), 'text': const Color(0xFFF57C00)};
+      case RarityLevel.legendary:
+        return {'bg': const Color(0xFFFFEBEE), 'text': const Color(0xFFD32F2F)};
     }
-    return count;
-  }
-
-  /// Get rarity color
-  Map<String, Color> _getRarityColor(String rarity) {
-    final colors = {
-      'COMMON': {'bg': const Color(0xFFE8F5E8), 'text': const Color(0xFF2E7D32)},
-      'FINE': {'bg': const Color(0xFFE3F2FD), 'text': const Color(0xFF1565C0)},
-      'RARE': {'bg': const Color(0xFFF3E5F5), 'text': const Color(0xFF7B1FA2)},
-      'EPIC': {'bg': const Color(0xFFFFF3E0), 'text': const Color(0xFFF57C00)},
-    };
-    return colors[rarity] ?? colors['COMMON']!;
   }
 }
