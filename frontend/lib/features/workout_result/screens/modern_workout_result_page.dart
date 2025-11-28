@@ -6,6 +6,7 @@ import '../../../core/models/target_muscle.dart';
 import '../../../core/models/workout_intent.dart';
 import '../../../core/services/exercise_service.dart';
 import '../../workout_execution/screens/professional_workout_video_page_v2.dart';
+import '../../workout_execution/screens/improved_workout_video_page.dart';
 
 /// Modern Workout Result Page - Based on Design Document Section 3.2
 /// Displays workout cards with professional UI design matching xunlian-2.jpg
@@ -1983,11 +1984,11 @@ class _ModernWorkoutResultPageState extends State<ModernWorkoutResultPage>
       demoVideoUrl: 'https://sample-videos.com/zip/10/mp4/SampleVideo_1280x720_1mb.mp4',
     )).toList();
 
-    // Navigate to professional workout video page with selected exercise
+    // Navigate to improved workout video page with thumbnail and click-to-play
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => ProfessionalWorkoutVideoPageV2(
+        builder: (context) => ImprovedWorkoutVideoPage(
           exercise: exercises[_selectedExerciseIndex],
           exercises: exercises,
           currentExerciseIndex: _selectedExerciseIndex,

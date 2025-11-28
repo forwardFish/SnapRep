@@ -63,7 +63,7 @@ class ExerciseService {
           }
           throw ErrorInfo(
             code: 1004,
-            message: '服务器返回错误，请稍后重试',
+            message: 'Server error, please try again later',
             category: 'SYSTEM',
           );
         }
@@ -74,10 +74,10 @@ class ExerciseService {
       if (e is ErrorInfo) {
         rethrow;
       }
-      // 其他网络错误，包装成 ErrorInfo
+      // Other network errors, wrap as ErrorInfo
       throw ErrorInfo(
         code: 1004,
-        message: '网络连接失败，请检查网络后重试',
+        message: 'Network connection failed, please check your connection and try again',
         category: 'NETWORK',
       );
     }

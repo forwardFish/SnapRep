@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { HttpAdapterHost, NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { PrismaClientExceptionFilter } from 'nestjs-prisma';
+import { join } from 'path';
 import { AppModule } from './app.module';
 import { ResponseErrorFilter, GlobalExceptionFilter } from './exception/response-error.filter';
 import type {
@@ -60,6 +61,41 @@ async function bootstrap() {
   if (corsConfig.enabled) {
     app.enableCors();
   }
+
+  // Static file serving for assets (videos, images, etc.)
+  // This provides a fallback for direct file access
+  // The AssetsController provides more control and validation
+  const express = require('express');
+  const assetsBasePath = join(__dirname, '..', 'asset');
+
+  // Serve videos
+  app.use('/api/v1/assets/videos', express.static(join(assetsBasePath, 'videos'), {
+    setHeaders: (res, path) => {
+      res.set('Access-Control-Allow-Origin', '*');
+      res.set('Accept-Ranges', 'bytes');
+      if (path.endsWith('.mp4')) {
+        res.set('Content-Type', 'video/mp4');
+      } else if (path.endsWith('.webm')) {
+        res.set('Content-Type', 'video/webm');
+      }
+    },
+  }));
+
+  // Serve images
+  app.use('/api/v1/assets/images', express.static(join(assetsBasePath, 'images'), {
+    setHeaders: (res, path) => {
+      res.set('Access-Control-Allow-Origin', '*');
+      res.set('Cache-Control', 'public, max-age=604800'); // 7 days
+      const ext = path.split('.').pop()?.toLowerCase();
+      if (ext === 'jpg' || ext === 'jpeg') {
+        res.set('Content-Type', 'image/jpeg');
+      } else if (ext === 'png') {
+        res.set('Content-Type', 'image/png');
+      } else if (ext === 'webp') {
+        res.set('Content-Type', 'image/webp');
+      }
+    },
+  }));
 
   await app.listen(process.env.PORT || nestConfig.port || 3000);
 }

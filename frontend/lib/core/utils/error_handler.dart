@@ -36,39 +36,39 @@ class ErrorHandler {
   /// 根据错误码范围返回默认错误消息
   static String _getDefaultErrorMessage(int errorCode) {
     if (errorCode >= 1000 && errorCode < 2000) {
-      return '请求出错，请稍后重试';
+      return 'Request failed, please try again later';
     } else if (errorCode >= 2000 && errorCode < 3000) {
-      return '用户信息错误，请重新登录';
+      return 'User information error, please login again';
     } else if (errorCode >= 3000 && errorCode < 4000) {
-      return '登录已过期，请重新登录';
+      return 'Session expired, please login again';
     } else if (errorCode >= 4000 && errorCode < 5000) {
-      return 'AI服务暂时不可用，请稍后重试';
+      return 'AI service temporarily unavailable, please try again later';
     } else if (errorCode >= 5000 && errorCode < 6000) {
-      return '支付服务出错，请联系客服';
+      return 'Payment service error, please contact support';
     } else if (errorCode >= 6000 && errorCode < 7000) {
-      return '数据加载失败，请稍后重试';
+      return 'Data loading failed, please try again later';
     } else if (errorCode >= 7000 && errorCode < 8000) {
-      return '场景数据加载失败';
+      return 'Scenario data loading failed';
     } else if (errorCode >= 8000 && errorCode < 9000) {
-      return '器材数据加载失败';
+      return 'Equipment data loading failed';
     } else if (errorCode >= 9000 && errorCode < 10000) {
-      return '主题周活动出错';
+      return 'Theme week activity error';
     } else if (errorCode >= 10000 && errorCode < 11000) {
-      return '训练推荐生成失败，请重试';
+      return 'Workout recommendation generation failed, please try again';
     } else if (errorCode >= 11000 && errorCode < 12000) {
-      return '训练动作数据加载失败';
+      return 'Exercise data loading failed';
     } else if (errorCode >= 12000 && errorCode < 13000) {
-      return '分享卡片生成失败';
+      return 'Share card generation failed';
     } else if (errorCode >= 13000 && errorCode < 14000) {
-      return '稀有度计算失败';
+      return 'Rarity calculation failed';
     } else if (errorCode >= 14000 && errorCode < 15000) {
-      return '卡片生成失败';
+      return 'Card generation failed';
     } else if (errorCode >= 15000 && errorCode < 16000) {
-      return 'AI识别失败，请重试';
+      return 'AI recognition failed, please try again';
     } else if (errorCode >= 16000 && errorCode < 17000) {
-      return '场景器材数据加载失败';
+      return 'Scenario equipment data loading failed';
     } else {
-      return '操作失败，请稍后重试';
+      return 'Operation failed, please try again later';
     }
   }
 
@@ -289,7 +289,17 @@ class ErrorHandler {
       }
 
       final code = error['code'] as int? ?? ErrorCodes.common['INTERNAL_SERVER_ERROR']!.code;
-      final backendMessage = error['message'] as String?;
+
+      // Handle message field - can be String or List<String>
+      String? backendMessage;
+      final messageField = error['message'];
+      if (messageField is String) {
+        backendMessage = messageField;
+      } else if (messageField is List) {
+        // If it's an array, join with newlines
+        backendMessage = messageField.join('\n');
+      }
+
       final category = error['category'] as String? ?? 'SYSTEM';
       final timestamp = error['timestamp'] as String?;
       final context = error['context'] as Map<String, dynamic>?;

@@ -56,8 +56,10 @@ enum EquipmentCategory {
 enum PrimaryMuscle {
   CHEST // 胸部肌群
   BACK // 背部肌群
+  CHEST_BACK // 胸背组合 (前端UI需要)
   LEGS // 腿部肌群
   GLUTES // 臀部肌群
+  CALVES // 小腿肌群
   SHOULDERS // 肩部肌群
   ARMS // 手臂肌群
   CORE // 核心肌群

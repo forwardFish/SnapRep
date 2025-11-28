@@ -1,7 +1,9 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import '../config/api_config.dart';
 import '../models/popular_exercise_dto.dart';
+import '../utils/error_handler.dart';
 
 /// 热门推荐动作服务（通用，不需要个人信息）
 class PopularExercisesService {
@@ -18,6 +20,9 @@ class PopularExercisesService {
 
       final response = await http.get(uri);
 
+      debugPrint('📡 Popular exercises response status: ${response.statusCode}');
+      debugPrint('📡 Popular exercises response body: ${response.body}');
+
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
 
@@ -31,10 +36,41 @@ class PopularExercisesService {
           return [];
         }
       } else {
-        throw Exception('Failed to load popular exercises: ${response.statusCode}');
+        debugPrint('❌ Failed to load popular exercises: ${response.statusCode} - ${response.body}');
+
+        // ✅ 使用统一的错误处理器解析后端返回的错误信息
+        try {
+          final errorResponse = json.decode(response.body);
+          final errorInfo = ErrorHandler.parseErrorResponse(errorResponse);
+
+          debugPrint('📋 Parsed error: ${errorInfo.toString()}');
+
+          // 抛出 ErrorInfo 对象，让上层调用者处理
+          throw errorInfo;
+        } catch (parseError) {
+          // 如果无法解析，抛出通用错误
+          if (parseError is ErrorInfo) {
+            rethrow;
+          }
+          throw ErrorInfo(
+            code: 1004,
+            message: 'Server error, please try again later',
+            category: 'SYSTEM',
+          );
+        }
       }
     } catch (e) {
-      throw Exception('Network error: $e');
+      debugPrint('❌ Network error in getPopularExercises: $e');
+      // 如果是 ErrorInfo 对象，直接重新抛出
+      if (e is ErrorInfo) {
+        rethrow;
+      }
+      // Other network errors, wrap as ErrorInfo
+      throw ErrorInfo(
+        code: 1004,
+        message: 'Network connection failed, please check your connection and try again',
+        category: 'NETWORK',
+      );
     }
   }
 

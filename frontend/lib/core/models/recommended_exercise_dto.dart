@@ -87,15 +87,15 @@ class RecommendedExerciseDto {
   String get difficultyText {
     switch (difficulty.toUpperCase()) {
       case 'BEGINNER':
-        return '初级';
+        return 'Beginner'; // 初级
       case 'INTERMEDIATE':
-        return '中级';
+        return 'Intermediate'; // 中级
       case 'ADVANCED':
-        return '高级';
+        return 'Advanced'; // 高级
       case 'EXPERT':
-        return '专家';
+        return 'Expert'; // 专家
       default:
-        return '未知';
+        return 'Unknown'; // 未知
     }
   }
 
@@ -119,23 +119,23 @@ class RecommendedExerciseDto {
   String get muscleDisplayName {
     switch (primaryMuscle.toLowerCase()) {
       case 'chest':
-        return '胸部';
+        return 'Chest'; // 胸部
       case 'back':
-        return '背部';
+        return 'Back'; // 背部
       case 'legs':
-        return '腿部';
+        return 'Legs'; // 腿部
       case 'glutes':
-        return '臀部';
+        return 'Glutes'; // 臀部
       case 'shoulders':
-        return '肩部';
+        return 'Shoulders'; // 肩部
       case 'arms':
-        return '手臂';
+        return 'Arms'; // 手臂
       case 'core':
-        return '核心';
+        return 'Core'; // 核心
       case 'full_body':
-        return '全身';
+        return 'Full Body'; // 全身
       case 'neck_shoulder':
-        return '颈肩';
+        return 'Neck & Shoulders'; // 颈肩
       default:
         return primaryMuscle.toUpperCase();
     }
@@ -143,24 +143,24 @@ class RecommendedExerciseDto {
 
   /// 获取训练次数显示文本
   String get trainedCountText {
-    return '已训练 $trainedCount 次';
+    return 'Trained $trainedCount times'; // 已训练 X 次
   }
 
   /// 获取最后训练时间显示文本
   String get lastTrainedText {
-    if (lastTrainedAt == null) return '暂无记录';
+    if (lastTrainedAt == null) return 'No record'; // 暂无记录
 
     final now = DateTime.now();
     final diff = now.difference(lastTrainedAt!);
 
     if (diff.inDays > 0) {
-      return '${diff.inDays}天前';
+      return '${diff.inDays} days ago'; // X天前
     } else if (diff.inHours > 0) {
-      return '${diff.inHours}小时前';
+      return '${diff.inHours} hours ago'; // X小时前
     } else if (diff.inMinutes > 0) {
-      return '${diff.inMinutes}分钟前';
+      return '${diff.inMinutes} minutes ago'; // X分钟前
     } else {
-      return '刚刚';
+      return 'Just now'; // 刚刚
     }
   }
 }

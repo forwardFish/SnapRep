@@ -276,6 +276,13 @@ export class EquipmentWithAssociationDto {
   imageUrl?: string;
 
   @ApiProperty({
+    description: '器材图标URL',
+    example: 'https://example.com/icons/dumbbells.svg',
+    required: false,
+  })
+  iconUrl?: string;
+
+  @ApiProperty({
     description: '是否是该场景的常见器材',
     example: true,
   })

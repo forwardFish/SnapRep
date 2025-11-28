@@ -52,6 +52,8 @@ dependencies:
 dependency_overrides:
   # 强制app_links使用与API 34兼容的版本
   app_links: 3.5.1
+  # 强制使用旧版本的package_info_plus,避免需要Gradle 8.1.2
+  package_info_plus: 4.0.2
 
 dev_dependencies:
   flutter_test:

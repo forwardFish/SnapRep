@@ -1,0 +1,7 @@
+Flutter assets will be downloaded from https://storage.flutter-io.cn. Make sure you trust this source!
+4 connected devices:
+
+NOH AN00 (mobile) • PQY0220C26003745 • android-arm64  • Android 12 (API 31)
+Windows (desktop) • windows          • windows-x64    • Microsoft Windows [版本 10.0.22631.5768]
+Chrome (web)      • chrome           • web-javascript • Google Chrome 142.0.7444.176
+Edge (web)        • edge             • web-javascript • Microsoft Edge 142.0.3595.94

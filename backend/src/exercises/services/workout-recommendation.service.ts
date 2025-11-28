@@ -256,9 +256,9 @@ export class WorkoutRecommendationService {
         return [];
       }
 
-      if (criteria.intent) {
-        filters.intent_type = `eq.${criteria.intent}`;
-      }
+      // NOTE: intent_type is now an array, so we filter in post-processing
+      // Cannot use eq.RELAX for array types in PostgREST
+      const intentFilter = criteria.intent; // Save for post-processing
 
       if (criteria.difficulty) {
         filters.difficulty = `eq.${criteria.difficulty}`;
@@ -280,7 +280,22 @@ export class WorkoutRecommendationService {
 
       logger.info(`Found ${exercises.length} exercises from supabaseApi`);
 
-      // 7. 后处理: secondary_muscles 过滤
+      // 7. 后处理: intent_type 过滤 (数组类型)
+      // 匹配规则: 数组包含该intent OR 数组为空[]（表示适用于所有意图）
+      if (intentFilter && exercises.length > 0) {
+        exercises = exercises.filter((ex: any) => {
+          const intentTypes = ex.intent_type;
+          // 如果是空数组，表示适用于所有意图
+          if (!intentTypes || intentTypes.length === 0) {
+            return true;
+          }
+          // 检查数组是否包含该意图
+          return Array.isArray(intentTypes) && intentTypes.includes(intentFilter);
+        });
+        logger.info(`After intent_type filtering (${intentFilter}): ${exercises.length} exercises`);
+      }
+
+      // 8. 后处理: secondary_muscles 过滤
       if (expandedMuscles.length > 0 && exercises.length > 0) {
         exercises = exercises.filter((ex: any) => {
           const primaryMatch = expandedMuscles.includes(ex.primary_muscle);
@@ -291,7 +306,7 @@ export class WorkoutRecommendationService {
         logger.info(`After secondary_muscles filtering: ${exercises.length} exercises`);
       }
 
-      // 8. 如果仍然没有结果,放宽条件(去掉intent和difficulty)
+      // 9. 如果仍然没有结果,放宽条件(去掉intent和difficulty)
       if (exercises.length === 0 && (criteria.intent || criteria.difficulty)) {
         logger.warn('Relaxing constraints (removing intent/difficulty)');
 

@@ -18,8 +18,8 @@ class PopularExerciseDto {
   /// 次要锻炼部位
   final List<String> secondaryMuscles;
 
-  /// 意图类型
-  final String intentType;
+  /// 意图类型（可能包含多个意图）
+  final List<String> intentType;
 
   /// 难度等级
   final String difficulty;
@@ -64,7 +64,7 @@ class PopularExerciseDto {
     required this.description,
     required this.primaryMuscle,
     this.secondaryMuscles = const [],
-    this.intentType = 'STRENGTH',
+    this.intentType = const [],
     required this.difficulty,
     required this.durationSeconds,
     this.sets = 3,
@@ -90,7 +90,9 @@ class PopularExerciseDto {
       secondaryMuscles: json['secondaryMuscles'] != null
           ? List<String>.from(json['secondaryMuscles'])
           : [],
-      intentType: json['intentType'] as String? ?? 'STRENGTH',
+      intentType: json['intentType'] != null
+          ? List<String>.from(json['intentType'])
+          : [],
       difficulty: json['difficulty'] as String,
       durationSeconds: json['durationSeconds'] as int,
       sets: json['sets'] as int? ?? 3,

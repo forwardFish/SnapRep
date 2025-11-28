@@ -137,14 +137,17 @@ class _HomePageState extends State<HomePage> {
 
   void _onScenarioPressed(Scenario scenario) {
     debugPrint('Scenario pressed: ${scenario.name}');
-    // 按照路由文档：首页 → Step1 (相机检测页面)
-    AppRoutes.navigateTo(context, AppRoutes.cameraDetection);
+    // Navigate to equipment selection with pre-selected scenario
+    AppRoutes.navigateToEquipmentSelection(
+      context,
+      scenarioCode: scenario.code,
+    );
   }
 
   void _onEquipmentPressed(Equipment equipment) {
     debugPrint('Equipment pressed: ${equipment.name}');
-    // Navigate to camera detection page (Step 1)
-    AppRoutes.navigateTo(context, AppRoutes.cameraDetection);
+    // Navigate to scenario selection page (Step 1a)
+    AppRoutes.navigateTo(context, AppRoutes.scenarioSelection);
   }
 
   void _onChallengesPressed() {
@@ -168,9 +171,9 @@ class _HomePageState extends State<HomePage> {
         // Already on home page
         break;
       case 1:
-        // Navigate to camera page (AI scene detection)
-        debugPrint('Navigate to AI camera detection page');
-        AppRoutes.navigateTo(context, AppRoutes.cameraDetection);
+        // Navigate to scenario selection page (new Step 1a)
+        debugPrint('Navigate to scenario selection page');
+        AppRoutes.navigateTo(context, AppRoutes.scenarioSelection);
         break;
       case 2:
         // Navigate to profile page

@@ -82,26 +82,12 @@ enum TargetMuscle {
     }
   }
 
-  /// 获取背景图片URL
-  String get backgroundImageUrl {
-    switch (this) {
-      case TargetMuscle.fullBody:
-        return 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80';
-      case TargetMuscle.neckShoulder:
-        return 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80';
-      case TargetMuscle.chestBack:
-        return 'https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80';
-      case TargetMuscle.core:
-        return 'https://images.unsplash.com/photo-1598300042247-d088f8ab3a91?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80';
-      case TargetMuscle.legs:
-        return 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80';
-      case TargetMuscle.glutes:
-        return 'https://images.unsplash.com/photo-1588286840104-8957b019727f?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80';
-      case TargetMuscle.calves:
-        return 'https://images.unsplash.com/photo-1549060279-7e168fcee0c2?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80';
-      case TargetMuscle.arms:
-        return 'https://images.unsplash.com/photo-1594737625785-a6cbdabd333c?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80';
-    }
+  /// 获取背景图片URL (从后端API获取)
+  /// 图片命名规则: {muscle_code}_background.jpg
+  /// 例如: FULL_BODY -> full_body_background.jpg
+  String getBackgroundImageUrl(String apiBaseUrl) {
+    final imageCode = code.toLowerCase();
+    return '$apiBaseUrl/api/v1/assets/images/${imageCode}_background.jpg';
   }
 
   /// 获取Flutter Color对象
@@ -175,7 +161,7 @@ class TargetMuscleSelection {
     DateTime? selectedAt,
   }) : selectedAt = selectedAt ?? DateTime.now() {
     if (selectedMuscles.length > 2) {
-      throw ArgumentError('最多只能选择2个目标部位');
+      throw ArgumentError('Maximum 2 target muscles allowed');
     }
   }
 
@@ -190,21 +176,21 @@ class TargetMuscleSelection {
   /// 是否包含全身训练
   bool get includesFullBody => selectedMuscles.contains(TargetMuscle.fullBody);
 
-  /// 获取训练重点类型
+  /// Get workout focus type
   String get focusType {
     if (includesFullBody || selectedMuscles.length > 1) {
-      return '全面训练';
+      return 'Comprehensive Training';
     }
 
     final muscle = primaryMuscle;
     if (muscle.isUpperBody) {
-      return '上半身重点';
+      return 'Upper Body Focus';
     } else if (muscle.isLowerBody) {
-      return '下半身重点';
+      return 'Lower Body Focus';
     } else if (muscle.isCoreArea) {
-      return '核心强化';
+      return 'Core Strengthening';
     } else {
-      return '综合训练';
+      return 'General Training';
     }
   }
 

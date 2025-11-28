@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import '../models/equipment.dart';
 import '../config/api_config.dart';
@@ -55,14 +56,40 @@ class EquipmentService {
   /// Returns equipment items that are commonly used in a specific scenario
   Future<List<Equipment>> getEquipmentByScenario(String scenarioCode) async {
     try {
-      // For now, we'll get all equipment and filter by some logic
-      // In a real implementation, this would be a specific API endpoint
-      final allEquipment = await getEquipment(includeInactive: false);
+      debugPrint('🌐 Fetching equipment for scenario: $scenarioCode');
 
-      // Mock filtering logic based on scenario
-      // This should be replaced with actual scenario-based filtering from the backend
-      return _filterEquipmentByScenario(allEquipment, scenarioCode);
+      final response = await http.get(
+        Uri.parse('$_baseUrl/rest/v1/scenario-equipment/by-code/$scenarioCode/equipment'),
+        headers: ApiConfig.defaultHeaders,
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = json.decode(response.body);
+
+        // Use fromJsonSafe for safer null handling
+        final equipment = data
+            .map((item) {
+              try {
+                return Equipment.fromJsonSafe(item as Map<String, dynamic>);
+              } catch (e) {
+                debugPrint('⚠️ Skipping invalid equipment item: $e');
+                return null;
+              }
+            })
+            .whereType<Equipment>() // Filter out null entries
+            .toList();
+
+        debugPrint('✅ Equipment loaded for scenario $scenarioCode: ${equipment.length} items');
+        return equipment;
+      } else if (response.statusCode == 404) {
+        debugPrint('⚠️ Scenario not found: $scenarioCode');
+        return [];
+      } else {
+        debugPrint('❌ Failed to load equipment: ${response.statusCode}');
+        throw Exception('Failed to load equipment for scenario: ${response.statusCode}');
+      }
     } catch (e) {
+      debugPrint('❌ Error loading equipment for scenario: $e');
       throw Exception('Failed to load equipment for scenario: $e');
     }
   }
@@ -163,25 +190,6 @@ class EquipmentService {
     } catch (e) {
       throw Exception('Network error: $e');
     }
-  }
-
-  /// Private helper method to filter equipment by scenario
-  /// This is a mock implementation - in production this should come from the backend
-  List<Equipment> _filterEquipmentByScenario(List<Equipment> allEquipment, String scenarioCode) {
-    // Define scenario-equipment mappings
-    const Map<String, List<String>> scenarioEquipmentMap = {
-      'office': ['FURNITURE', 'WALL', 'BOTTLE', 'BAG', 'FABRIC'],
-      'home': ['FURNITURE', 'WALL', 'BOTTLE', 'BAG', 'STAIRS', 'FABRIC', 'STICK'],
-      'travel': ['BOTTLE', 'BAG', 'FABRIC', 'WALL'],
-      'outdoor': ['OUTDOOR', 'BOTTLE', 'BAG', 'STAIRS', 'STICK'],
-    };
-
-    final allowedCategories = scenarioEquipmentMap[scenarioCode] ??
-        scenarioEquipmentMap['office']!;
-
-    return allEquipment
-        .where((equipment) => allowedCategories.contains(equipment.category))
-        .toList();
   }
 
   /// Mock AI recognition result

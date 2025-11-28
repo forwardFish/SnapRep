@@ -1,4 +1,47 @@
 pluginManagement {
+    // 全局插件仓库 - 使用国内镜像并允许不安全协议
+    repositories {
+        // // HTTP镜像源（避免SSL问题）
+        // maven {
+        //     url 'http://maven.aliyun.com/nexus/content/groups/public/'
+        //     allowInsecureProtocol = true
+        // }
+        // // 阿里云 Google 仓库
+        // maven {
+        //     url 'https://maven.aliyun.com/repository/google'
+        //     allowInsecureProtocol = true
+        // }
+        // // 阿里云 Gradle 插件仓库
+        // maven {
+        //     url 'https://maven.aliyun.com/repository/gradle-plugin'
+        //     allowInsecureProtocol = true
+        // }
+        // 腾讯云镜像
+        // maven {
+        //     url 'https://mirrors.cloud.tencent.com/nexus/repository/maven-public/'
+        //     allowInsecureProtocol = true
+        // }
+        // // 网易云镜像
+        // maven {
+        //     url 'https://mirrors.163.com/maven/repository/maven-public/'
+        //     allowInsecureProtocol = true
+        // }
+        maven {
+            url 'https://storage.flutter-io.cn/download.flutter.io'
+        }
+        // 下面这三个在你有代理/科学上网时非常好用，没有也无所谓
+        google {
+            allowInsecureProtocol = true
+        }
+        mavenCentral {
+            allowInsecureProtocol = true
+        }
+        gradlePluginPortal {
+            allowInsecureProtocol = true
+        }
+    }
+
+    // ======== Flutter SDK 配置（保持不变）========
     def flutterSdkPath = {
         def properties = new Properties()
         file("local.properties").withInputStream { properties.load(it) }
@@ -12,8 +55,55 @@ pluginManagement {
 
     plugins {
         id "dev.flutter.flutter-gradle-plugin" version "1.0.0" apply false
-        // ➜ 新增这一行（跟你的模板版本匹配）
+        // Kotlin 插件（保持不变）
         id "org.jetbrains.kotlin.android" version "1.7.10" apply false
+    }
+}
+
+// 全局依赖仓库 - 优先使用上面 settings 里的国内镜像
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.PREFER_SETTINGS)
+    repositories {
+        // // HTTP镜像源（避免SSL问题）
+        // maven {
+        //     url 'http://maven.aliyun.com/nexus/content/groups/public/'
+        //     allowInsecureProtocol = true
+        // }
+        // // 阿里云 Google 仓库
+        // maven {
+        //     url 'https://maven.aliyun.com/repository/google'
+        //     allowInsecureProtocol = true
+        // }
+        // // 阿里云中央仓库
+        // maven {
+        //     url 'https://maven.aliyun.com/repository/central'
+        //     allowInsecureProtocol = true
+        // }
+        // // 阿里云公共仓库
+        // maven {
+        //     url 'https://maven.aliyun.com/repository/public'
+        //     allowInsecureProtocol = true
+        // }
+        // // 腾讯云镜像
+        // maven {
+        //     url 'https://mirrors.cloud.tencent.com/nexus/repository/maven-public/'
+        //     allowInsecureProtocol = true
+        // }
+        // // 网易云镜像
+        // maven {
+        //     url 'https://mirrors.163.com/maven/repository/maven-public/'
+        //     allowInsecureProtocol = true
+        // }
+        maven {
+            url 'https://storage.flutter-io.cn/download.flutter.io'
+        }
+        // 有代理就可以让它去官方源兜底
+        google {
+            allowInsecureProtocol = true
+        }
+        mavenCentral {
+            allowInsecureProtocol = true
+        }
     }
 }
 

@@ -1,71 +1,48 @@
 buildscript {
     ext.kotlin_version = '1.7.10'
-     repositories {
+
+    repositories {
+        // 1⃣ Flutter 官方中国镜像（核心：放最前面）
+        // 用来下 io.flutter:flutter_embedding_* 这些依赖
         maven {
-            url 'https://maven.aliyun.com/repository/google'
-            allowInsecureProtocol = false
+            url 'https://storage.flutter-io.cn/download.flutter.io'
         }
-        maven {
-            url 'https://repo.huaweicloud.com/repository/maven/google/'
-            allowInsecureProtocol = false
-        }
-        maven {
-            url 'https://mirrors.tuna.tsinghua.edu.cn/android/maven2/'
-            allowInsecureProtocol = false
-        }
-        maven {
-            url 'https://maven.aliyun.com/repository/gradle-plugin'
-            allowInsecureProtocol = false
-        }
-        maven {
-            url 'https://maven.aliyun.com/repository/public'
-            allowInsecureProtocol = false
-        }
-        maven {
-            url 'https://mirrors.cloud.tencent.com/nexus/repository/maven-public/'
-            allowInsecureProtocol = false
-        }
+
+        // 2⃣ 官方仓库（如果你本机有代理/VPN，可以保留用来兜底）
+        google()
         mavenCentral()
-        // 不再写 google()
+        // gradle 插件门户（一般用不到太多，但留着没坏处）
+        gradlePluginPortal()
     }
 
     dependencies {
         classpath 'com.android.tools.build:gradle:7.4.2'
+        // 如果后面需要 Kotlin Gradle 插件再打开
         // classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
     }
 }
 
 allprojects {
     repositories {
+        // 跟上面保持一致，保证所有子模块用相同仓库
+
+        // 1⃣ Flutter 镜像
         maven {
-            url 'https://maven.aliyun.com/repository/google'
-            allowInsecureProtocol = false
+            url 'https://storage.flutter-io.cn/download.flutter.io'
         }
-        maven {
-            url 'https://repo.huaweicloud.com/repository/maven/google/'
-            allowInsecureProtocol = false
-        }
-        maven {
-            url 'https://mirrors.tuna.tsinghua.edu.cn/android/maven2/'
-            allowInsecureProtocol = false
-        }
-        maven {
-            url 'https://maven.aliyun.com/repository/public'
-            allowInsecureProtocol = false
-        }
-        maven {
-            url 'https://mirrors.cloud.tencent.com/nexus/repository/maven-public/'
-            allowInsecureProtocol = false
-        }
+
+        // 2⃣ 官方仓库（有网络就会用，没有就靠 Flutter 镜像能撑多少算多少）
+        google()
         mavenCentral()
     }
 }
 
 rootProject.buildDir = '../build'
+
 subprojects {
     project.buildDir = "${rootProject.buildDir}/${project.name}"
 
-    // 强制所有子项目使用API 34
+    // 可选：统一 compileSdkVersion / targetSdkVersion
     afterEvaluate { project ->
         if (project.hasProperty('android')) {
             project.android.compileSdkVersion 34
@@ -73,13 +50,12 @@ subprojects {
 
             if (project.android.hasProperty('defaultConfig')) {
                 project.android.defaultConfig.targetSdkVersion 34
-                if (project.android.defaultConfig.hasProperty('minSdkVersion')) {
-                    // 保持原有minSdkVersion不变
-                }
             }
         }
     }
 }
+
+// 保持不变
 subprojects {
     project.evaluationDependsOn(':app')
 }

@@ -474,8 +474,8 @@ class _WorkoutGuideStep1PageState extends State<WorkoutGuideStep1Page> {
 
   void _onContinuePressed() {
     if (_selectedMode != null) {
-      // Navigate to step 2
-      AppRoutes.navigateToWorkoutGuideStep2(
+      // Navigate to Step 4: Muscle Selection (workout_guide_step3_page.dart)
+      AppRoutes.navigateToWorkoutGuideStep3(
         context,
         guideData: {
           'selectedMode': _selectedMode,

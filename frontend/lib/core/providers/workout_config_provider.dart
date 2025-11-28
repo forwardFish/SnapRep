@@ -187,23 +187,23 @@ class WorkoutConfigProvider extends ChangeNotifier {
       summary.add('部位: ${_targetMuscles.join(', ')}');
     }
 
-    return summary.isEmpty ? '暂无选择' : summary.join(' · ');
+    return summary.isEmpty ? 'No selection' : summary.join(' · ');
   }
 
-  /// 验证当前配置是否有效
+  /// Validate current configuration
   bool validateConfiguration() {
     if (_selectedEquipment.isEmpty) {
-      setError('请至少选择一个器材');
+      setError('Please select at least one equipment');
       return false;
     }
 
     if (_selectedIntent == null) {
-      setError('请选择运动意图');
+      setError('Please select workout intent');
       return false;
     }
 
     if (_targetMuscles.isEmpty) {
-      setError('请至少选择一个目标部位');
+      setError('Please select at least one target muscle');
       return false;
     }
 

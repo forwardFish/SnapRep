@@ -425,9 +425,14 @@ class _RecommendedExercisesPageState extends State<RecommendedExercisesPage> {
 
     WorkoutIntent intentType;
     try {
+      // intentType 现在是 List<String>，取第一个元素
+      final firstIntent = popularExercise.intentType.isNotEmpty
+          ? popularExercise.intentType.first
+          : 'STRETCH';
+
       intentType = WorkoutIntent.values.firstWhere(
-        (i) => i.name.toLowerCase() == popularExercise.intentType.toLowerCase() ||
-               i.code.toLowerCase() == popularExercise.intentType.toLowerCase(),
+        (i) => i.name.toLowerCase() == firstIntent.toLowerCase() ||
+               i.code.toLowerCase() == firstIntent.toLowerCase(),
         orElse: () => WorkoutIntent.stretch,
       );
     } catch (e) {

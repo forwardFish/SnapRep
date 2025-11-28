@@ -324,25 +324,25 @@ class WorkoutGuideProvider with ChangeNotifier {
     }
   }
 
-  /// 获取当前步骤验证错误信息
+  /// Get current step validation error message
   String? getCurrentStepError() {
     switch (_currentStep) {
       case 1:
         if (_selectedIntents.isEmpty) {
-          return '请选择至少一种运动意图';
+          return 'Please select at least one workout intent';
         }
         break;
       case 2:
         if (_selectedScenario == null) {
-          return '请选择一个训练场景';
+          return 'Please select a training scenario';
         }
         if (_selectedEquipment.isEmpty) {
-          return '请选择至少一种器材';
+          return 'Please select at least one equipment';
         }
         break;
       case 3:
         if (_selectedTargetMuscles.isEmpty) {
-          return '请选择至少一个目标部位';
+          return 'Please select at least one target muscle';
         }
         break;
     }
@@ -365,23 +365,23 @@ class WorkoutGuideProvider with ChangeNotifier {
   Future<Map<String, dynamic>?> generateWorkoutRecommendation() async {
     debugPrint('🚀 Generating workout recommendation');
 
-    // 详细验证每个步骤
+    // Detailed validation for each step
     if (!isStep1Valid) {
-      setError('请先在 Step 1 选择运动意图');
+      setError('Please select workout intent in Step 1');
       return null;
     }
 
     if (!isStep2Valid) {
       if (_selectedScenario == null) {
-        setError('请先在 Step 2 选择训练场景');
+        setError('Please select training scenario in Step 2');
       } else if (_selectedEquipment.isEmpty) {
-        setError('请先在 Step 2 选择至少一个器材');
+        setError('Please select at least one equipment in Step 2');
       }
       return null;
     }
 
     if (!isStep3Valid) {
-      setError('请至少选择一个目标部位');
+      setError('Please select at least one target muscle');
       return null;
     }
 
@@ -440,8 +440,8 @@ class WorkoutGuideProvider with ChangeNotifier {
         debugPrint('📋 Error code: ${e.code}, category: ${e.category}');
         debugPrint('📋 Original message: ${e.originalMessage}');
       } else {
-        // 其他未知错误
-        errorMessage = '操作失败，请稍后重试';
+        // Other unknown errors
+        errorMessage = 'Operation failed, please try again later';
         debugPrint('⚠️ Unknown error type: ${e.runtimeType}');
       }
 

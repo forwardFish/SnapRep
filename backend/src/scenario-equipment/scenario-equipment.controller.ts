@@ -416,6 +416,78 @@ export class ScenarioEquipmentController {
   }
 
   /**
+   * 通过场景code获取所有器材
+   */
+  @Get('by-code/:scenarioCode/equipment')
+  @ApiOperation({
+    summary: '通过场景code获取所有器材',
+    description: '根据场景code获取该场景可用的所有器材',
+  })
+  @ApiParam({ name: 'scenarioCode', description: '场景代码 (如: home, office, gym)' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: '获取成功',
+    type: [EquipmentWithAssociationDto],
+  })
+  @ApiResponse({ status: HttpStatus.NOT_FOUND, description: '场景不存在' })
+  async getEquipmentByScenarioCode(
+    @Param('scenarioCode') scenarioCode: string,
+    @Query('onlyCommon') onlyCommon: boolean = false
+  ): Promise<EquipmentWithAssociationDto[]> {
+    try {
+      logger.info(`通过code获取场景器材: scenarioCode=${scenarioCode}, onlyCommon=${onlyCommon}`);
+      logger.info('Using direct Supabase API due to database connection issue');
+
+      // 查找场景
+      const scenarios = await this.supabaseApi.get('scenarios', { code: scenarioCode });
+      if (!scenarios || scenarios.length === 0) {
+        throw new NotFoundException(`Scenario with code '${scenarioCode}' not found`);
+      }
+      const scenario = scenarios[0];
+
+      // 构建查询条件
+      const filters: Record<string, any> = {
+        scenario_id: scenario.id,
+      };
+
+      if (onlyCommon) {
+        filters.is_common = true;
+      }
+
+      // 获取关联关系
+      const associations = await this.supabaseApi.get('scenario_equipment', filters, {
+        orderBy: 'created_at.asc',
+      });
+
+      // 获取关联的器材详情
+      const result: EquipmentWithAssociationDto[] = [];
+
+      for (const assoc of associations) {
+        const equipment = await this.supabaseApi.getById('equipment', assoc.equipment_id);
+        if (equipment && equipment.is_active) {
+          result.push({
+            id: equipment.id,
+            code: equipment.code,
+            name: equipment.name,
+            description: equipment.description || undefined,
+            imageUrl: equipment.image_url || undefined,
+            iconUrl: equipment.icon_url || undefined,
+            isCommon: assoc.is_common,
+            isActive: equipment.is_active,
+            createdAt: equipment.created_at ? new Date(equipment.created_at) : new Date(),
+            updatedAt: equipment.updated_at ? new Date(equipment.updated_at) : new Date(),
+          });
+        }
+      }
+
+      logger.info(`通过code获取场景器材成功: ${scenarioCode}, 数量: ${result.length}`);
+      return result;
+    } catch (error) {
+      this.handleError(error, 'getEquipmentByScenarioCode', { scenarioCode, onlyCommon });
+    }
+  }
+
+  /**
    * 获取器材所在的场景
    */
   @Get('equipment/:equipmentId/scenarios')

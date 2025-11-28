@@ -7,16 +7,16 @@ part 'exercise.g.dart';
 /// 动作难度等级
 enum ExerciseDifficulty {
   @JsonValue('BEGINNER')
-  beginner('BEGINNER', '初级', '🟢', '#4CAF50'),
+  beginner('BEGINNER', 'Beginner', '🟢', '#4CAF50'), // 初级
 
   @JsonValue('INTERMEDIATE')
-  intermediate('INTERMEDIATE', '中级', '🟡', '#FF9800'),
+  intermediate('INTERMEDIATE', 'Intermediate', '🟡', '#FF9800'), // 中级
 
   @JsonValue('ADVANCED')
-  advanced('ADVANCED', '高级', '🟠', '#FF5722'),
+  advanced('ADVANCED', 'Advanced', '🟠', '#FF5722'), // 高级
 
   @JsonValue('EXPERT')
-  expert('EXPERT', '专家', '🔴', '#F44336');
+  expert('EXPERT', 'Expert', '🔴', '#F44336'); // 专家
 
   const ExerciseDifficulty(this.code, this.displayName, this.emoji, this.color);
 
@@ -35,19 +35,19 @@ enum ExerciseDifficulty {
 
 /// 动作标签类型
 enum ExerciseTag {
-  standing('standing', '站立'),
-  sitting('sitting', '坐姿'),
-  lying('lying', '平躺'),
-  wall('wall', '靠墙'),
-  chair('chair', '椅子'),
-  bottle('bottle', '水瓶'),
-  handsFreee('hands_free', '空手'),
-  stretch('stretch', '拉伸'),
-  strength('strength', '力量'),
-  cardio('cardio', '有氧'),
-  silent('silent', '静音'),
-  smallSpace('small_space', '小空间'),
-  balance('balance', '平衡');
+  standing('standing', 'Standing'), // 站立
+  sitting('sitting', 'Sitting'), // 坐姿
+  lying('lying', 'Lying'), // 平躺
+  wall('wall', 'Wall'), // 靠墙
+  chair('chair', 'Chair'), // 椅子
+  bottle('bottle', 'Bottle'), // 水瓶
+  handsFreee('hands_free', 'Hands Free'), // 空手
+  stretch('stretch', 'Stretch'), // 拉伸
+  strength('strength', 'Strength'), // 力量
+  cardio('cardio', 'Cardio'), // 有氧
+  silent('silent', 'Silent'), // 静音
+  smallSpace('small_space', 'Small Space'), // 小空间
+  balance('balance', 'Balance'); // 平衡
 
   const ExerciseTag(this.code, this.displayName);
 
@@ -183,8 +183,8 @@ class Exercise {
       ExerciseTag.wall,
     ].contains(tag)).toList();
 
-    if (equipmentTags.isEmpty) return '无需器材';
-    return equipmentTags.map((tag) => tag.displayName).join('、');
+    if (equipmentTags.isEmpty) return 'No equipment needed'; // 无需器材
+    return equipmentTags.map((tag) => tag.displayName).join(', ');
   }
 
   /// 获取动作类型描述
@@ -196,8 +196,8 @@ class Exercise {
       ExerciseTag.balance,
     ].contains(tag)).toList();
 
-    if (typeTags.isEmpty) return '综合训练';
-    return typeTags.map((tag) => tag.displayName).join('、');
+    if (typeTags.isEmpty) return 'General Training'; // 综合训练
+    return typeTags.map((tag) => tag.displayName).join(', ');
   }
 
   /// 获取姿势描述
@@ -209,7 +209,7 @@ class Exercise {
     ].contains(tag)).toList();
 
     if (postureTags.isEmpty) return '';
-    return postureTags.map((tag) => tag.displayName).join('、');
+    return postureTags.map((tag) => tag.displayName).join(', ');
   }
 
   /// JSON序列化方法

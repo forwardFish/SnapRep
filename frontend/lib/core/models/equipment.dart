@@ -25,6 +25,19 @@ class Equipment {
     this.displayOrder,
   });
 
+  /// Factory constructor with safe null handling
+  factory Equipment.fromJsonSafe(Map<String, dynamic> json) {
+    return Equipment(
+      id: json['id']?.toString() ?? '',
+      code: json['code']?.toString() ?? '',
+      name: json['name']?.toString() ?? 'Unknown Equipment',
+      category: json['category']?.toString() ?? 'Equipment',
+      iconUrl: json['icon_url']?.toString(),
+      isActive: json['is_active'] as bool?,
+      displayOrder: json['display_order'] as int?,
+    );
+  }
+
   factory Equipment.fromJson(Map<String, dynamic> json) => _$EquipmentFromJson(json);
   Map<String, dynamic> toJson() => _$EquipmentToJson(this);
 }

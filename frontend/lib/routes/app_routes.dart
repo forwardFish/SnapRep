@@ -1,11 +1,6 @@
 import 'package:flutter/material.dart';
 import '../features/splash/splash_screen.dart';
 import '../features/home/screens/home_page.dart';
-import '../features/workout_guide/screens/camera_detection_page.dart';
-import '../features/workout_guide/screens/workout_mode_selection_page.dart';
-import '../features/workout_guide/screens/workout_guide_step2_page.dart';
-import '../features/workout_guide/screens/environment_confirmation_page.dart';
-import '../features/workout_guide/screens/workout_guide_step3_page.dart';
 import '../features/workout_result/screens/modern_workout_result_page.dart';
 import '../features/result_card/screens/result_card_page.dart';
 import '../features/profile/screens/my_page.dart';
@@ -16,10 +11,10 @@ import '../features/profile/screens/achievement_details_page.dart';
 import '../features/auth/screens/google_login_page.dart';
 import '../features/challenges/screens/challenges_page.dart';
 import '../features/exercises/screens/recommended_exercises_page.dart';
-import '../features/onboarding/screens/scenario_selection_page.dart';
-import '../features/onboarding/screens/equipment_selection_page.dart';
-import '../features/onboarding/screens/intent_selection_page.dart';
-import '../features/onboarding/screens/muscle_target_page.dart';
+import '../features/workout_guide/screens/scenario_selection_page.dart';
+import '../features/workout_guide/screens/equipment_selection_page.dart';
+import '../features/workout_guide/screens/workout_guide_step1_page.dart';
+import '../features/workout_guide/screens/workout_guide_step3_page.dart';
 import '../features/onboarding/screens/ai_recognition_page.dart';
 import '../core/models/exercise.dart';
 
@@ -33,6 +28,21 @@ class AppRoutes {
 
   /// 首页 - 主界面,包含快速开始、场景推荐、器材选择等入口
   static const String home = '/home';
+
+  // ========== 新版训练引导流程路由 ==========
+
+  /// [新版] Step 1a: 场景选择页 - 选择训练场景 (AI识别 或 手动选择)
+  /// 功能: AI相机识别 或 手动选择训练场景
+  /// 跳转来源: 首页
+  /// 下一步AI: workoutModeSelection (直接到运动意图)
+  /// 下一步手动: equipmentSelection (器材选择)
+  static const String scenarioSelection = '/scenario-selection';
+
+  /// [新版] Step 1b: 器材选择页 - 根据场景选择可用器材
+  /// 功能: 根据选择的场景动态加载并选择器材
+  /// 跳转来源: scenarioSelection (手动选择场景后)
+  /// 下一步: workoutModeSelection (运动意图选择)
+  static const String equipmentSelection = '/equipment-selection';
 
   // ========== 旧版训练引导流程路由 (逐步被新版替代) ==========
 
@@ -60,15 +70,21 @@ class AppRoutes {
   /// 下一步: workoutModeSelection
   static const String environmentConfirmation = '/environment-confirmation';
 
-  /// [旧版] Step 1 别名 - 指向 cameraDetection,保持命名一致性
-  static const String workoutGuideStep1 = '/camera-detection';
+  /// [旧版] Step 1 别名 - 现在指向新版场景选择页面，保持命名一致性
+  static const String workoutGuideStep1 = '/scenario-selection';
 
-  /// [旧版] Step 2 别名 - 现在指向 cameraDetection (场景器材选择)
-  static const String workoutGuideStep2 = '/camera-detection';
+  /// [旧版] Step 2 别名 - 现在指向器材选择页面
+  static const String workoutGuideStep2 = '/equipment-selection';
+
+  /// [新版] Step 3a: 运动意图选择页 - 选择运动意图(拉伸/力量/有氧等)
+  /// 功能: 根据场景和器材选择运动意图
+  /// 跳转来源: equipmentSelection (器材选择后)
+  /// 下一步: workoutGuideStep3 (肌肉选择)
+  static const String intentSelection = '/intent-selection';
 
   /// [旧版] Step 3: 重点部位选择页 - 选择想要锻炼的目标肌群
   /// 功能: 选择训练的目标部位(如腿部、腰腹、手臂等)
-  /// 跳转来源: scenarioEquipmentSelection
+  /// 跳转来源: intentSelection
   /// 下一步: modernWorkoutResult (训练动作推荐结果)
   static const String workoutGuideStep3 = '/workout-guide-step3';
 
@@ -150,31 +166,6 @@ class AppRoutes {
 
   // ========== 新版引导流程路由 (推荐使用) ==========
 
-  /// [新版] Step 1: 场景选择页 - 选择训练场景(办公室/家里/公园/健身房等)
-  /// 功能: 用户选择当前所在场景,系统会推荐该场景下常见器材
-  /// 跳转来源: 首页"开始引导流程"、首次使用引导
-  /// 下一步: equipmentSelection (器材选择)
-  static const String scenarioSelection = '/scenario-selection';
-
-  /// [新版] Step 2: 器材选择页 - 根据场景选择可用的训练器材
-  /// 功能: 显示当前场景下的常见器材,可多选
-  /// 参数: scenarioCode (从scenarioSelection传入)
-  /// 跳转来源: scenarioSelection
-  /// 下一步: intentSelection (运动意图选择)
-  static const String equipmentSelection = '/equipment-selection';
-
-  /// [新版] Step 3: 运动意图选择页 - 选择训练目标(拉伸/力量/有氧/放松等)
-  /// 功能: 选择本次训练的主要意图和目标
-  /// 跳转来源: equipmentSelection
-  /// 下一步: muscleSelection (目标肌群选择)
-  static const String intentSelection = '/intent-selection';
-
-  /// [新版] Step 4: 目标肌群选择页 - 选择想要重点锻炼的身体部位
-  /// 功能: 选择训练的目标部位(全身/上肢/下肢/核心等)
-  /// 跳转来源: intentSelection
-  /// 下一步: modernWorkoutResult (生成训练推荐)
-  static const String muscleSelection = '/muscle-selection';
-
   /// [新版] AI识别页 - 使用相机AI识别场景和器材,自动填充选择
   /// 功能: 拍照后AI自动识别并填充场景和器材信息
   /// 跳转来源: 场景选择页或器材选择页的"AI识别"按钮
@@ -186,20 +177,9 @@ class AppRoutes {
     return {
       splash: (context) => const SplashScreen(),
       home: (context) => const HomePage(),
-      cameraDetection: (context) => const CameraDetectionPage(),
-      workoutModeSelection: (context) {
-        final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
-        return WorkoutModeSelectionPage(guideData: args);
-      },
-      scenarioEquipmentSelection: (context) {
-        final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
-        return const WorkoutGuideStep2Page(); // 场景和器材选择页
-      },
-      environmentConfirmation: (context) {
-        final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
-        return EnvironmentConfirmationPage(guideData: args);
-      },
-      workoutGuideStep3: (context) => const WorkoutGuideStep3Page(),
+      // 旧版路由已废弃，保留路由名称但不再使用
+      // cameraDetection, workoutModeSelection, scenarioEquipmentSelection,
+      // environmentConfirmation, workoutGuideStep3 已移除
       workoutResult: (context) {
         final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
         return ModernWorkoutResultPage(recommendationParams: args?['recommendationParams']);
@@ -218,7 +198,7 @@ class AppRoutes {
       challenges: (context) => const ChallengesPage(),
       recommendedExercises: (context) => const RecommendedExercisesPage(),
 
-      // New onboarding flow routes
+      // New onboarding flow routes (现在使用的版本)
       scenarioSelection: (context) => const ScenarioSelectionPage(),
       equipmentSelection: (context) {
         final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
@@ -226,8 +206,8 @@ class AppRoutes {
           scenarioCode: args?['scenarioCode'],
         );
       },
-      intentSelection: (context) => const IntentSelectionPage(),
-      muscleSelection: (context) => const MuscleTargetPage(),
+      intentSelection: (context) => const WorkoutGuideStep1Page(),
+      workoutGuideStep3: (context) => const WorkoutGuideStep3Page(),
       aiRecognition: (context) => const AIRecognitionPage(),
     };
   }
@@ -497,7 +477,7 @@ class AppRoutes {
 
   /// 从意图选择导航到肌肉目标选择
   static Future<T?> navigateToMuscleSelection<T>(BuildContext context) {
-    return navigateTo<T>(context, muscleSelection);
+    return navigateTo<T>(context, workoutGuideStep3);
   }
 
   // === 业务流程导航方法 (Business Flow Navigation) ===

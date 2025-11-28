@@ -245,10 +245,10 @@ export class ExercisesDao extends PrismaBaseDao<any> {
         return [];
       }
 
-      // 6. 意图筛选
-      if (criteria.intent) {
-        filters.intent_type = `eq.${criteria.intent}`;
-      }
+      // 6. 意图筛选 - NOTE: 改为数组后，需要在后处理中过滤
+      // 因为需要匹配: 数组包含该intent OR 数组为空[]
+      // Supabase PostgREST 不支持直接的 OR 查询，所以我们在后处理中过滤
+      const intentFilter = criteria.intent; // 保存用于后处理
 
       // 7. 难度筛选
       if (criteria.difficulty) {
@@ -284,7 +284,22 @@ export class ExercisesDao extends PrismaBaseDao<any> {
 
       logger.info(`Found ${exercises.length} exercises from Supabase after all filters`);
 
-      // 11. 后处理: 如果有目标肌群要求,进一步筛选 secondary_muscles
+      // 11. 后处理: 意图筛选（intent_type 改为数组后）
+      // 匹配规则: 数组包含该intent OR 数组为空[]（表示适用于所有意图）
+      if (intentFilter && exercises.length > 0) {
+        exercises = exercises.filter((ex: any) => {
+          const intentTypes = ex.intent_type;
+          // 如果是空数组，表示适用于所有意图
+          if (!intentTypes || intentTypes.length === 0) {
+            return true;
+          }
+          // 检查数组是否包含该意图
+          return Array.isArray(intentTypes) && intentTypes.includes(intentFilter);
+        });
+        logger.info(`After intent_type filtering (${intentFilter}): ${exercises.length} exercises`);
+      }
+
+      // 12. 后处理: 如果有目标肌群要求,进一步筛选 secondary_muscles
       if (expandedMuscles.length > 0 && exercises.length > 0) {
         exercises = exercises.filter((ex: any) => {
           // 检查 primary_muscle 或 secondary_muscles 是否匹配
@@ -445,20 +460,35 @@ export class ExercisesDao extends PrismaBaseDao<any> {
   }
 
   /**
-   * 按意图分组获取动作
+   * 按意图分组获取动作（intent_type改为数组后，需要特殊处理）
+   * 注意：一个动作可能属于多个意图，所以会重复计数
    */
   private async getExercisesByIntent(): Promise<Record<string, number>> {
     try {
-      const result = await this.prisma.exercise.groupBy({
-        by: ['intentType'],
+      // 改为数组后不能直接使用 groupBy，需要手动统计
+      const exercises = await this.prisma.exercise.findMany({
         where: { isActive: true },
-        _count: { id: true }
+        select: { intentType: true }
       });
 
-      return result.reduce((acc, item) => {
-        acc[item.intentType] = item._count.id;
-        return acc;
-      }, {} as Record<string, number>);
+      const intentCounts: Record<string, number> = {};
+
+      exercises.forEach((exercise) => {
+        const intentTypes = exercise.intentType as unknown as any[];
+        if (intentTypes && Array.isArray(intentTypes) && intentTypes.length > 0) {
+          // 每个意图都计数一次（一个动作可能属于多个意图）
+          intentTypes.forEach((intent: string) => {
+            intentCounts[intent] = (intentCounts[intent] || 0) + 1;
+          });
+        } else {
+          // 空数组表示适用于所有意图，在每个意图下都计数
+          ['RELAX', 'STRETCH', 'MODERATE', 'STRENGTH'].forEach((intent) => {
+            intentCounts[intent] = (intentCounts[intent] || 0) + 1;
+          });
+        }
+      });
+
+      return intentCounts;
     } catch (error) {
       logger.error(`按意图分组获取动作失败: error=${error.message}`);
       throw error;
