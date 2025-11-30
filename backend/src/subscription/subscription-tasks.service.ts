@@ -1,6 +1,6 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
-import { SubscriptionService } from './subscription.service.temp';
-import { DailyUsageService } from './daily-usage.service.temp';
+import { SubscriptionService } from './subscription.service';
+import { DailyUsageService } from './daily-usage.service';
 import { logger } from '../common/logger/logger';
 
 

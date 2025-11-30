@@ -11,9 +11,9 @@ Equipment _$EquipmentFromJson(Map<String, dynamic> json) => Equipment(
       code: json['code'] as String,
       name: json['name'] as String,
       category: json['category'] as String,
-      iconUrl: json['icon_url'] as String?,
-      isActive: json['is_active'] as bool?,
-      displayOrder: (json['display_order'] as num?)?.toInt(),
+      iconUrl: json['iconUrl'] as String?,
+      isActive: json['isActive'] as bool?,
+      displayOrder: (json['displayOrder'] as num?)?.toInt(),
     );
 
 Map<String, dynamic> _$EquipmentToJson(Equipment instance) => <String, dynamic>{
@@ -21,7 +21,7 @@ Map<String, dynamic> _$EquipmentToJson(Equipment instance) => <String, dynamic>{
       'code': instance.code,
       'name': instance.name,
       'category': instance.category,
-      'icon_url': instance.iconUrl,
-      'is_active': instance.isActive,
-      'display_order': instance.displayOrder,
+      'iconUrl': instance.iconUrl,
+      'isActive': instance.isActive,
+      'displayOrder': instance.displayOrder,
     };

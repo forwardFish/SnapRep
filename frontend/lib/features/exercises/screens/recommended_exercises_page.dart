@@ -6,10 +6,11 @@ import '../../../core/models/target_muscle.dart';
 import '../../../core/models/workout_intent.dart';
 import '../../../core/services/popular_exercises_service.dart';
 import '../../workout_result/screens/modern_workout_result_page.dart';
-// import '../../workout_execution/screens/modern_workout_page_fixed.dart';
 
+/// Recommended Exercises Page - Modern Premium Design
+/// Displays popular exercises in beautiful cards matching reference UI
+/// Features: Hero images, gradient overlays, badges, smooth animations
 class RecommendedExercisesPage extends StatefulWidget {
-  // 不再需要userId参数，因为这是通用推荐
   const RecommendedExercisesPage({super.key});
 
   @override
@@ -17,15 +18,39 @@ class RecommendedExercisesPage extends StatefulWidget {
       _RecommendedExercisesPageState();
 }
 
-class _RecommendedExercisesPageState extends State<RecommendedExercisesPage> {
+class _RecommendedExercisesPageState extends State<RecommendedExercisesPage>
+    with SingleTickerProviderStateMixin {
   List<PopularExerciseDto> exercises = [];
   bool isLoading = false;
   String? error;
+  late AnimationController _animationController;
+  late Animation<double> _fadeAnimation;
 
   @override
   void initState() {
     super.initState();
+    _setupAnimations();
     _loadPopularExercises();
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
+  }
+
+  void _setupAnimations() {
+    _animationController = AnimationController(
+      duration: const Duration(milliseconds: 800),
+      vsync: this,
+    );
+
+    _fadeAnimation = CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeOut,
+    );
+
+    _animationController.forward();
   }
 
   Future<void> _loadPopularExercises() async {
@@ -57,8 +82,9 @@ class _RecommendedExercisesPageState extends State<RecommendedExercisesPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       body: isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? _buildLoadingState()
           : error != null
               ? _buildErrorState()
               : exercises.isEmpty
@@ -67,26 +93,121 @@ class _RecommendedExercisesPageState extends State<RecommendedExercisesPage> {
     );
   }
 
-  Widget _buildErrorState() {
+  Widget _buildLoadingState() {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(
-            Icons.error_outline,
-            size: 64,
-            color: Colors.red,
+          Container(
+            width: 60,
+            height: 60,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: const LinearGradient(
+                colors: [Color(0xFFD4A574), Color(0xFFE5A000)],
+              ),
+            ),
+            child: const Center(
+              child: CircularProgressIndicator(
+                color: Colors.white,
+                strokeWidth: 3,
+              ),
+            ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 24),
+          const Text(
+            'Loading Popular Exercises',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF2C3E50),
+            ),
+          ),
+          const SizedBox(height: 8),
           Text(
-            error!,
-            style: const TextStyle(fontSize: 16),
-            textAlign: TextAlign.center,
+            'Finding the best workouts for you...',
+            style: TextStyle(
+              fontSize: 14,
+              color: Colors.grey[600],
+            ),
           ),
-          const SizedBox(height: 16),
-          ElevatedButton(
-            onPressed: _loadPopularExercises,
-            child: const Text('Retry'),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildErrorState() {
+    return SafeArea(
+      child: Column(
+        children: [
+          _buildAppBar(),
+          Expanded(
+            child: Center(
+              child: Padding(
+                padding: const EdgeInsets.all(32),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                      width: 80,
+                      height: 80,
+                      decoration: BoxDecoration(
+                        color: Colors.red.withOpacity(0.1),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.error_outline,
+                        size: 48,
+                        color: Colors.red,
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    const Text(
+                      'Oops! Something went wrong',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF2C3E50),
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      error!,
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.grey[600],
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 32),
+                    ElevatedButton.icon(
+                      onPressed: _loadPopularExercises,
+                      icon: const Icon(Icons.refresh, size: 20),
+                      label: const Text(
+                        'Try Again',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFD4A574),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 32,
+                          vertical: 16,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(28),
+                        ),
+                        elevation: 2,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ),
         ],
       ),
@@ -94,155 +215,88 @@ class _RecommendedExercisesPageState extends State<RecommendedExercisesPage> {
   }
 
   Widget _buildEmptyState() {
-    return Stack(
-      children: [
-        // Background Image
-        Positioned.fill(
-          child: Container(
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [Color(0xFF6C5CE7), Color(0xFF74B9FF)],
-              ),
-            ),
-          ),
-        ),
-        // Content
-        SafeArea(
-          child: Column(
-            children: [
-              _buildAppBar(),
-              Expanded(
-                child: Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(
-                        Icons.fitness_center_outlined,
-                        size: 80,
-                        color: Colors.white,
-                      ),
-                      const SizedBox(height: 24),
-                      const Text(
-                        'No Training History',
-                        style: TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
+    return SafeArea(
+      child: Column(
+        children: [
+          _buildAppBar(),
+          Expanded(
+            child: Center(
+              child: Padding(
+                padding: const EdgeInsets.all(32),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                      width: 120,
+                      height: 120,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            const Color(0xFFD4A574).withOpacity(0.2),
+                            const Color(0xFFE5A000).withOpacity(0.2),
+                          ],
                         ),
+                        shape: BoxShape.circle,
                       ),
-                      const SizedBox(height: 8),
-                      const Text(
-                        'Complete some workouts and your\nmost practiced exercises will appear here',
+                      child: const Icon(
+                        Icons.fitness_center_outlined,
+                        size: 64,
+                        color: Color(0xFFD4A574),
+                      ),
+                    ),
+                    const SizedBox(height: 32),
+                    const Text(
+                      'No Training History Yet',
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF2C3E50),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      'Complete some workouts and your\nmost practiced exercises will appear here',
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: Colors.grey[600],
+                        height: 1.5,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 40),
+                    ElevatedButton.icon(
+                      onPressed: () {
+                        Navigator.of(context).pushNamedAndRemoveUntil(
+                          '/home',
+                          (route) => false,
+                        );
+                      },
+                      icon: const Icon(Icons.play_arrow, size: 20),
+                      label: const Text(
+                        'Start First Workout',
                         style: TextStyle(
                           fontSize: 16,
-                          color: Colors.white70,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 32),
-                      ElevatedButton.icon(
-                        onPressed: () {
-                          // Navigate to home page to start training
-                          Navigator.of(context).pushNamedAndRemoveUntil(
-                            '/home',
-                            (route) => false,
-                          );
-                        },
-                        icon: const Icon(Icons.play_arrow),
-                        label: const Text('Start First Workout'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.white,
-                          foregroundColor: const Color(0xFF6C5CE7),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 24,
-                            vertical: 12,
-                          ),
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
-                    ],
-                  ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFD4A574),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 32,
+                          vertical: 16,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(28),
+                        ),
+                        elevation: 2,
+                      ),
+                    ),
+                  ],
                 ),
               ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildExerciseContent() {
-    return Stack(
-      children: [
-        // Background - Use gradient (no asset needed)
-        Positioned.fill(
-          child: Container(
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [Color(0xFF6C5CE7), Color(0xFF74B9FF)],
-              ),
-            ),
-          ),
-        ),
-        // Dark overlay
-        Positioned.fill(
-          child: Container(
-            color: Colors.black.withOpacity(0.4),
-          ),
-        ),
-        // Content
-        SafeArea(
-          child: Column(
-            children: [
-              _buildAppBar(),
-              Expanded(
-                child: _buildExerciseList(),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildAppBar() {
-    return Container(
-      padding: const EdgeInsets.all(16.0),
-      child: Row(
-        children: [
-          IconButton(
-            onPressed: () => Navigator.pop(context),
-            icon: const Icon(
-              Icons.arrow_back_ios,
-              color: Colors.white,
-              size: 24,
-            ),
-          ),
-          const SizedBox(width: 8),
-          const Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Recommended Exercises',
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                ),
-                SizedBox(height: 4),
-                Text(
-                  'Based on your training history',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.white70,
-                  ),
-                ),
-              ],
             ),
           ),
         ],
@@ -250,173 +304,505 @@ class _RecommendedExercisesPageState extends State<RecommendedExercisesPage> {
     );
   }
 
-  Widget _buildExerciseList() {
+  Widget _buildExerciseContent() {
+    return SafeArea(
+      child: Column(
+        children: [
+          _buildAppBar(),
+          Expanded(
+            child: FadeTransition(
+              opacity: _fadeAnimation,
+              child: _buildExerciseGrid(),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAppBar() {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.03),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          // Back button
+          GestureDetector(
+            onTap: () => Navigator.pop(context),
+            child: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF8F8F8),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(
+                Icons.arrow_back_ios_new,
+                color: Color(0xFF2C3E50),
+                size: 20,
+              ),
+            ),
+          ),
+          const SizedBox(width: 16),
+          // Title section
+          const Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Popular Exercises',
+                  style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF2C3E50),
+                    letterSpacing: -0.5,
+                  ),
+                ),
+                SizedBox(height: 2),
+                Text(
+                  'Trending workouts worldwide',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Color(0xFF6B7280),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          // Filter button (future enhancement)
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF8F8F8),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Icon(
+              Icons.tune,
+              color: Color(0xFF2C3E50),
+              size: 20,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildExerciseGrid() {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+      padding: const EdgeInsets.all(20),
       child: GridView.builder(
         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: 2,
-          childAspectRatio: 0.8,
-          crossAxisSpacing: 12,
-          mainAxisSpacing: 16,
+          childAspectRatio: 0.75,
+          crossAxisSpacing: 16,
+          mainAxisSpacing: 20,
         ),
         itemCount: exercises.length,
         itemBuilder: (context, index) {
-          final exercise = exercises[index];
-          return _buildExerciseCard(exercise);
+          return _buildExerciseCard(exercises[index], index);
         },
       ),
     );
   }
 
-  Widget _buildExerciseCard(PopularExerciseDto exercise) {
-    return GestureDetector(
-      onTap: () => _navigateToExercise(exercise),
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.95),
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.1),
-              blurRadius: 8,
-              offset: const Offset(0, 4),
-            ),
-          ],
+  Widget _buildExerciseCard(PopularExerciseDto exercise, int index) {
+    // Stagger animation based on index
+    final delay = index * 50;
+
+    return TweenAnimationBuilder<double>(
+      duration: Duration(milliseconds: 600 + delay),
+      tween: Tween(begin: 0.0, end: 1.0),
+      curve: Curves.easeOutCubic,
+      builder: (context, value, child) {
+        return Transform.translate(
+          offset: Offset(0, 30 * (1 - value)),
+          child: Opacity(
+            opacity: value,
+            child: child,
+          ),
+        );
+      },
+      child: GestureDetector(
+        onTap: () => _navigateToExercise(exercise),
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.08),
+                blurRadius: 20,
+                offset: const Offset(0, 8),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Hero Image Section
+              Expanded(
+                flex: 5,
+                child: _buildCardImage(exercise),
+              ),
+
+              // Content Section
+              Expanded(
+                flex: 4,
+                child: _buildCardContent(exercise),
+              ),
+            ],
+          ),
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Exercise image
-            Expanded(
-              flex: 3,
-              child: Container(
-                width: double.infinity,
-                decoration: const BoxDecoration(
-                  borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-                  color: Colors.grey,
-                ),
-                child: exercise.demoImageUrl != null
-                    ? ClipRRect(
-                        borderRadius: const BorderRadius.vertical(
-                            top: Radius.circular(16)),
-                        child: CachedNetworkImage(
-                          imageUrl: exercise.demoImageUrl!,
-                          fit: BoxFit.cover,
-                          placeholder: (context, url) => const Center(
-                            child: CircularProgressIndicator(),
+      ),
+    );
+  }
+
+  Widget _buildCardImage(PopularExerciseDto exercise) {
+    // 获取本地fallback图片路径 - 根据肌肉群选择
+    String getFallbackImagePath() {
+      // final muscle = exercise.primaryMuscle.toLowerCase();
+
+      // 根据肌肉群返回对应的本地图片
+      // if (muscle.contains('chest') || muscle.contains('胸')) {
+      //   return 'assets/images/fallbacks/exercise_default_chest.jpg';
+      // } else if (muscle.contains('back') || muscle.contains('背')) {
+      //   return 'assets/images/fallbacks/exercise_default_back.jpg';
+      // } else if (muscle.contains('leg') || muscle.contains('腿')) {
+      //   return 'assets/images/fallbacks/exercise_default_legs.jpg';
+      // } else if (muscle.contains('arm') || muscle.contains('手臂')) {
+      //   return 'assets/images/fallbacks/exercise_default_arms.jpg';
+      // } else if (muscle.contains('core') || muscle.contains('腹') || muscle.contains('核心')) {
+      //   return 'assets/images/fallbacks/exercise_default_core.jpg';
+      // } else if (muscle.contains('shoulder') || muscle.contains('肩')) {
+      //   return 'assets/images/fallbacks/exercise_default_shoulders.jpg';
+      // }
+
+      // 默认通用健身图片
+      return 'assets/images/fallbacks/exercise_default_general.jpg';
+    }
+
+    // 获取图片URL - 使用 Exercise 模型的 displayImageUrl getter
+    String? getImageUrl() {
+      // 使用 Exercise 模型提供的完整图片 URL（会自动转换为后端 API URL）
+      return exercise.displayImageUrl;
+    }
+
+    final imageUrl = getImageUrl();
+    final fallbackPath = getFallbackImagePath();
+
+    return Stack(
+      children: [
+        // Main image
+        Positioned.fill(
+          child: ClipRRect(
+            borderRadius: const BorderRadius.only(
+              topLeft: Radius.circular(20),
+              topRight: Radius.circular(20),
+            ),
+            child: imageUrl != null
+                ? CachedNetworkImage(
+                    imageUrl: imageUrl,
+                    fit: BoxFit.cover,
+                    placeholder: (context, url) => Container(
+                      color: const Color(0xFFF8F8F8),
+                      child: const Center(
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            Color(0xFFD4A574),
                           ),
-                          errorWidget: (context, url, error) => Container(
-                            color: Colors.grey[200],
+                        ),
+                      ),
+                    ),
+                    errorWidget: (context, url, error) {
+                      // 如果后端图片加载失败,使用本地asset图片
+                      return Image.asset(
+                        fallbackPath,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) {
+                          // 如果本地图片也失败,显示深色渐变背景
+                          return Container(
+                            decoration: const BoxDecoration(
+                              gradient: LinearGradient(
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                                colors: [
+                                  Color(0xFF374151),
+                                  Color(0xFF1F2937),
+                                ],
+                              ),
+                            ),
                             child: const Center(
                               child: Icon(
                                 Icons.fitness_center,
-                                size: 40,
-                                color: Colors.grey,
+                                size: 48,
+                                color: Color(0xFFD4A574),
                               ),
                             ),
+                          );
+                        },
+                      );
+                    },
+                  )
+                : // 如果后端没有图片URL,直接使用本地asset
+                Image.asset(
+                    fallbackPath,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      // 如果本地图片加载失败,显示渐变背景
+                      return Container(
+                        decoration: const BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [
+                              Color(0xFF374151),
+                              Color(0xFF1F2937),
+                            ],
                           ),
                         ),
-                      )
-                    : Container(
-                        color: Colors.grey[200],
                         child: const Center(
                           child: Icon(
                             Icons.fitness_center,
-                            size: 40,
-                            color: Colors.grey,
+                            size: 48,
+                            color: Color(0xFFD4A574),
                           ),
                         ),
-                      ),
+                      );
+                    },
+                  ),
+          ),
+        ),
+
+        // Gradient overlay
+        Positioned.fill(
+          child: Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Colors.transparent,
+                  Colors.black.withOpacity(0.1),
+                  Colors.black.withOpacity(0.3),
+                ],
+              ),
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(20),
+                topRight: Radius.circular(20),
               ),
             ),
-            // Exercise info
-            Expanded(
-              flex: 2,
-              child: Padding(
-                padding: const EdgeInsets.all(12.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min, // 改为 min，让 Column 只占用所需空间
-                  children: [
-                    // Exercise name
-                    Text(
-                      exercise.name,
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black87,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 4),
-                    // Muscle group and difficulty
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 6, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF6C5CE7).withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Text(
-                              exercise.muscleDisplayName,
-                              style: const TextStyle(
-                                fontSize: 10,
-                                color: Color(0xFF6C5CE7),
-                                fontWeight: FontWeight.w500,
-                              ),
-                              textAlign: TextAlign.center,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 4),
-                    // Training count
-                    Row(
-                      children: [
-                        const Icon(
-                          Icons.repeat,
-                          size: 12,
-                          color: Colors.grey,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          exercise.popularityText,
-                          style: const TextStyle(
-                            fontSize: 10,
-                            color: Colors.grey,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
+          ),
+        ),
+
+        // Top badges
+        Positioned(
+          top: 12,
+          left: 12,
+          right: 12,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              // Difficulty badge
+              _buildDifficultyBadge(exercise.difficulty),
+              // Duration badge
+              _buildDurationBadge(exercise.durationSeconds),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDifficultyBadge(String difficulty) {
+    Color badgeColor;
+    String label;
+
+    switch (difficulty.toLowerCase()) {
+      case 'beginner':
+      case 'easy':
+      case 'green':
+        badgeColor = const Color(0xFF10B981);
+        label = 'Easy';
+        break;
+      case 'intermediate':
+      case 'medium':
+      case 'yellow':
+        badgeColor = const Color(0xFFF59E0B);
+        label = 'Medium';
+        break;
+      case 'advanced':
+      case 'hard':
+      case 'red':
+        badgeColor = const Color(0xFFEF4444);
+        label = 'Hard';
+        break;
+      default:
+        badgeColor = const Color(0xFF6B7280);
+        label = 'Medium';
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: badgeColor.withOpacity(0.9),
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: badgeColor.withOpacity(0.3),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Text(
+        label,
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 11,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 0.5,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDurationBadge(int seconds) {
+    final minutes = (seconds / 60).ceil();
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: Colors.black.withOpacity(0.6),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: Colors.white.withOpacity(0.2),
+          width: 1,
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(
+            Icons.schedule,
+            color: Colors.white,
+            size: 12,
+          ),
+          const SizedBox(width: 4),
+          Text(
+            '${minutes}min',
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCardContent(PopularExerciseDto exercise) {
+    return Padding(
+      padding: const EdgeInsets.all(14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Exercise name
+          Text(
+            exercise.name,
+            style: const TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w700,
+              color: Color(0xFF2C3E50),
+              height: 1.2,
+            ),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
+
+          const SizedBox(height: 8),
+
+          // Muscle tag
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+            decoration: BoxDecoration(
+              color: const Color(0xFFD4A574).withOpacity(0.12),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Text(
+              exercise.muscleDisplayName,
+              style: const TextStyle(
+                fontSize: 11,
+                color: Color(0xFFD4A574),
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 12),
+
+          // Bottom row - Popularity
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(4),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF8F8F8),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(
+                  Icons.local_fire_department,
+                  size: 14,
+                  color: Color(0xFFE5A000),
                 ),
               ),
-            ),
-          ],
-        ),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  exercise.popularityText,
+                  style: const TextStyle(
+                    fontSize: 11,
+                    color: Color(0xFF6B7280),
+                    fontWeight: FontWeight.w500,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              // Arrow icon
+              const Icon(
+                Icons.arrow_forward_ios,
+                size: 12,
+                color: Color(0xFFD4A574),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
 
   void _navigateToExercise(PopularExerciseDto popularExercise) {
     debugPrint(
-        '📍 Navigating to reference workout page for: ${popularExercise.name} (ID: ${popularExercise.id})');
+        '📍 Navigating to exercise detail: ${popularExercise.name} (ID: ${popularExercise.id})');
 
-    // Convert PopularExerciseDto to Exercise object using REAL DATA from backend
-    // Parse primaryMuscle and intentType
+    // Convert PopularExerciseDto to Exercise object
     TargetMuscle primaryMuscle;
     try {
       primaryMuscle = TargetMuscle.values.firstWhere(
-        (m) => m.name.toLowerCase() == popularExercise.primaryMuscle.toLowerCase() ||
-               m.code.toLowerCase() == popularExercise.primaryMuscle.toLowerCase(),
+        (m) =>
+            m.name.toLowerCase() ==
+                popularExercise.primaryMuscle.toLowerCase() ||
+            m.code.toLowerCase() == popularExercise.primaryMuscle.toLowerCase(),
         orElse: () => TargetMuscle.fullBody,
       );
     } catch (e) {
@@ -425,14 +811,14 @@ class _RecommendedExercisesPageState extends State<RecommendedExercisesPage> {
 
     WorkoutIntent intentType;
     try {
-      // intentType 现在是 List<String>，取第一个元素
       final firstIntent = popularExercise.intentType.isNotEmpty
           ? popularExercise.intentType.first
           : 'STRETCH';
 
       intentType = WorkoutIntent.values.firstWhere(
-        (i) => i.name.toLowerCase() == firstIntent.toLowerCase() ||
-               i.code.toLowerCase() == firstIntent.toLowerCase(),
+        (i) =>
+            i.name.toLowerCase() == firstIntent.toLowerCase() ||
+            i.code.toLowerCase() == firstIntent.toLowerCase(),
         orElse: () => WorkoutIntent.stretch,
       );
     } catch (e) {
@@ -449,7 +835,6 @@ class _RecommendedExercisesPageState extends State<RecommendedExercisesPage> {
       difficulty = ExerciseDifficulty.intermediate;
     }
 
-    // Parse tags
     List<ExerciseTag> parsedTags = popularExercise.tags.map((tag) {
       try {
         return ExerciseTag.values.firstWhere(
@@ -487,8 +872,9 @@ class _RecommendedExercisesPageState extends State<RecommendedExercisesPage> {
       difficulty: difficulty,
       durationSeconds: popularExercise.durationSeconds,
       sets: popularExercise.sets,
-      repetitions: popularExercise.sets * 10, // Estimate based on sets
-      thumbnailUrl: popularExercise.thumbnailUrl ?? popularExercise.demoImageUrl,
+      repetitions: popularExercise.sets * 10,
+      thumbnailUrl:
+          popularExercise.thumbnailUrl ?? popularExercise.demoImageUrl,
       demoImageUrl: popularExercise.demoImageUrl,
       demoVideoUrl: popularExercise.demoVideoUrl,
       keyPoints: popularExercise.keyPoints.isNotEmpty
@@ -511,7 +897,7 @@ class _RecommendedExercisesPageState extends State<RecommendedExercisesPage> {
       tags: parsedTags,
     );
 
-    // Navigate to ModernWorkoutResultPage with real exercise data
+    // Navigate to ModernWorkoutResultPage
     Navigator.push(
       context,
       MaterialPageRoute(

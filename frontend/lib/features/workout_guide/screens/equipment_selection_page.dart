@@ -458,13 +458,13 @@ class _EquipmentSelectionPageState extends State<EquipmentSelectionPage> {
               Positioned.fill(
                 child: Container(
                   decoration: BoxDecoration(
-                    image: equipment.iconUrl != null && equipment.iconUrl!.isNotEmpty
+                    image: equipment.fullIconUrl != null && equipment.fullIconUrl!.isNotEmpty
                         ? DecorationImage(
-                            image: NetworkImage(equipment.iconUrl!),
+                            image: NetworkImage(equipment.fullIconUrl!),
                             fit: BoxFit.cover,
                           )
                         : null,
-                    color: equipment.iconUrl == null || equipment.iconUrl!.isEmpty ? color.withOpacity(0.2) : null,
+                    color: equipment.fullIconUrl == null || equipment.fullIconUrl!.isEmpty ? color.withOpacity(0.2) : null,
                   ),
                 ),
               ),

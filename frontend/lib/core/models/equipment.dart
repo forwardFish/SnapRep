@@ -1,4 +1,6 @@
 import 'package:json_annotation/json_annotation.dart';
+import 'package:flutter/foundation.dart';
+import '../utils/image_url_helper.dart';
 
 part 'equipment.g.dart';
 
@@ -8,11 +10,11 @@ class Equipment {
   final String code;
   final String name;
   final String category;
-  @JsonKey(name: 'icon_url')
+  @JsonKey(name: 'iconUrl')  // 改为驼峰命名，匹配后端
   final String? iconUrl;
-  @JsonKey(name: 'is_active')
+  @JsonKey(name: 'isActive')  // 改为驼峰命名，匹配后端
   final bool? isActive;
-  @JsonKey(name: 'display_order')
+  @JsonKey(name: 'displayOrder')  // 改为驼峰命名，匹配后端
   final int? displayOrder;
 
   Equipment({
@@ -25,6 +27,21 @@ class Equipment {
     this.displayOrder,
   });
 
+  /// 获取完整的图标 URL（从后端 API 加载）
+  String? get fullIconUrl {
+    debugPrint('🔍 Equipment.fullIconUrl called for: $name');
+    debugPrint('   📁 Original iconUrl: $iconUrl');
+
+    if (iconUrl == null || iconUrl!.isEmpty) {
+      debugPrint('   ❌ iconUrl is null or empty, returning null');
+      return null;
+    }
+
+    final fullUrl = ImageUrlHelper.getImageUrl(iconUrl);
+    debugPrint('   ✅ Converted to: $fullUrl');
+    return fullUrl;
+  }
+
   /// Factory constructor with safe null handling
   factory Equipment.fromJsonSafe(Map<String, dynamic> json) {
     return Equipment(
@@ -32,9 +49,9 @@ class Equipment {
       code: json['code']?.toString() ?? '',
       name: json['name']?.toString() ?? 'Unknown Equipment',
       category: json['category']?.toString() ?? 'Equipment',
-      iconUrl: json['icon_url']?.toString(),
-      isActive: json['is_active'] as bool?,
-      displayOrder: json['display_order'] as int?,
+      iconUrl: json['iconUrl']?.toString(),  // 改为驼峰命名
+      isActive: json['isActive'] as bool?,   // 改为驼峰命名
+      displayOrder: json['displayOrder'] as int?,  // 改为驼峰命名
     );
   }
 

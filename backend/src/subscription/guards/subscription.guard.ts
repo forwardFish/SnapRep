@@ -1,6 +1,6 @@
 import { Injectable, CanActivate, ExecutionContext, ForbiddenException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { SubscriptionService } from '../subscription.service.temp';
+import { SubscriptionService } from '../subscription.service';
 
 @Injectable()
 export class SubscriptionGuard implements CanActivate {

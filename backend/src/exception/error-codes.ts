@@ -71,6 +71,34 @@ export const ErrorCodes = {
         ORDER_CAPTURE_FAILED: { code: 5004, message: 'PAYPAL_ORDER_CAPTURE_FAILED' },
     },
 
+    // 订阅系统相关错误 (5500-5699)
+    SUBSCRIPTION: {
+        NOT_FOUND: { code: 5500, message: 'SUBSCRIPTION_NOT_FOUND', httpStatus: HttpStatus.NOT_FOUND, category: ErrorCategory.BUSINESS },
+        ALREADY_EXISTS: { code: 5501, message: 'SUBSCRIPTION_ALREADY_EXISTS', httpStatus: HttpStatus.CONFLICT, category: ErrorCategory.BUSINESS },
+        TRIAL_ALREADY_USED: { code: 5502, message: 'SUBSCRIPTION_TRIAL_ALREADY_USED', httpStatus: HttpStatus.BAD_REQUEST, category: ErrorCategory.BUSINESS },
+        TRIAL_ALREADY_STARTED: { code: 5503, message: 'SUBSCRIPTION_TRIAL_ALREADY_STARTED', httpStatus: HttpStatus.BAD_REQUEST, category: ErrorCategory.BUSINESS },
+        INVALID_PURCHASE_TOKEN: { code: 5504, message: 'SUBSCRIPTION_INVALID_PURCHASE_TOKEN', httpStatus: HttpStatus.BAD_REQUEST, category: ErrorCategory.VALIDATION },
+        PAYMENT_VERIFICATION_FAILED: { code: 5505, message: 'SUBSCRIPTION_PAYMENT_VERIFICATION_FAILED', httpStatus: HttpStatus.BAD_REQUEST, category: ErrorCategory.EXTERNAL },
+        DAILY_LIMIT_REACHED: { code: 5506, message: 'SUBSCRIPTION_DAILY_LIMIT_REACHED', httpStatus: HttpStatus.FORBIDDEN, category: ErrorCategory.BUSINESS },
+        CREATE_FAILED: { code: 5507, message: 'SUBSCRIPTION_CREATE_FAILED', httpStatus: HttpStatus.INTERNAL_SERVER_ERROR, category: ErrorCategory.SYSTEM },
+        UPDATE_FAILED: { code: 5508, message: 'SUBSCRIPTION_UPDATE_FAILED', httpStatus: HttpStatus.INTERNAL_SERVER_ERROR, category: ErrorCategory.SYSTEM },
+        CANCEL_FAILED: { code: 5509, message: 'SUBSCRIPTION_CANCEL_FAILED', httpStatus: HttpStatus.INTERNAL_SERVER_ERROR, category: ErrorCategory.SYSTEM },
+        FETCH_FAILED: { code: 5510, message: 'SUBSCRIPTION_FETCH_FAILED', httpStatus: HttpStatus.INTERNAL_SERVER_ERROR, category: ErrorCategory.SYSTEM },
+        INVALID_TIER: { code: 5511, message: 'SUBSCRIPTION_INVALID_TIER', httpStatus: HttpStatus.BAD_REQUEST, category: ErrorCategory.VALIDATION },
+        EXPIRED: { code: 5512, message: 'SUBSCRIPTION_EXPIRED', httpStatus: HttpStatus.FORBIDDEN, category: ErrorCategory.BUSINESS },
+        USER_NOT_FOUND: { code: 5513, message: 'SUBSCRIPTION_USER_NOT_FOUND', httpStatus: HttpStatus.NOT_FOUND, category: ErrorCategory.BUSINESS },
+        GOOGLE_PLAY_ERROR: { code: 5514, message: 'SUBSCRIPTION_GOOGLE_PLAY_ERROR', httpStatus: HttpStatus.BAD_REQUEST, category: ErrorCategory.EXTERNAL },
+    },
+
+    // 每日使用限制相关错误 (5700-5799)
+    DAILY_USAGE: {
+        FETCH_FAILED: { code: 5700, message: 'DAILY_USAGE_FETCH_FAILED', httpStatus: HttpStatus.INTERNAL_SERVER_ERROR, category: ErrorCategory.SYSTEM },
+        UPDATE_FAILED: { code: 5701, message: 'DAILY_USAGE_UPDATE_FAILED', httpStatus: HttpStatus.INTERNAL_SERVER_ERROR, category: ErrorCategory.SYSTEM },
+        LIMIT_REACHED: { code: 5702, message: 'DAILY_USAGE_LIMIT_REACHED', httpStatus: HttpStatus.FORBIDDEN, category: ErrorCategory.BUSINESS },
+        INVALID_TIMEZONE: { code: 5703, message: 'DAILY_USAGE_INVALID_TIMEZONE', httpStatus: HttpStatus.BAD_REQUEST, category: ErrorCategory.VALIDATION },
+        CREATE_FAILED: { code: 5704, message: 'DAILY_USAGE_CREATE_FAILED', httpStatus: HttpStatus.INTERNAL_SERVER_ERROR, category: ErrorCategory.SYSTEM },
+    },
+
     // 数据库相关错误 (6000-6999)
     DATABASE: {
         CONNECTION_ERROR: { code: 6000, message: 'DATABASE_CONNECTION_ERROR' },

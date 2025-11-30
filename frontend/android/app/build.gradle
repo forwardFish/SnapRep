@@ -5,6 +5,12 @@ plugins {
     id "dev.flutter.flutter-gradle-plugin"
 }
 
+def keystoreProperties = new Properties()
+def keystorePropertiesFile = rootProject.file('key.properties')
+if (keystorePropertiesFile.exists()) {
+    keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+}
+
 def localProperties = new Properties()
 def localPropertiesFile = rootProject.file('local.properties')
 if (localPropertiesFile.exists()) {
@@ -15,18 +21,18 @@ if (localPropertiesFile.exists()) {
 
 def flutterVersionCode = localProperties.getProperty('flutter.versionCode')
 if (flutterVersionCode == null) {
-    flutterVersionCode = '1'
+    flutterVersionCode = '1.0.1'
 }
 
 def flutterVersionName = localProperties.getProperty('flutter.versionName')
 if (flutterVersionName == null) {
-    flutterVersionName = '1.0'
+    flutterVersionName = '1.0.1'
 }
 
 android {
     namespace "com.snaprep.fitness"
-    compileSdkVersion 34
-    buildToolsVersion "34.0.0"
+    compileSdkVersion 35
+    buildToolsVersion "35.0.0"
     ndkVersion flutter.ndkVersion
 
     compileOptions {
@@ -47,17 +53,45 @@ android {
         applicationId "com.snaprep.fitness"
         // You can update the following values to match your application needs.
         // For more information, see: https://docs.flutter.dev/deployment/android#reviewing-the-gradle-build-configuration.
-        minSdkVersion flutter.minSdkVersion
-        targetSdkVersion 34
+        // ✅ 改成固定 21（或更高，比如 23/24 都可以）
+        minSdkVersion 21
+
+        targetSdkVersion 35
         versionCode flutterVersionCode.toInteger()
         versionName flutterVersionName
+
+        // 👇 加这一行
+        multiDexEnabled true
     }
 
+// 👇 就在这里加 signingConfigs 和 buildTypes
+    signingConfigs {
+        release {
+            if (keystoreProperties['storeFile']) {
+                storeFile file(keystoreProperties['storeFile'])
+                storePassword keystoreProperties['storePassword']
+                keyAlias keystoreProperties['keyAlias']
+                keyPassword keystoreProperties['keyPassword']
+            }
+        }
+    }
+    
     buildTypes {
         release {
             // TODO: Add your own signing config for the release build.
             // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig signingConfigs.debug
+            // signingConfig signingConfigs.debug
+            signingConfig signingConfigs.release
+            // 看你需不需要混淆，先关掉最稳
+            minifyEnabled false
+            // 禁用资源压缩，避免构建错误
+            shrinkResources false
+            // 禁用ProGuard
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+        debug {
+            minifyEnabled false
+            shrinkResources false
         }
     }
 
@@ -65,15 +99,15 @@ android {
         checkReleaseBuilds false
     }
 
-    // 强制所有依赖使用API 34
+    // 强制所有依赖使用API 35
     configurations.all {
         resolutionStrategy {
             eachDependency { details ->
-                // 强制Android相关依赖使用API 34
+                // 强制Android相关依赖使用API 35
                 if (details.requested.group == 'androidx' ||
                     details.requested.group == 'com.android.support' ||
                     details.requested.name.contains('android')) {
-                    details.because "Force all Android dependencies to use API 34"
+                    details.because "Force all Android dependencies to use API 35"
                     // 这里不设置version，而是通过compileSdkVersion控制
                 }
             }
@@ -86,36 +120,44 @@ android {
     subprojects {
         afterEvaluate { project ->
             if (project.hasProperty('android')) {
-                project.android.compileSdkVersion 34
-                project.android.targetSdkVersion 34
+                project.android.compileSdkVersion 35
+                project.android.targetSdkVersion 35
                 if (project.android.hasProperty('buildToolsVersion')) {
-                    project.android.buildToolsVersion '34.0.0'
+                    project.android.buildToolsVersion '35.0.0'
                 }
                 if (project.android.hasProperty('defaultConfig')) {
-                    project.android.defaultConfig.targetSdkVersion 34
-                    project.android.defaultConfig.compileSdkVersion 34
+                    project.android.defaultConfig.targetSdkVersion 35
+                    project.android.defaultConfig.compileSdkVersion 35
                 }
             }
         }
     }
 }
 
-// 在根级别强制所有项目使用API 34
+// 在根级别强制所有项目使用API 35
 allprojects {
     configurations.all {
         resolutionStrategy {
             eachDependency { details ->
                 if (details.requested.name == 'compileSdkVersion') {
-                    details.useVersion '34'
-                    details.because 'Force compileSdkVersion to 34'
+                    details.useVersion '35'
+                    details.because 'Force compileSdkVersion to 35'
                 }
             }
         }
     }
 }
 
+
+
+
 flutter {
     source '../..'
 }
 
-dependencies {}
+dependencies {
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
+
+    // 👇 新增这一行
+    implementation "androidx.multidex:multidex:2.0.1"
+}

@@ -5,6 +5,9 @@ import '../../../core/models/exercise.dart';
 import '../../../core/models/target_muscle.dart';
 import '../../../core/models/workout_intent.dart';
 import '../../../core/services/exercise_service.dart';
+import '../../../core/services/token_service.dart';
+import '../../../core/services/subscription_service.dart';
+import '../../subscription/widgets/subscription_paywall_dialog.dart';
 import '../../workout_execution/screens/professional_workout_video_page_v2.dart';
 import '../../workout_execution/screens/improved_workout_video_page.dart';
 
@@ -27,7 +30,8 @@ class ModernWorkoutResultPage extends StatefulWidget {
   });
 
   @override
-  State<ModernWorkoutResultPage> createState() => _ModernWorkoutResultPageState();
+  State<ModernWorkoutResultPage> createState() =>
+      _ModernWorkoutResultPageState();
 }
 
 class _ModernWorkoutResultPageState extends State<ModernWorkoutResultPage>
@@ -98,7 +102,9 @@ class _ModernWorkoutResultPageState extends State<ModernWorkoutResultPage>
     try {
       // Method 1: Direct exercises passed (from ReferenceWorkoutPage pattern)
       if (widget.exercises != null && widget.exercises!.isNotEmpty) {
-        _workoutCards = widget.exercises!.map((ex) => _convertExerciseToWorkoutCard(ex, false)).toList();
+        _workoutCards = widget.exercises!
+            .map((ex) => _convertExerciseToWorkoutCard(ex, false))
+            .toList();
         _selectedExerciseIndex = widget.currentExerciseIndex;
         setState(() {
           _isLoading = false;
@@ -108,7 +114,9 @@ class _ModernWorkoutResultPageState extends State<ModernWorkoutResultPage>
 
       // Method 2: Single exercise passed
       if (widget.exercise != null) {
-        _workoutCards = [_convertExerciseToWorkoutCard(widget.exercise!, false)];
+        _workoutCards = [
+          _convertExerciseToWorkoutCard(widget.exercise!, false)
+        ];
         _selectedExerciseIndex = 0;
         setState(() {
           _isLoading = false;
@@ -122,12 +130,13 @@ class _ModernWorkoutResultPageState extends State<ModernWorkoutResultPage>
       final intent = _parseIntent(params['intent'] ?? 'STRETCH');
       // Support both 'equipment' and 'equipmentCodes' keys for compatibility
       final equipmentCodes = _parseEquipmentCodes(
-        params['equipmentCodes'] ?? params['equipment'] ?? ['chair', 'wall']
-      );
-      final scenarioCode = params['scenarioCode'] ?? params['scenario'] ?? 'office';
+          params['equipmentCodes'] ?? params['equipment'] ?? ['chair', 'wall']);
+      final scenarioCode =
+          params['scenarioCode'] ?? params['scenario'] ?? 'office';
       final targetMuscles = _parseTargetMuscles(params['targetMuscles']);
 
-      debugPrint('🎯 Loading workout recommendations: intent=$intent, equipment=$equipmentCodes, scenario=$scenarioCode');
+      debugPrint(
+          '🎯 Loading workout recommendations: intent=$intent, equipment=$equipmentCodes, scenario=$scenarioCode');
 
       // Get recommendations from API
       final recommendationData = await _exerciseService.getQuickRecommendation(
@@ -141,7 +150,10 @@ class _ModernWorkoutResultPageState extends State<ModernWorkoutResultPage>
 
       // Convert API response to WorkoutCard objects
       final exercises = recommendationData['exercises'] as List<dynamic>? ?? [];
-      _workoutCards = exercises.take(3).map((exercise) => _convertToWorkoutCard(exercise, false)).toList();
+      _workoutCards = exercises
+          .take(3)
+          .map((exercise) => _convertToWorkoutCard(exercise, false))
+          .toList();
 
       // Load alternative exercises if needed
       if (_workoutCards.isNotEmpty) {
@@ -165,7 +177,8 @@ class _ModernWorkoutResultPageState extends State<ModernWorkoutResultPage>
         }
       }
 
-      debugPrint('✅ Workout data loaded: ${_workoutCards.length} main exercises, ${_alternativeCards.length} alternatives');
+      debugPrint(
+          '✅ Workout data loaded: ${_workoutCards.length} main exercises, ${_alternativeCards.length} alternatives');
     } catch (e) {
       debugPrint('❌ Failed to load workout data: $e');
       setState(() {
@@ -194,7 +207,8 @@ class _ModernWorkoutResultPageState extends State<ModernWorkoutResultPage>
 
   List<String> _parseEquipmentCodes(dynamic equipmentValue) {
     if (equipmentValue is List<String>) return equipmentValue;
-    if (equipmentValue is List) return equipmentValue.map((e) => e.toString()).toList();
+    if (equipmentValue is List)
+      return equipmentValue.map((e) => e.toString()).toList();
     if (equipmentValue is String) return [equipmentValue];
     return ['chair', 'wall']; // Default fallback
   }
@@ -228,7 +242,8 @@ class _ModernWorkoutResultPageState extends State<ModernWorkoutResultPage>
     );
   }
 
-  WorkoutCard _convertExerciseToWorkoutCard(Exercise exercise, bool isReplacement) {
+  WorkoutCard _convertExerciseToWorkoutCard(
+      Exercise exercise, bool isReplacement) {
     return WorkoutCard(
       id: exercise.id,
       name: exercise.name,
@@ -240,14 +255,17 @@ class _ModernWorkoutResultPageState extends State<ModernWorkoutResultPage>
       safetyTips: exercise.safetyWarnings,
       previewImage: exercise.thumbnailUrl ?? 'assets/exercises/default.jpg',
       isReplacement: isReplacement,
+      exercise: exercise, // 保存完整的 Exercise 对象
     );
   }
 
   DifficultyLevel _parseDifficulty(dynamic difficulty) {
     if (difficulty == null) return DifficultyLevel.easy;
     final diffStr = difficulty.toString().toLowerCase();
-    if (diffStr.contains('hard') || diffStr.contains('advanced')) return DifficultyLevel.hard;
-    if (diffStr.contains('medium') || diffStr.contains('intermediate')) return DifficultyLevel.medium;
+    if (diffStr.contains('hard') || diffStr.contains('advanced'))
+      return DifficultyLevel.hard;
+    if (diffStr.contains('medium') || diffStr.contains('intermediate'))
+      return DifficultyLevel.medium;
     return DifficultyLevel.easy;
   }
 
@@ -291,7 +309,8 @@ class _ModernWorkoutResultPageState extends State<ModernWorkoutResultPage>
   }
 
   List<String> _parseSafetyTips(dynamic exercise) {
-    if (exercise['safetyWarnings'] != null && exercise['safetyWarnings'] is List) {
+    if (exercise['safetyWarnings'] != null &&
+        exercise['safetyWarnings'] is List) {
       return (exercise['safetyWarnings'] as List)
           .map((tip) => '⚠️ ${tip.toString()}')
           .toList();
@@ -463,19 +482,6 @@ class _ModernWorkoutResultPageState extends State<ModernWorkoutResultPage>
               overflow: TextOverflow.ellipsis,
             ),
           ),
-
-          // Favorite Button - outline heart
-          GestureDetector(
-            onTap: () {},
-            child: Container(
-              padding: const EdgeInsets.all(4),
-              child: const Icon(
-                Icons.favorite_border_rounded,
-                color: Color(0xFF1A1A1A),
-                size: 22,
-              ),
-            ),
-          ),
         ],
       ),
     );
@@ -488,9 +494,10 @@ class _ModernWorkoutResultPageState extends State<ModernWorkoutResultPage>
         // Main Background Image - use actual exercise image with fallback to Unsplash
         Positioned.fill(
           child: Image.network(
-            _selectedCard.previewImage.isNotEmpty && !_selectedCard.previewImage.contains('default')
+            _selectedCard.previewImage.isNotEmpty &&
+                    !_selectedCard.previewImage.contains('default')
                 ? _selectedCard.previewImage
-                : 'https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+                : 'assets/images/backpack_workout.jpg',
             fit: BoxFit.cover,
             loadingBuilder: (context, child, loadingProgress) {
               if (loadingProgress == null) return child;
@@ -509,13 +516,14 @@ class _ModernWorkoutResultPageState extends State<ModernWorkoutResultPage>
                 ),
               );
             },
-            errorBuilder: (context, error, stackTrace) => Image.network(
-              'https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+            errorBuilder: (context, error, stackTrace) => Image.asset(
+              'assets/images/backpack_workout.jpg',
               fit: BoxFit.cover,
               errorBuilder: (ctx, err, trace) => Container(
                 color: const Color(0xFF374151),
                 child: const Center(
-                  child: Icon(Icons.fitness_center, color: Colors.white38, size: 48),
+                  child: Icon(Icons.fitness_center,
+                      color: Colors.white38, size: 48),
                 ),
               ),
             ),
@@ -561,7 +569,10 @@ class _ModernWorkoutResultPageState extends State<ModernWorkoutResultPage>
                   fontWeight: FontWeight.w500,
                   color: Colors.white.withOpacity(0.95),
                   shadows: const [
-                    Shadow(color: Colors.black38, blurRadius: 4, offset: Offset(0, 1)),
+                    Shadow(
+                        color: Colors.black38,
+                        blurRadius: 4,
+                        offset: Offset(0, 1)),
                   ],
                 ),
               ),
@@ -580,7 +591,8 @@ class _ModernWorkoutResultPageState extends State<ModernWorkoutResultPage>
               fontWeight: FontWeight.w400,
               color: Colors.white.withOpacity(0.85),
               shadows: const [
-                Shadow(color: Colors.black38, blurRadius: 4, offset: Offset(0, 1)),
+                Shadow(
+                    color: Colors.black38, blurRadius: 4, offset: Offset(0, 1)),
               ],
             ),
           ),
@@ -624,9 +636,10 @@ class _ModernWorkoutResultPageState extends State<ModernWorkoutResultPage>
                     // Background Image
                     Positioned.fill(
                       child: Image.network(
-                        card.previewImage.isNotEmpty && !card.previewImage.contains('default')
+                        card.previewImage.isNotEmpty &&
+                                !card.previewImage.contains('default')
                             ? card.previewImage
-                            : 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+                            : 'assets/images/outdoor_workout.jpg',
                         fit: BoxFit.cover,
                         errorBuilder: (context, error, stackTrace) => Container(
                           decoration: BoxDecoration(
@@ -652,8 +665,12 @@ class _ModernWorkoutResultPageState extends State<ModernWorkoutResultPage>
                               ? Colors.black.withOpacity(0.55)
                               : Colors.black.withOpacity(0.35),
                           border: isSelected
-                              ? Border.all(color: Colors.white.withOpacity(0.5), width: 1.5)
-                              : Border.all(color: Colors.white.withOpacity(0.15), width: 1),
+                              ? Border.all(
+                                  color: Colors.white.withOpacity(0.5),
+                                  width: 1.5)
+                              : Border.all(
+                                  color: Colors.white.withOpacity(0.15),
+                                  width: 1),
                           borderRadius: BorderRadius.circular(12),
                         ),
                       ),
@@ -676,13 +693,16 @@ class _ModernWorkoutResultPageState extends State<ModernWorkoutResultPage>
                               child: ClipRRect(
                                 borderRadius: BorderRadius.circular(10),
                                 child: Image.network(
-                                  card.previewImage.isNotEmpty && !card.previewImage.contains('default')
+                                  card.previewImage.isNotEmpty &&
+                                          !card.previewImage.contains('default')
                                       ? card.previewImage
-                                      : 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80',
+                                      : 'assets/images/outdoor_workout.jpg',
                                   fit: BoxFit.cover,
-                                  errorBuilder: (context, error, stackTrace) => Container(
+                                  errorBuilder: (context, error, stackTrace) =>
+                                      Container(
                                     color: Colors.white.withOpacity(0.1),
-                                    child: const Icon(Icons.fitness_center, color: Colors.white54, size: 28),
+                                    child: const Icon(Icons.fitness_center,
+                                        color: Colors.white54, size: 28),
                                   ),
                                 ),
                               ),
@@ -804,7 +824,12 @@ class _ModernWorkoutResultPageState extends State<ModernWorkoutResultPage>
             if (_selectedCard.safetyTips.isNotEmpty) ...[
               _buildSectionWithAccent('Key Points'),
               const SizedBox(height: 12),
-              ..._selectedCard.safetyTips.take(3).toList().asMap().entries.map((entry) {
+              ..._selectedCard.safetyTips
+                  .take(3)
+                  .toList()
+                  .asMap()
+                  .entries
+                  .map((entry) {
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 12),
                   child: Row(
@@ -952,41 +977,48 @@ class _ModernWorkoutResultPageState extends State<ModernWorkoutResultPage>
     );
   }
 
-  /// Info cards (Level, Time, Calories) - matching reference xunlian-2.jpg exactly
+  /// Info cards (Level, Time, Calories) - Refined subtle design
   Widget _buildInfoCards() {
     return Row(
       children: [
-        // Level card - light cream/beige like reference
+        // Level card - Soft gold/amber tone
         Expanded(
           child: _buildInfoCard(
             icon: Icons.bar_chart_rounded,
             label: 'Level',
-            value: _selectedCard.difficulty.name[0].toUpperCase() + _selectedCard.difficulty.name.substring(1),
-            backgroundColor: const Color(0xFFFFF8F0),
+            value: _selectedCard.difficulty.name[0].toUpperCase() +
+                _selectedCard.difficulty.name.substring(1),
+            iconColor: const Color(0xFFD4A574),
+            accentColor: const Color(0xFFD4A574),
+            backgroundColor: const Color(0xFFFFFBF5),
           ),
         ),
-        const SizedBox(width: 10),
+        const SizedBox(width: 12),
 
-        // Time card - light gray like reference
+        // Time card - Neutral dark gray
         Expanded(
           child: _buildInfoCard(
             icon: Icons.schedule_rounded,
             label: 'Time',
             value: '${_selectedCard.duration ~/ 60}',
-            unit: '/min',
-            backgroundColor: const Color(0xFFF5F5F5),
+            unit: 'min',
+            iconColor: const Color(0xFF2D2D2D),
+            accentColor: const Color(0xFF2D2D2D),
+            backgroundColor: const Color(0xFFF8F8F8),
           ),
         ),
-        const SizedBox(width: 10),
+        const SizedBox(width: 12),
 
-        // Calories card - light pink/rose like reference
+        // Calories card - Warm coral/rose tone
         Expanded(
           child: _buildInfoCard(
             icon: Icons.local_fire_department_rounded,
             label: 'Burn',
             value: '${(_selectedCard.duration * 0.055).toStringAsFixed(0)}',
-            unit: '/cal',
-            backgroundColor: const Color(0xFFFFF0F0),
+            unit: 'cal',
+            iconColor: const Color(0xFFE5A090),
+            accentColor: const Color(0xFFE5A090),
+            backgroundColor: const Color(0xFFFFF8F6),
           ),
         ),
       ],
@@ -998,56 +1030,84 @@ class _ModernWorkoutResultPageState extends State<ModernWorkoutResultPage>
     required String label,
     required String value,
     required Color backgroundColor,
+    required Color iconColor,
+    required Color accentColor,
     String? unit,
   }) {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
       decoration: BoxDecoration(
         color: backgroundColor,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: accentColor.withOpacity(0.1),
+          width: 1,
+        ),
       ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Icon with label
+          // Icon circle with accent color
+          Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: iconColor.withOpacity(0.15),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              icon,
+              size: 18,
+              color: iconColor,
+            ),
+          ),
+          const SizedBox(height: 10),
+
+          // Label text
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w500,
+              color: Color(0xFF666666),
+              letterSpacing: 0.2,
+            ),
+          ),
+          const SizedBox(height: 3),
+
+          // Value with unit - fixed overflow
           Row(
-            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.end,
+            mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(icon, size: 18, color: const Color(0xFF666666)),
-              const SizedBox(width: 4),
-              Text(
-                label,
-                style: const TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w400,
-                  color: Color(0xFF666666),
+              Flexible(
+                child: Text(
+                  value,
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w700,
+                    color: accentColor,
+                    height: 1.0,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          // Value with optional unit
-          RichText(
-            text: TextSpan(
-              children: [
-                TextSpan(
-                  text: value,
-                  style: const TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w700,
-                    color: Color(0xFF1A1A1A),
-                  ),
-                ),
-                if (unit != null)
-                  TextSpan(
-                    text: unit,
-                    style: const TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w400,
-                      color: Color(0xFF888888),
+              if (unit != null) ...[
+                const SizedBox(width: 1),
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 1),
+                  child: Text(
+                    unit,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                      color: accentColor.withOpacity(0.7),
                     ),
                   ),
+                ),
               ],
-            ),
+            ],
           ),
         ],
       ),
@@ -1056,27 +1116,67 @@ class _ModernWorkoutResultPageState extends State<ModernWorkoutResultPage>
 
   /// Target muscles section - matching reference "练习部位" exactly
   Widget _buildTargetMusclesSection() {
+    // 从当前选中的 Exercise 获取肌肉群信息
+    final exercise = _selectedCard.exercise;
+    if (exercise == null) {
+      // 如果没有 Exercise 数据，不显示该部分
+      return const SizedBox.shrink();
+    }
+
+    // 收集所有目标肌肉群（主要 + 次要）
+    final List<TargetMuscle> targetMuscles = [
+      exercise.primaryMuscle,
+      ...exercise.secondaryMuscles,
+    ];
+
+    // 去重
+    final uniqueMuscles = targetMuscles.toSet().toList();
+
+    if (uniqueMuscles.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _buildSectionWithAccent('Target Muscles'),
         const SizedBox(height: 16),
 
-        // Muscle icons row - matching reference simple icon style
-        Row(
-          mainAxisAlignment: MainAxisAlignment.start,
-          children: [
-            _buildMuscleIcon(Icons.accessibility_new, 'Abs'),
-            const SizedBox(width: 12),
-            _buildMuscleIcon(Icons.directions_run, 'Legs'),
-            const SizedBox(width: 12),
-            _buildMuscleIcon(Icons.sports_gymnastics, 'Glutes'),
-            const SizedBox(width: 12),
-            _buildMuscleIcon(Icons.sports_kabaddi, 'Arms'),
-          ],
+        // 动态生成肌肉图标 - 从后端 Exercise 数据获取
+        Wrap(
+          spacing: 12,
+          runSpacing: 12,
+          children: uniqueMuscles.map((muscle) {
+            return _buildMuscleIcon(
+              _getMuscleIcon(muscle),
+              muscle.displayName,
+            );
+          }).toList(),
         ),
       ],
     );
+  }
+
+  /// 根据 TargetMuscle 返回对应的图标
+  IconData _getMuscleIcon(TargetMuscle muscle) {
+    switch (muscle) {
+      case TargetMuscle.fullBody:
+        return Icons.accessibility_new;
+      case TargetMuscle.neckShoulder:
+        return Icons.self_improvement;
+      case TargetMuscle.chestBack:
+        return Icons.fitness_center;
+      case TargetMuscle.core:
+        return Icons.circle_outlined;
+      case TargetMuscle.legs:
+        return Icons.directions_run;
+      case TargetMuscle.glutes:
+        return Icons.sports_gymnastics;
+      case TargetMuscle.calves:
+        return Icons.nordic_walking;
+      case TargetMuscle.arms:
+        return Icons.sports_kabaddi;
+    }
   }
 
   Widget _buildMuscleIcon(IconData icon, String label) {
@@ -1280,7 +1380,8 @@ class _ModernWorkoutResultPageState extends State<ModernWorkoutResultPage>
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 2),
                       decoration: BoxDecoration(
                         color: Colors.green,
                         borderRadius: BorderRadius.circular(12),
@@ -1616,9 +1717,7 @@ class _ModernWorkoutResultPageState extends State<ModernWorkoutResultPage>
             color: Color(0xFF2C3E50),
           ),
         ),
-
         const SizedBox(height: 16),
-
         SizedBox(
           height: 140,
           child: ListView.builder(
@@ -1962,27 +2061,142 @@ class _ModernWorkoutResultPageState extends State<ModernWorkoutResultPage>
     );
   }
 
-  void _startWorkout() {
+  void _startWorkout() async {
     HapticFeedback.lightImpact();
 
+    // Step 1: 检查登录状态
+    final isLoggedIn = await _checkLoginStatus();
+    if (!isLoggedIn) return;
+
+    // Step 2: 检查订阅状态和每日限制
+    final canStart = await _checkSubscriptionAndUsage();
+    if (!canStart) return;
+
+    // Step 3: 允许开始训练
+    _navigateToWorkoutVideo();
+  }
+
+  /// 检查登录状态
+  Future<bool> _checkLoginStatus() async {
+    final tokenService = TokenService.instance;
+    final isLoggedIn = await tokenService.isLoggedIn();
+
+    if (!isLoggedIn) {
+      debugPrint('⚠️ User not logged in, navigating to login page...');
+
+      // 跳转到登录页
+      if (!mounted) return false;
+      await Navigator.pushNamed(context, AppRoutes.googleLogin);
+
+      // 检查用户是否成功登录
+      final isNowLoggedIn = await tokenService.isLoggedIn();
+      if (!isNowLoggedIn) {
+        debugPrint('❌ User canceled login or login failed');
+        return false;
+      }
+
+      debugPrint('✅ User logged in successfully');
+      return true;
+    }
+
+    return true;
+  }
+
+  /// 检查订阅状态和每日使用限制
+  Future<bool> _checkSubscriptionAndUsage() async {
+    try {
+      final subscriptionService = SubscriptionService();
+
+      /* 恢复正常逻辑的步骤：
+      当你测试完成后，只需要：
+      删除 第 2048-2051 行的测试说明注释
+      删除 第 2062-2081 行的测试代码
+      取消注释 第 2054-2060 行和 2083-2088 行（正常逻辑） */
+
+      // ============================================================
+      // 🔧 测试模式: 临时注释每日限制检查，所有用户都显示付费弹窗
+      // 用于测试付费订阅流程的 UI 和交互效果
+      // ============================================================
+
+      // TODO: 恢复正常逻辑时，取消下面的注释，并删除强制显示弹窗的代码
+      /*
+      // 正常逻辑: 检查是否可以开始训练 (付费用户/试用期用户/未达限制的免费用户可以开始)
+      final canStart = await subscriptionService.canStartExercise();
+
+      if (!canStart) {
+        debugPrint('⚠️ User reached daily limit, showing subscription paywall...');
+      */
+
+      // 🧪 测试代码: 强制所有用户都显示付费弹窗
+      debugPrint(
+          '🧪 [TEST MODE] Forcing subscription paywall for all users...');
+
+      // 显示付费弹窗
+      if (!mounted) return false;
+      final subscribed = await showSubscriptionPaywall(
+        context,
+        triggerSource: 'workout_start',
+        onSubscribed: () {
+          debugPrint('✅ User subscribed, can start workout now');
+        },
+      );
+
+      // 如果用户订阅成功,再次检查权限
+      if (subscribed == true) {
+        final canStartNow = await subscriptionService.canStartExercise();
+        return canStartNow;
+      }
+
+      return false;
+
+      /*
+      // 正常逻辑的结束
+      }
+
+      return true;
+      */
+    } catch (e) {
+      debugPrint('❌ Error checking subscription: $e');
+
+      // 出错时显示友好提示
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to check subscription status: $e'),
+            backgroundColor: const Color(0xFFE74C3C),
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+
+      return false;
+    }
+  }
+
+  /// 导航到训练视频页面
+  void _navigateToWorkoutVideo() {
     // Convert workout cards to Exercise objects
-    final exercises = _workoutCards.map((card) => Exercise(
-      id: card.id,
-      code: card.name.toLowerCase().replaceAll(' ', '_'),
-      name: card.name,
-      description: card.benefits,
-      primaryMuscle: TargetMuscle.core, // Default to core
-      secondaryMuscles: [], // Empty secondary muscles
-      intentType: WorkoutIntent.stretch, // Default to stretch
-      difficulty: ExerciseDifficulty.beginner, // Convert from card.difficulty if needed
-      durationSeconds: card.duration,
-      sets: card.sets,
-      keyPoints: [], // Add key points if available
-      safetyWarnings: card.safetyTips,
-      benefits: card.benefits,
-      tags: card.tags.map((tag) => ExerciseTag.fromCode(tag)).toList(),
-      demoVideoUrl: 'https://sample-videos.com/zip/10/mp4/SampleVideo_1280x720_1mb.mp4',
-    )).toList();
+    final exercises = _workoutCards
+        .map((card) => Exercise(
+              id: card.id,
+              code: card.name.toLowerCase().replaceAll(' ', '_'),
+              name: card.name,
+              description: card.benefits,
+              primaryMuscle: TargetMuscle.core, // Default to core
+              secondaryMuscles: [], // Empty secondary muscles
+              intentType: WorkoutIntent.stretch, // Default to stretch
+              difficulty: ExerciseDifficulty
+                  .beginner, // Convert from card.difficulty if needed
+              durationSeconds: card.duration,
+              sets: card.sets,
+              keyPoints: [], // Add key points if available
+              safetyWarnings: card.safetyTips,
+              benefits: card.benefits,
+              tags: card.tags.map((tag) => ExerciseTag.fromCode(tag)).toList(),
+              demoVideoUrl:
+                  'https://sample-videos.com/zip/10/mp4/SampleVideo_1280x720_1mb.mp4',
+            ))
+        .toList();
 
     // Navigate to improved workout video page with thumbnail and click-to-play
     Navigator.push(
@@ -2049,6 +2263,7 @@ class WorkoutCard {
   final List<String> safetyTips;
   final String previewImage;
   final bool isReplacement;
+  final Exercise? exercise; // 添加完整的 Exercise 数据，用于访问肌肉群信息
 
   WorkoutCard({
     required this.id,
@@ -2061,6 +2276,7 @@ class WorkoutCard {
     required this.safetyTips,
     required this.previewImage,
     this.isReplacement = false,
+    this.exercise, // 可选的 Exercise 对象
   });
 }
 

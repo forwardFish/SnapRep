@@ -259,7 +259,7 @@ class _WorkoutGuideStep3PageState extends State<WorkoutGuideStep3Page> {
             ),
           ],
           image: const DecorationImage(
-            image: NetworkImage('https://images.unsplash.com/photo-1583454110551-21f2fa2afe61?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80'),
+            image: AssetImage('assets/images/workout_mat.jpg'),
             fit: BoxFit.cover,
           ),
         ),

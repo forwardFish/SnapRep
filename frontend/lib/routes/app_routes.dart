@@ -9,7 +9,6 @@ import '../features/profile/screens/workout_details_page.dart';
 import '../features/profile/screens/workout_calendar_page.dart';
 import '../features/profile/screens/achievement_details_page.dart';
 import '../features/auth/screens/google_login_page.dart';
-import '../features/challenges/screens/challenges_page.dart';
 import '../features/exercises/screens/recommended_exercises_page.dart';
 import '../features/workout_guide/screens/scenario_selection_page.dart';
 import '../features/workout_guide/screens/equipment_selection_page.dart';
@@ -146,12 +145,6 @@ class AppRoutes {
 
   // ========== 社交和挑战页面 ==========
 
-  /// 挑战页面 - 物品挑战列表和参与页面
-  /// 功能: 显示各种器材挑战活动,可以参与挑战
-  /// 跳转来源: 首页挑战入口、底部导航栏
-  /// 操作: 点击挑战卡片可以快速加入对应训练
-  static const String challenges = '/challenges';
-
   /// 推荐动作页面 - 根据用户历史推荐适合的训练动作
   /// 功能: AI分析用户训练习惯,推荐个性化动作
   /// 跳转来源: 首页推荐入口
@@ -195,7 +188,6 @@ class AppRoutes {
       workoutCalendar: (context) => const WorkoutCalendarPage(),
       achievementDetails: (context) => const AchievementDetailsPage(),
       googleLogin: (context) => const GoogleLoginPage(),
-      challenges: (context) => const ChallengesPage(),
       recommendedExercises: (context) => const RecommendedExercisesPage(),
 
       // New onboarding flow routes (现在使用的版本)

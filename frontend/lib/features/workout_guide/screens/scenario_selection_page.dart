@@ -69,7 +69,7 @@ class _ScenarioSelectionPageState extends State<ScenarioSelectionPage>
       'title': 'Living Space',
       'description': 'Comfortable environment\nPersonal space workout',
       'color': Color(0xFF3498DB),
-      'imageUrl': 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80',
+      'imageUrl': 'assets/images/outdoor_workout.jpg',
     },
     {
       'id': 'office',
@@ -77,7 +77,7 @@ class _ScenarioSelectionPageState extends State<ScenarioSelectionPage>
       'title': 'Workplace',
       'description': 'Professional setting\nQuick desk exercises',
       'color': Color(0xFF9B59B6),
-      'imageUrl': 'https://images.unsplash.com/photo-1497366216548-37526070297c?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80',
+      'imageUrl': 'assets/images/office_workout.jpg',
     },
     {
       'id': 'gym',
@@ -85,7 +85,7 @@ class _ScenarioSelectionPageState extends State<ScenarioSelectionPage>
       'title': 'Fitness Center',
       'description': 'Professional equipment\nFull workout space',
       'color': Color(0xFF27AE60),
-      'imageUrl': 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80',
+      'imageUrl': 'assets/images/home_workout.jpg',
     },
     {
       'id': 'travel',
@@ -93,7 +93,7 @@ class _ScenarioSelectionPageState extends State<ScenarioSelectionPage>
       'title': 'On the Go',
       'description': 'Hotel or limited space\nBodyweight exercises',
       'color': Color(0xFFE67E22),
-      'imageUrl': 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80',
+      'imageUrl': 'assets/images/hotel_workout.jpg',
     },
   ];
 
@@ -1088,7 +1088,7 @@ class _ScenarioSelectionPageState extends State<ScenarioSelectionPage>
                 child: Container(
                   decoration: BoxDecoration(
                     image: DecorationImage(
-                      image: NetworkImage(scenario['imageUrl']),
+                      image: AssetImage(scenario['imageUrl']),
                       fit: BoxFit.cover,
                     ),
                   ),

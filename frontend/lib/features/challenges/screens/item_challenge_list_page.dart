@@ -4,7 +4,6 @@ import '../../../core/models/challenge_item_dto.dart';
 import '../../../core/services/challenges_service.dart';
 import '../../../core/services/exercise_service.dart';
 import '../../../routes/app_routes.dart';
-import 'challenges_page.dart';
 
 // Helper function to validate and sanitize image URLs
 bool _isValidImageUrl(String? url) {

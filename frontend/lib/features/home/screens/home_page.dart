@@ -57,7 +57,7 @@ class _HomePageState extends State<HomePage> {
                       title: 'Scenarios',
                       items: homeProvider.scenarios,
                       getTitle: (scenario) => scenario.name,
-                      getImageUrl: (scenario) => scenario.iconUrl,
+                      getImageUrl: (scenario) => scenario.fullIconUrl,
                       onItemTap: (scenario) =>
                           () => _onScenarioPressed(scenario),
                       isLoading: homeProvider.isLoadingScenarios,
@@ -70,7 +70,7 @@ class _HomePageState extends State<HomePage> {
                       title: 'Equipments',
                       items: homeProvider.equipment,
                       getTitle: (equipment) => equipment.name,
-                      getImageUrl: (equipment) => equipment.iconUrl,
+                      getImageUrl: (equipment) => equipment.fullIconUrl,
                       onItemTap: (equipment) =>
                           () => _onEquipmentPressed(equipment),
                       isLoading: homeProvider.isLoadingEquipment,
@@ -97,9 +97,8 @@ class _HomePageState extends State<HomePage> {
                       padding: const EdgeInsets.symmetric(horizontal: 24),
                       child: ChallengeHeroSection(
                         onPressed: _onChallengesPressed,
-                        // Fixed image URL for challenge hero section (won't change)
-                        imageUrl:
-                            'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80',
+                        // Local image for challenge hero section
+                        imageUrl: 'assets/images/backpack_workout.jpg',
                       ),
                     ),
                   ],

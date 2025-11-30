@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 
 class HeroSection extends StatelessWidget {
   final VoidCallback onCtaPressed;
@@ -30,16 +29,10 @@ class HeroSection extends StatelessWidget {
           children: [
             // Background Image
             Positioned.fill(
-              child: CachedNetworkImage(
-                imageUrl: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80',
+              child: Image.asset(
+                'assets/images/outdoor_workout.jpg',
                 fit: BoxFit.cover,
-                placeholder: (context, url) => Container(
-                  color: Colors.grey[300],
-                  child: const Center(
-                    child: CircularProgressIndicator(),
-                  ),
-                ),
-                errorWidget: (context, url, error) => Container(
+                errorBuilder: (context, error, stackTrace) => Container(
                   color: Colors.grey[300],
                   child: const Center(
                     child: Icon(Icons.error),

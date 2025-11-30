@@ -11,8 +11,8 @@ Scenario _$ScenarioFromJson(Map<String, dynamic> json) => Scenario(
       code: json['code'] as String,
       name: json['name'] as String,
       description: json['description'] as String?,
-      iconUrl: json['icon_url'] as String?,
-      isActive: json['is_active'] as bool?,
+      iconUrl: json['iconUrl'] as String?,
+      isActive: json['isActive'] as bool?,
     );
 
 Map<String, dynamic> _$ScenarioToJson(Scenario instance) => <String, dynamic>{
@@ -20,6 +20,6 @@ Map<String, dynamic> _$ScenarioToJson(Scenario instance) => <String, dynamic>{
       'code': instance.code,
       'name': instance.name,
       'description': instance.description,
-      'icon_url': instance.iconUrl,
-      'is_active': instance.isActive,
+      'iconUrl': instance.iconUrl,
+      'isActive': instance.isActive,
     };

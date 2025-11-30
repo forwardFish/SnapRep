@@ -251,12 +251,16 @@ class _ProfessionalWorkoutVideoPageState extends State<ProfessionalWorkoutVideoP
           children: [
             Icon(Icons.celebration, color: Color(0xFFFFD700), size: 32),
             SizedBox(width: 12),
-            Text(
-              'Workout Complete!',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
+            Expanded(
+              child: Text(
+                'Workout Complete!',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
               ),
             ),
           ],

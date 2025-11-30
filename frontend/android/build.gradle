@@ -2,6 +2,15 @@ buildscript {
     ext.kotlin_version = '1.7.10'
 
     repositories {
+        // 腾讯云镜像 - 可能比阿里云证书配置更好
+        maven { url 'https://mirrors.cloud.tencent.com/nexus/repository/maven-public/' }
+
+        // 阿里云镜像 - 解决TLS问题
+        maven { url 'https://maven.aliyun.com/repository/google' }
+        maven { url 'https://maven.aliyun.com/repository/central' }
+        maven { url 'https://maven.aliyun.com/repository/gradle-plugin' }
+        maven { url 'https://maven.aliyun.com/repository/public' }
+
         // 1⃣ Flutter 官方中国镜像（核心：放最前面）
         // 用来下 io.flutter:flutter_embedding_* 这些依赖
         maven {
@@ -16,7 +25,7 @@ buildscript {
     }
 
     dependencies {
-        classpath 'com.android.tools.build:gradle:7.4.2'
+        classpath 'com.android.tools.build:gradle:8.1.4'
         // 如果后面需要 Kotlin Gradle 插件再打开
         // classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
     }
@@ -25,6 +34,15 @@ buildscript {
 allprojects {
     repositories {
         // 跟上面保持一致，保证所有子模块用相同仓库
+
+        // 腾讯云镜像 - 可能比阿里云证书配置更好
+        maven { url 'https://mirrors.cloud.tencent.com/nexus/repository/maven-public/' }
+
+        // 阿里云镜像 - 解决TLS问题
+        maven { url 'https://maven.aliyun.com/repository/google' }
+        maven { url 'https://maven.aliyun.com/repository/central' }
+        maven { url 'https://maven.aliyun.com/repository/gradle-plugin' }
+        maven { url 'https://maven.aliyun.com/repository/public' }
 
         // 1⃣ Flutter 镜像
         maven {
@@ -55,10 +73,8 @@ subprojects {
     }
 }
 
-// 保持不变
-subprojects {
-    project.evaluationDependsOn(':app')
-}
+// 修复：只在根项目中评估 app 模块
+rootProject.evaluationDependsOn(':app')
 
 tasks.register("clean", Delete) {
     delete rootProject.buildDir

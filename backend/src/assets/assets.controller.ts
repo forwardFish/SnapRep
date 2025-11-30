@@ -52,6 +52,8 @@ export class AssetsController {
     @Param('filename') filename: string,
     @Res({ passthrough: true }) res: Response,
   ): Promise<StreamableFile> {
+    logger.info(`Serving video: ${filename}`);
+    
     return this.serveFile('videos', filename, res, {
       cacheMaxAge: 31536000, // 1 year for videos
     });
@@ -83,6 +85,7 @@ export class AssetsController {
     @Param('filename') filename: string,
     @Res({ passthrough: true }) res: Response,
   ): Promise<StreamableFile> {
+    logger.info(`Serving image: ${filename}`);
     return this.serveFile('images', filename, res, {
       cacheMaxAge: 604800, // 7 days for images
     });
@@ -123,6 +126,7 @@ export class AssetsController {
     description: 'Video not found',
   })
   async checkVideo(@Param('filename') filename: string) {
+    logger.info(`Checking video: ${filename}`);
     return this.checkFile('videos', filename);
   }
 
@@ -149,6 +153,7 @@ export class AssetsController {
     description: 'Image not found',
   })
   async checkImage(@Param('filename') filename: string) {
+    logger.info(`Checking image: ${filename}`);
     return this.checkFile('images', filename);
   }
 

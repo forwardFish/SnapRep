@@ -95,6 +95,34 @@ class ErrorCodes {
     'ORDER_CAPTURE_FAILED': ErrorCodeType(code: 5004, message: 'PAYPAL_ORDER_CAPTURE_FAILED'),
   };
 
+  // 订阅系统相关错误 (5500-5699)
+  static const Map<String, ErrorCodeType> subscription = {
+    'NOT_FOUND': ErrorCodeType(code: 5500, message: 'SUBSCRIPTION_NOT_FOUND', httpStatus: 404, category: 'BUSINESS'),
+    'ALREADY_EXISTS': ErrorCodeType(code: 5501, message: 'SUBSCRIPTION_ALREADY_EXISTS', httpStatus: 409, category: 'BUSINESS'),
+    'TRIAL_ALREADY_USED': ErrorCodeType(code: 5502, message: 'SUBSCRIPTION_TRIAL_ALREADY_USED', httpStatus: 400, category: 'BUSINESS'),
+    'TRIAL_ALREADY_STARTED': ErrorCodeType(code: 5503, message: 'SUBSCRIPTION_TRIAL_ALREADY_STARTED', httpStatus: 400, category: 'BUSINESS'),
+    'INVALID_PURCHASE_TOKEN': ErrorCodeType(code: 5504, message: 'SUBSCRIPTION_INVALID_PURCHASE_TOKEN', httpStatus: 400, category: 'VALIDATION'),
+    'PAYMENT_VERIFICATION_FAILED': ErrorCodeType(code: 5505, message: 'SUBSCRIPTION_PAYMENT_VERIFICATION_FAILED', httpStatus: 400, category: 'EXTERNAL'),
+    'DAILY_LIMIT_REACHED': ErrorCodeType(code: 5506, message: 'SUBSCRIPTION_DAILY_LIMIT_REACHED', httpStatus: 403, category: 'BUSINESS'),
+    'CREATE_FAILED': ErrorCodeType(code: 5507, message: 'SUBSCRIPTION_CREATE_FAILED', httpStatus: 500, category: 'SYSTEM'),
+    'UPDATE_FAILED': ErrorCodeType(code: 5508, message: 'SUBSCRIPTION_UPDATE_FAILED', httpStatus: 500, category: 'SYSTEM'),
+    'CANCEL_FAILED': ErrorCodeType(code: 5509, message: 'SUBSCRIPTION_CANCEL_FAILED', httpStatus: 500, category: 'SYSTEM'),
+    'FETCH_FAILED': ErrorCodeType(code: 5510, message: 'SUBSCRIPTION_FETCH_FAILED', httpStatus: 500, category: 'SYSTEM'),
+    'INVALID_TIER': ErrorCodeType(code: 5511, message: 'SUBSCRIPTION_INVALID_TIER', httpStatus: 400, category: 'VALIDATION'),
+    'EXPIRED': ErrorCodeType(code: 5512, message: 'SUBSCRIPTION_EXPIRED', httpStatus: 403, category: 'BUSINESS'),
+    'USER_NOT_FOUND': ErrorCodeType(code: 5513, message: 'SUBSCRIPTION_USER_NOT_FOUND', httpStatus: 404, category: 'BUSINESS'),
+    'GOOGLE_PLAY_ERROR': ErrorCodeType(code: 5514, message: 'SUBSCRIPTION_GOOGLE_PLAY_ERROR', httpStatus: 400, category: 'EXTERNAL'),
+  };
+
+  // 每日使用限制相关错误 (5700-5799)
+  static const Map<String, ErrorCodeType> dailyUsage = {
+    'FETCH_FAILED': ErrorCodeType(code: 5700, message: 'DAILY_USAGE_FETCH_FAILED', httpStatus: 500, category: 'SYSTEM'),
+    'UPDATE_FAILED': ErrorCodeType(code: 5701, message: 'DAILY_USAGE_UPDATE_FAILED', httpStatus: 500, category: 'SYSTEM'),
+    'LIMIT_REACHED': ErrorCodeType(code: 5702, message: 'DAILY_USAGE_LIMIT_REACHED', httpStatus: 403, category: 'BUSINESS'),
+    'INVALID_TIMEZONE': ErrorCodeType(code: 5703, message: 'DAILY_USAGE_INVALID_TIMEZONE', httpStatus: 400, category: 'VALIDATION'),
+    'CREATE_FAILED': ErrorCodeType(code: 5704, message: 'DAILY_USAGE_CREATE_FAILED', httpStatus: 500, category: 'SYSTEM'),
+  };
+
   // 数据库相关错误 (6000-6999)
   static const Map<String, ErrorCodeType> database = {
     'CONNECTION_ERROR': ErrorCodeType(code: 6000, message: 'DATABASE_CONNECTION_ERROR'),

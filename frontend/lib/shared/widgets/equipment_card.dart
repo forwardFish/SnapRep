@@ -56,10 +56,10 @@ class EquipmentCard extends StatelessWidget {
                       : Colors.grey[100],
                   shape: BoxShape.circle,
                 ),
-                child: equipment.iconUrl != null
+                child: equipment.fullIconUrl != null && equipment.fullIconUrl!.isNotEmpty
                     ? ClipOval(
                         child: Image.network(
-                          equipment.iconUrl!,
+                          equipment.fullIconUrl!,
                           fit: BoxFit.cover,
                           errorBuilder: (context, error, stackTrace) => Icon(
                             _getEquipmentIcon(equipment.category),

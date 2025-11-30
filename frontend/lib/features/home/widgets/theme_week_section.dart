@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import '../../../core/models/theme_week.dart';
 
 class ThemeWeekSection extends StatelessWidget {
@@ -167,22 +166,10 @@ class ThemeWeekSection extends StatelessWidget {
           children: [
             // Background Image Layer - exactly like HTML reference
             Positioned.fill(
-              child: CachedNetworkImage(
-                imageUrl: 'https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80',
+              child: Image.asset(
+                'assets/images/backpack_workout.jpg',
                 fit: BoxFit.cover,
-                placeholder: (context, url) => Container(
-                  decoration: const BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        Color(0xFF667eea),
-                        Color(0xFF764ba2),
-                      ],
-                    ),
-                  ),
-                ),
-                errorWidget: (context, url, error) => Container(
+                errorBuilder: (context, error, stackTrace) => Container(
                   decoration: const BoxDecoration(
                     gradient: LinearGradient(
                       begin: Alignment.topLeft,
@@ -285,15 +272,23 @@ class ThemeWeekSection extends StatelessWidget {
                         ),
                         child: Column(
                           children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            // Progress text with overflow handling
+                            Wrap(
+                              spacing: 12,
+                              runSpacing: 8,
+                              alignment: WrapAlignment.spaceBetween,
+                              crossAxisAlignment: WrapCrossAlignment.center,
                               children: [
-                                Text(
-                                  'Progress: ${participation.progress.completed}/${participation.progress.target} completed',
-                                  style: const TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w600,
-                                    color: Colors.white,
+                                Flexible(
+                                  child: Text(
+                                    'Progress: ${participation.progress.completed}/${participation.progress.target} completed',
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.white,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
                                   ),
                                 ),
                                 const Text(

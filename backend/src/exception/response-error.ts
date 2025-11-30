@@ -20,6 +20,7 @@ export enum ErrorCategory {
   SYSTEM = 'SYSTEM',        // 系统错误
   NETWORK = 'NETWORK',      // 网络错误
   AUTH = 'AUTH',            // 认证授权错误
+  EXTERNAL = 'EXTERNAL',    // 外部服务错误（如 Google Play）
 }
 
 /**

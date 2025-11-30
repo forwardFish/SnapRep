@@ -1,6 +1,7 @@
 import 'package:json_annotation/json_annotation.dart';
 import 'target_muscle.dart';
 import 'workout_intent.dart';
+import '../utils/image_url_helper.dart';
 
 part 'exercise.g.dart';
 
@@ -210,6 +211,29 @@ class Exercise {
 
     if (postureTags.isEmpty) return '';
     return postureTags.map((tag) => tag.displayName).join(', ');
+  }
+
+  /// 获取完整的缩略图 URL（从后端 API 加载）
+  String? get fullThumbnailUrl {
+    if (thumbnailUrl == null || thumbnailUrl!.isEmpty) return null;
+    return ImageUrlHelper.getExerciseThumbnail(thumbnailUrl);
+  }
+
+  /// 获取完整的演示图片 URL（从后端 API 加载）
+  String? get fullDemoImageUrl {
+    if (demoImageUrl == null || demoImageUrl!.isEmpty) return null;
+    return ImageUrlHelper.getExerciseDemoImage(demoImageUrl);
+  }
+
+  /// 获取完整的演示视频 URL（从后端 API 加载）
+  String? get fullDemoVideoUrl {
+    if (demoVideoUrl == null || demoVideoUrl!.isEmpty) return null;
+    return ImageUrlHelper.getExerciseDemoVideo(demoVideoUrl);
+  }
+
+  /// 获取用于显示的图片 URL（优先使用 demoImageUrl，其次 thumbnailUrl）
+  String? get displayImageUrl {
+    return fullDemoImageUrl ?? fullThumbnailUrl;
   }
 
   /// JSON序列化方法

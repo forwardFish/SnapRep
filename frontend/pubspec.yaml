@@ -82,6 +82,7 @@ flutter:
   # Assets configuration
   assets:
     - assets/images/
+    - assets/images/fallbacks/
     - assets/videos/
 
   # To add assets to your application, add an assets section, like this:
