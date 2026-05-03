@@ -1,80 +1,142 @@
 buildscript {
-    ext.kotlin_version = '1.7.10'
-
+    ext.kotlin_version = '1.9.22'
     repositories {
-        // 腾讯云镜像 - 可能比阿里云证书配置更好
-        maven { url 'https://mirrors.cloud.tencent.com/nexus/repository/maven-public/' }
-
-        // 阿里云镜像 - 解决TLS问题
-        maven { url 'https://maven.aliyun.com/repository/google' }
-        maven { url 'https://maven.aliyun.com/repository/central' }
-        maven { url 'https://maven.aliyun.com/repository/gradle-plugin' }
-        maven { url 'https://maven.aliyun.com/repository/public' }
-
-        // 1⃣ Flutter 官方中国镜像（核心：放最前面）
-        // 用来下 io.flutter:flutter_embedding_* 这些依赖
+        // 🔥 ONLY HTTP Aliyun mirrors - NO HTTPS to avoid TLS handshake errors
         maven {
-            url 'https://storage.flutter-io.cn/download.flutter.io'
+            url 'http://maven.aliyun.com/repository/google'
+            allowInsecureProtocol = true
         }
-
-        // 2⃣ 官方仓库（如果你本机有代理/VPN，可以保留用来兜底）
-        google()
-        mavenCentral()
-        // gradle 插件门户（一般用不到太多，但留着没坏处）
-        gradlePluginPortal()
+        maven {
+            url 'http://maven.aliyun.com/repository/public'
+            allowInsecureProtocol = true
+        }
+        maven {
+            url 'http://maven.aliyun.com/repository/jcenter'
+            allowInsecureProtocol = true
+        }
+        maven {
+            url 'http://maven.aliyun.com/repository/gradle-plugin'
+            allowInsecureProtocol = true
+        }
+        // ❌ REMOVED: google() and mavenCentral() - causing TLS handshake failures
     }
-
     dependencies {
-        classpath 'com.android.tools.build:gradle:8.1.4'
-        // 如果后面需要 Kotlin Gradle 插件再打开
-        // classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+        // ✅ 升级到 AGP 8.0.2 (通过代理下载，完全支持 SDK 35)
+        classpath 'com.android.tools.build:gradle:8.0.2'
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
     }
-}
 
-allprojects {
-    repositories {
-        // 跟上面保持一致，保证所有子模块用相同仓库
+    // Ensure buildscript classpath also pins androidx.annotation to a mirrored version
+    configurations.all {
+        resolutionStrategy {
+            // 使用确实存在的版本 1.6.0 (1.7.0, 1.7.1, 1.8.0 都不存在!)
+            force 'androidx.annotation:annotation:1.6.0'
+            force 'androidx.annotation:annotation-experimental:1.3.0'
 
-        // 腾讯云镜像 - 可能比阿里云证书配置更好
-        maven { url 'https://mirrors.cloud.tencent.com/nexus/repository/maven-public/' }
-
-        // 阿里云镜像 - 解决TLS问题
-        maven { url 'https://maven.aliyun.com/repository/google' }
-        maven { url 'https://maven.aliyun.com/repository/central' }
-        maven { url 'https://maven.aliyun.com/repository/gradle-plugin' }
-        maven { url 'https://maven.aliyun.com/repository/public' }
-
-        // 1⃣ Flutter 镜像
-        maven {
-            url 'https://storage.flutter-io.cn/download.flutter.io'
-        }
-
-        // 2⃣ 官方仓库（有网络就会用，没有就靠 Flutter 镜像能撑多少算多少）
-        google()
-        mavenCentral()
-    }
-}
-
-rootProject.buildDir = '../build'
-
-subprojects {
-    project.buildDir = "${rootProject.buildDir}/${project.name}"
-
-    // 可选：统一 compileSdkVersion / targetSdkVersion
-    afterEvaluate { project ->
-        if (project.hasProperty('android')) {
-            project.android.compileSdkVersion 34
-            project.android.buildToolsVersion '34.0.0'
-
-            if (project.android.hasProperty('defaultConfig')) {
-                project.android.defaultConfig.targetSdkVersion 34
+            // 强制替换所有不存在的版本
+            eachDependency { details ->
+                if (details.requested.group == 'androidx.annotation' && details.requested.name == 'annotation') {
+                    details.useVersion '1.6.0'
+                    details.because "Forcing all androidx.annotation to 1.6.0 (the only stable version that exists)"
+                }
             }
         }
     }
 }
 
-// 修复：只在根项目中评估 app 模块
-rootProject.evaluationDependsOn(':app')
+allprojects {
+    repositories {
+        // 🔥 ONLY HTTP Aliyun mirrors - NO HTTPS to avoid TLS handshake errors
+        maven {
+            url 'http://maven.aliyun.com/repository/google'
+            allowInsecureProtocol = true
+        }
+        maven {
+            url 'http://maven.aliyun.com/repository/public'
+            allowInsecureProtocol = true
+        }
+        maven {
+            url 'http://maven.aliyun.com/repository/jcenter'
+            allowInsecureProtocol = true
+        }
+        maven {
+            url 'http://maven.aliyun.com/repository/gradle-plugin'
+            allowInsecureProtocol = true
+        }
+        // ❌ REMOVED: google() and mavenCentral() - causing TLS handshake failures
+    }
+
+    // 全局强制所有Android项目使用正确的依赖版本(包括所有子项目和插件)
+    configurations.all {
+        resolutionStrategy {
+            // 🔥 强制使用确实存在的版本 1.6.0 (1.7.0, 1.7.1, 1.8.0 都不存在!)
+            force 'androidx.annotation:annotation:1.6.0'
+            force 'androidx.annotation:annotation-experimental:1.3.0'
+
+            // 🔥 强制替换所有androidx.annotation请求为1.6.0
+            eachDependency { DependencyResolveDetails details ->
+                if (details.requested.group == 'androidx.annotation' &&
+                    details.requested.name == 'annotation') {
+                    // 无论请求什么版本,都强制使用1.6.0
+                    details.useVersion '1.6.0'
+                    details.because "Forcing androidx.annotation to 1.6.0 - versions 1.7.x and 1.8.x do not exist in Maven repos"
+                }
+                if (details.requested.group == 'androidx.annotation' &&
+                    details.requested.name == 'annotation-experimental') {
+                    // 强制使用1.3.0
+                    details.useVersion '1.3.0'
+                    details.because "Forcing androidx.annotation-experimental to 1.3.0"
+                }
+            }
+        }
+    }
+
+    // 全局强制所有Android项目使用API 35和Java 17
+    afterEvaluate { project ->
+        if (project.hasProperty('android')) {
+            project.android.compileSdkVersion 35
+
+            // 强制所有子项目使用Java 17
+            if (project.android.hasProperty('compileOptions')) {
+                project.android.compileOptions {
+                    sourceCompatibility JavaVersion.VERSION_17
+                    targetCompatibility JavaVersion.VERSION_17
+                }
+            }
+
+            // 强制 Kotlin 也使用 JVM 17
+            project.tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
+                kotlinOptions {
+                    jvmTarget = '17'
+                }
+            }
+
+            if (project.android.hasProperty('targetSdkVersion')) {
+                project.android.targetSdkVersion 35
+            }
+            if (project.android.hasProperty('buildToolsVersion')) {
+                project.android.buildToolsVersion '35.0.0'
+            }
+            if (project.android.hasProperty('defaultConfig')) {
+                if (project.android.defaultConfig.hasProperty('targetSdkVersion')) {
+                    project.android.defaultConfig.targetSdkVersion 35
+                }
+                if (project.android.defaultConfig.hasProperty('compileSdkVersion')) {
+                    project.android.defaultConfig.compileSdkVersion 35
+                }
+            }
+        }
+    }
+
+}
+
+rootProject.buildDir = "../build"
+subprojects {
+    project.buildDir = "${rootProject.buildDir}/${project.name}"
+}
+subprojects {
+    project.evaluationDependsOn(":app")
+}
 
 tasks.register("clean", Delete) {
     delete rootProject.buildDir

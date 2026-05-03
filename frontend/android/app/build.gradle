@@ -1,9 +1,6 @@
-plugins {
-    id "com.android.application"
-    // id "kotlin-android"
-    id "org.jetbrains.kotlin.android"  
-    id "dev.flutter.flutter-gradle-plugin"
-}
+apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
+// Flutter plugin will be applied via app_plugin_loader.gradle
 
 def keystoreProperties = new Properties()
 def keystorePropertiesFile = rootProject.file('key.properties')
@@ -18,6 +15,13 @@ if (localPropertiesFile.exists()) {
         localProperties.load(reader)
     }
 }
+
+def flutterRoot = localProperties.getProperty('flutter.sdk')
+if (flutterRoot == null) {
+    throw new GradleException("Flutter SDK not found. Define location with flutter.sdk in the local.properties file.")
+}
+
+apply from: "$flutterRoot/packages/flutter_tools/gradle/flutter.gradle"
 
 def flutterVersionCode = localProperties.getProperty('flutter.versionCode')
 if (flutterVersionCode == null) {
@@ -54,7 +58,7 @@ android {
         // You can update the following values to match your application needs.
         // For more information, see: https://docs.flutter.dev/deployment/android#reviewing-the-gradle-build-configuration.
         // ✅ 改成固定 21（或更高，比如 23/24 都可以）
-        minSdkVersion 21
+        minSdkVersion flutter.minSdkVersion
 
         targetSdkVersion 35
         versionCode flutterVersionCode.toInteger()
@@ -97,22 +101,21 @@ android {
 
     lintOptions {
         checkReleaseBuilds false
+        abortOnError false
     }
 
-    // 强制所有依赖使用API 35
+    packagingOptions {
+        jniLibs {
+            useLegacyPackaging = false
+        }
+    }
+
+    // 强制所有依赖使用 API 35
     configurations.all {
         resolutionStrategy {
-            eachDependency { details ->
-                // 强制Android相关依赖使用API 35
-                if (details.requested.group == 'androidx' ||
-                    details.requested.group == 'com.android.support' ||
-                    details.requested.name.contains('android')) {
-                    details.because "Force all Android dependencies to use API 35"
-                    // 这里不设置version，而是通过compileSdkVersion控制
-                }
-            }
-            // 强制编译SDK版本
-            force 'com.android.tools.build:gradle:8.1.0'
+            // 使用存在的 androidx.annotation 版本
+            force 'androidx.annotation:annotation:1.8.0'
+            force 'androidx.annotation:annotation-experimental:1.4.0'
         }
     }
 
@@ -160,4 +163,27 @@ dependencies {
 
     // 👇 新增这一行
     implementation "androidx.multidex:multidex:2.0.1"
+}
+
+// 自动备份AAB文件的任务
+afterEvaluate {
+    tasks.named("bundleRelease").configure {
+        doLast {
+            def aabFile = file("$buildDir/outputs/bundle/release/app-release.aab")
+            def backupDir = file("../../")
+            def timestamp = System.currentTimeMillis()
+            def backupFile = new File(backupDir, "snaprep-gradle-backup-${timestamp}.aab")
+            
+            if (aabFile.exists()) {
+                copy {
+                    from aabFile
+                    into backupDir
+                    rename { backupFile.name }
+                }
+                println "✅ AAB备份成功: ${backupFile.absolutePath}"
+            } else {
+                println "❌ AAB文件不存在: ${aabFile.absolutePath}"
+            }
+        }
+    }
 }

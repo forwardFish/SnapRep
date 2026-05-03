@@ -15,19 +15,17 @@ class ScenarioSelectionPage extends StatefulWidget {
 
 class _ScenarioSelectionPageState extends State<ScenarioSelectionPage>
     with TickerProviderStateMixin {
-  // Detection mode - CAMERA FUNCTIONALITY DISABLED (kept for code compatibility)
-  // User can never access camera mode as AI Scan button is hidden
-  String _detectionMode = 'selection'; // Always 'selection'
+  // Detection mode - CAMERA FUNCTIONALITY TEMPORARILY DISABLED
+  // String _detectionMode = 'selection'; // 'camera' or 'selection'
 
-  // Camera related - KEPT FOR CODE COMPATIBILITY (never used in practice)
-  // Using dynamic types to avoid compilation errors since camera package is not imported
-  dynamic _controller;
-  List<dynamic> _cameras = [];
+  // Camera related - TEMPORARILY DISABLED FOR GOOGLE PLAY
+  /* CameraController? _controller;
+  List<CameraDescription> _cameras = [];
   bool _isCameraInitialized = false;
   bool _isAnalyzing = false;
   bool _analysisComplete = false;
   String? _detectedScene;
-  List<String> _detectedEquipment = [];
+  List<String> _detectedEquipment = []; */
 
   // Manual selection related
   String? _selectedScenario;
@@ -310,10 +308,10 @@ class _ScenarioSelectionPageState extends State<ScenarioSelectionPage>
       );
     }
 
-    // Camera controller check (never used since camera is disabled)
-    if (_controller != null) {
-      // Would show CameraPreview here if camera package was imported
-      return Container(color: Colors.black);
+    if (_controller != null && _controller!.value.isInitialized) {
+      return SizedBox.expand(
+        child: CameraPreview(_controller!),
+      );
     }
 
     // Mock camera view for testing
@@ -1196,16 +1194,7 @@ class _ScenarioSelectionPageState extends State<ScenarioSelectionPage>
     );
   }
 
-  // CAMERA METHODS - Empty implementations for code compatibility (never called)
-  void _startAnalysis() {
-    // Empty - AI Scan button is hidden, this method is never called
-  }
-
-  void _onAIScanContinue() {
-    // Empty - AI Scan is disabled, this method is never called
-  }
-
-  // CAMERA METHOD: _startAnalysis - ORIGINAL CODE BELOW (DISABLED)
+  // CAMERA METHOD: _startAnalysis - DISABLED
   /*
   void _startAnalysis() {
     if (_isAnalyzing) return;
