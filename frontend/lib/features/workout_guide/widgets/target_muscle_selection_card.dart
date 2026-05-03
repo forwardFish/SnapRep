@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/constants/app_constants.dart';
 import '../../../core/models/target_muscle.dart';
 
 /// 目标肌肉选择卡片组件
@@ -52,13 +53,14 @@ class TargetMuscleSelectionCard extends StatelessWidget {
             children: [
               // Background Image
               Positioned.fill(
-                child: Container(
-                  decoration: BoxDecoration(
-                    image: DecorationImage(
-                      image: NetworkImage(targetMuscle.backgroundImageUrl),
-                      fit: BoxFit.cover,
-                    ),
-                  ),
+                child: Image.network(
+                  targetMuscle.getBackgroundImageUrl(AppConstants.nestJsApiUrl),
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) {
+                    return Container(
+                      color: targetMuscle.color.withOpacity(0.9),
+                    );
+                  },
                 ),
               ),
 

@@ -9,6 +9,15 @@
 # packages, and plugins designed to encourage good coding practices.
 include: package:flutter_lints/flutter.yaml
 
+analyzer:
+  exclude:
+    # Stage 1 stabilization: stale backup/copy artifacts are not part of the
+    # active Flutter source set, but Flutter analyze scans them by default.
+    - lib/**/backup/**
+    - lib/features/workout_guide/screens/scenario_selection_page_full_camera.dart
+    - lib/*副本.dart
+    - lib/**/*副本.dart
+
 linter:
   # The lint rules applied to this project can be customized in the
   # section below to disable rules from the `package:flutter_lints/flutter.yaml`
