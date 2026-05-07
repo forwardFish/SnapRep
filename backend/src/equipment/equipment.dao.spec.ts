@@ -4,7 +4,7 @@ import { EquipmentDao } from './equipment.dao';
 import { EquipmentService } from './equipment.service';
 import { ResponseError } from '../exception/response-error';
 import { ErrorCodes } from '../exception/error-codes';
-import { EquipmentCategory } from './dto/create-update-equipment.dto';
+import { EquipmentCategory } from './dto/get-equipment-query.dto';
 
 // Mock Prisma Service
 const mockPrismaService = {
@@ -54,7 +54,7 @@ describe('EquipmentDao', () => {
         code: 'DUMBBELLS_5KG',
         name: '5kg哑铃',
         description: '适合初学者使用的5公斤哑铃',
-        category: EquipmentCategory.STRENGTH,
+        category: EquipmentCategory.FURNITURE,
         imageUrl: 'https://example.com/images/dumbbells-5kg.jpg',
         displayOrder: 1,
         isActive: true,
@@ -161,7 +161,7 @@ describe('EquipmentDao', () => {
         code: 'NEW_EQUIPMENT',
         name: 'New Equipment',
         description: 'A new piece of equipment',
-        category: EquipmentCategory.STRENGTH,
+        category: EquipmentCategory.FURNITURE,
         isActive: true,
       };
 
@@ -257,14 +257,14 @@ describe('EquipmentDao', () => {
           id: 'equipment-1',
           code: 'DUMBBELLS_5KG',
           name: '5kg哑铃',
-          category: EquipmentCategory.STRENGTH,
+          category: EquipmentCategory.FURNITURE,
           isActive: true,
         },
         {
           id: 'equipment-2',
           code: 'TREADMILL',
           name: '跑步机',
-          category: 'CARDIO',
+          category: 'WALL',
           isActive: true,
         },
       ];
@@ -272,7 +272,7 @@ describe('EquipmentDao', () => {
       mockPrismaService.equipment.findMany.mockResolvedValue(mockEquipment);
       mockPrismaService.equipment.count.mockResolvedValue(2);
 
-      const result = await dao.findEquipmentWithPagination(1, 10, 'STRENGTH');
+      const result = await dao.findEquipmentWithPagination(1, 10, 'FURNITURE');
 
       expect(result.data).toEqual(mockEquipment);
       expect(result.pagination).toEqual({
@@ -289,11 +289,11 @@ describe('EquipmentDao', () => {
   describe('EquipmentDao - getEquipmentStats', () => {
     it('should return equipment statistics', async () => {
       const mockEquipmentByCategory = {
-        STRENGTH: [
+        FURNITURE: [
           { id: 'eq1', code: 'DUMBBELLS', name: '哑铃' },
           { id: 'eq2', code: 'BARBELL', name: '杠铃' },
         ],
-        CARDIO: [
+        WALL: [
           { id: 'eq3', code: 'TREADMILL', name: '跑步机' },
         ],
       };
@@ -314,7 +314,7 @@ describe('EquipmentDao', () => {
         inactive: 2,
         categories: [
           {
-            category: EquipmentCategory.STRENGTH,
+            category: EquipmentCategory.FURNITURE,
             count: 2,
             items: [
               { id: 'eq1', code: 'DUMBBELLS', name: '哑铃' },
@@ -322,7 +322,7 @@ describe('EquipmentDao', () => {
             ],
           },
           {
-            category: 'CARDIO',
+            category: 'WALL',
             count: 1,
             items: [
               { id: 'eq3', code: 'TREADMILL', name: '跑步机' },
@@ -358,7 +358,7 @@ describe('EquipmentDao', () => {
           code: 'DUMBBELLS_5KG',
           name: '5kg哑铃',
           description: '适合初学者',
-          category: EquipmentCategory.STRENGTH,
+          category: EquipmentCategory.FURNITURE,
           isActive: true,
           createdAt: new Date('2024-01-01'),
           updatedAt: new Date('2024-01-01'),
@@ -375,7 +375,7 @@ describe('EquipmentDao', () => {
         id: 'equipment-1',
         code: 'DUMBBELLS_5KG',
         name: '5kg哑铃',
-        category: EquipmentCategory.STRENGTH,
+        category: EquipmentCategory.FURNITURE,
         isActive: true,
         createdAt: '2024-01-01T00:00:00.000Z',
         updatedAt: '2024-01-01T00:00:00.000Z',
@@ -397,7 +397,7 @@ describe('EquipmentDao', () => {
         code: 'NEW_EQUIPMENT',
         name: 'New Equipment',
         description: 'Description',
-        category: EquipmentCategory.STRENGTH,
+        category: EquipmentCategory.FURNITURE,
         isActive: true,
       };
 
@@ -418,7 +418,7 @@ describe('EquipmentDao', () => {
         id: 'new-id',
         code: 'NEW_EQUIPMENT',
         name: 'New Equipment',
-        category: EquipmentCategory.STRENGTH,
+        category: EquipmentCategory.FURNITURE,
         isActive: true,
         createdAt: '2024-01-01T00:00:00.000Z',
         updatedAt: '2024-01-01T00:00:00.000Z',
@@ -451,7 +451,7 @@ export class EquipmentUsageExample {
   async getStrengthEquipment() {
     try {
       // 1. 获取所有力量训练器材
-      const strengthEquipment = await this.equipmentDao.findActiveEquipment('STRENGTH');
+      const strengthEquipment = await this.equipmentDao.findActiveEquipment('FURNITURE');
 
       // 2. 按显示顺序分组
       const sortedEquipment = strengthEquipment.sort((a, b) =>
@@ -459,7 +459,7 @@ export class EquipmentUsageExample {
       );
 
       return {
-        category: EquipmentCategory.STRENGTH,
+        category: EquipmentCategory.FURNITURE,
         equipment: sortedEquipment,
         count: sortedEquipment.length,
         summary: {

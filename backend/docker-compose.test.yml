@@ -1,0 +1,22 @@
+﻿services:
+    snaprep-test-postgres:
+        image: postgres:16-alpine
+        container_name: snaprep-test-postgres
+        restart: unless-stopped
+        environment:
+            POSTGRES_DB: snaprep_test
+            POSTGRES_USER: snaprep_test
+            POSTGRES_PASSWORD: snaprep_test
+        ports:
+            - '55432:5432'
+        healthcheck:
+            test: ['CMD-SHELL', 'pg_isready -U snaprep_test -d snaprep_test']
+            interval: 5s
+            timeout: 5s
+            retries: 20
+        volumes:
+            - snaprep-test-postgres-data:/var/lib/postgresql/data
+
+volumes:
+    snaprep-test-postgres-data:
+        name: snaprep-test-postgres-data

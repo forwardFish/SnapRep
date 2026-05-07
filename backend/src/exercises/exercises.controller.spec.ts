@@ -3,6 +3,7 @@ import { ExercisesController } from './exercises.controller';
 import { WorkoutRecommendationService } from './services/workout-recommendation.service';
 import { ExerciseMatchingService } from './services/exercise-matching.service';
 import { IntentType, Difficulty, PrimaryMuscle } from '../common/types/prisma-enums';
+import { SupabaseApiService } from '../common/services/supabase-api.service';
 
 describe('ExercisesController', () => {
   let controller: ExercisesController;
@@ -24,6 +25,12 @@ describe('ExercisesController', () => {
           useValue: {
             replaceExercise: jest.fn(),
             getAlternatives: jest.fn(),
+          },
+        },
+        {
+          provide: SupabaseApiService,
+          useValue: {
+            get: jest.fn(),
           },
         },
       ],

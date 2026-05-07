@@ -31,3 +31,36 @@ Method: inferred from README files, UI text, routes, services, providers, contro
 - What is the canonical meaning of “popular/recommended exercises”?
 - Which auth methods are officially supported at relaunch?
 - What is the authoritative API contract for challenges and subscriptions?
+
+<!-- STAGE1_VALIDATION_2026_05_06_START -->
+
+## Stage 1 product requirements validation update ? 2026-05-06
+
+Status: **current product requirements remain SnapRep itself; no migration/rewrite/UI-only redesign.**  
+Source basis: `frontend/lib/main.dart`, `frontend/lib/features/profile/screens/cosmic_profile_pages.dart`, `frontend/test/ui_pages_smoke_test.dart`, backend controllers/schema, and current Stage 1 validation logs.  
+Generated: 2026-05-06T22:21:26+08:00
+
+### Current product closed loop from code
+
+```text
+Home
+? Guide Step 1 / Step 2 / Step 3
+? Workout Result
+? Training Practice and/or Result Card
+? My / Cosmic Profile / Collection / Card Detail / Share
+```
+
+### Requirements conclusions
+
+| finding | evidence file path | impact | risk level | recommended action |
+|---|---|---|---|---|
+| Home must remain the fastest route into workout generation. | `frontend/lib/main.dart:251-410` | This is the entry point for the current prototype and should not be replaced during Stage 1. | Low | Preserve current behavior; only document or test it until Stage 2. |
+| Guide currently captures intent, scenario/equipment/camera assist, and body target through Step 1/2/3 screens. | `frontend/lib/main.dart:412-638` | These choices define the recommendation context. | Medium | In Stage 2, map these selections to backend recommendation DTOs. |
+| Workout Result supports Start Follow and Card entry points. | `frontend/lib/main.dart:639-718`; `frontend/test/ui_pages_smoke_test.dart` | Confirms the Result ? Practice/Card split required by the product loop. | Low | Keep both paths; add end-to-end coverage later. |
+| Training Practice supports page state and next-step flow. | `frontend/lib/main.dart:2253-2535`; `frontend/test/ui_pages_smoke_test.dart` | Practice is functional enough for prototype validation. | Medium | Stage 2 should connect completion state to backend sessions/cards. |
+| My/Card retention experience is represented by cosmic profile pages. | `frontend/lib/main.dart:124-133`; `frontend/lib/features/profile/screens/cosmic_profile_pages.dart:5-160` | Latest My/Card UI baseline is not the older `my_page.dart` alone. | Medium | Treat cosmic profile pages as current visual/product basis; reconcile with provider/API data in Stage 2. |
+| Backend supports recommendations, workout sessions, generated cards, rarity/stats, challenges, assets, subscriptions, analytics, and theme weeks. | `backend/src/**/*.controller.ts`; `.omx/logs/stage1-validation/backend_start_dev.stdout.log` | Backend is real product infrastructure, not a mock-only layer. | High | Do not discard backend; align latest frontend loop with API contracts. |
+| Frontend still has local/default fallback behavior; this is not full offline-first database persistence. | `frontend/lib/core/services/default_data_service.dart`; `frontend/lib/core/services/api_service.dart`; `frontend/pubspec.yaml` | Prevents over-claiming offline-first maturity. | Medium | Define exact offline requirements in Stage 2; current state is fallback/default data. |
+| Camera recognition must be described as fallback/mock/placeholder unless true camera/AI is revalidated. | `frontend/pubspec.yaml`; `frontend/lib/main.dart:1090-1265`; `frontend/test/ui_pages_smoke_test.dart` | Avoids false product claims. | High | Keep manual object selection fallback; mark true camera AI as ???. |
+| Missing `docs/PRD-SnapRep.md` and `docs/UI-Design-Spec.md` should not block Stage 1. | `docs/07-current-product-requirements-summary.md`; `docs/01-product-requirements-from-code.md`; `docs/design/claude????.md` | Current PRD/UI basis is split across existing docs. | Medium | Mark missing docs as ???; consolidate after Stage 1. |
+<!-- STAGE1_VALIDATION_2026_05_06_END -->

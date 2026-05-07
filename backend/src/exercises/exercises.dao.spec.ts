@@ -3,6 +3,7 @@ import { PrismaService } from 'nestjs-prisma';
 import { ExercisesDao } from './exercises.dao';
 import { ResponseError } from '../exception/response-error';
 import { ErrorCodes } from '../exception/error-codes';
+import { SupabaseApiService } from '../common/services/supabase-api.service';
 
 describe('ExercisesDao', () => {
   let dao: ExercisesDao;
@@ -29,6 +30,33 @@ describe('ExercisesDao', () => {
     exerciseEquipment: [],
     exerciseScenarios: []
   } as any;
+
+  const toSupabaseExercise = (exercise: any) => ({
+    id: exercise.id,
+    code: exercise.code,
+    name: exercise.name,
+    description: exercise.description,
+    primary_muscle: exercise.primaryMuscle,
+    secondary_muscles: exercise.secondaryMuscles || [],
+    intent_type: Array.isArray(exercise.intentType) ? exercise.intentType : [exercise.intentType],
+    difficulty: exercise.difficulty,
+    default_duration: exercise.defaultDuration,
+    default_sets: exercise.defaultSets,
+    duration_type: exercise.durationType,
+    demo_image_url: exercise.demoImageUrl,
+    demo_video_url: exercise.demoVideoUrl,
+    tags: exercise.tags || [],
+    is_active: exercise.isActive,
+    created_at: exercise.createdAt,
+    updated_at: exercise.updatedAt,
+  });
+
+  const toDaoExercise = (exercise: any) => ({
+    ...exercise,
+    intentType: Array.isArray(exercise.intentType) ? exercise.intentType : [exercise.intentType],
+  });
+
+  let supabaseApiService: SupabaseApiService;
 
   const mockExercises = [
     mockExercise,
@@ -69,11 +97,20 @@ describe('ExercisesDao', () => {
             },
           },
         },
+        {
+          provide: SupabaseApiService,
+          useValue: {
+            getById: jest.fn(),
+            getByField: jest.fn(),
+            get: jest.fn(),
+          },
+        },
       ],
     }).compile();
 
     dao = module.get<ExercisesDao>(ExercisesDao);
     prismaService = module.get<PrismaService>(PrismaService);
+    supabaseApiService = module.get<SupabaseApiService>(SupabaseApiService);
   });
 
   afterEach(() => {
@@ -82,16 +119,16 @@ describe('ExercisesDao', () => {
 
   describe('findById', () => {
     it('should return exercise when found and active', async () => {
-      jest.spyOn(prismaService.exercise, 'findUnique').mockResolvedValue(mockExercise);
+      jest.spyOn(supabaseApiService, 'getById').mockResolvedValue(toSupabaseExercise(mockExercise));
 
       const result = await dao.findById('ex-123');
 
-      expect(result).toEqual(mockExercise);
-      expect(prismaService.exercise.findUnique).toHaveBeenCalled();
+      expect(result).toEqual(toDaoExercise(mockExercise));
+      expect(supabaseApiService.getById).toHaveBeenCalled();
     });
 
     it('should return null when exercise not found', async () => {
-      jest.spyOn(prismaService.exercise, 'findUnique').mockResolvedValue(null);
+      jest.spyOn(supabaseApiService, 'getById').mockResolvedValue(null);
 
       const result = await dao.findById('ex-nonexistent');
 
@@ -100,16 +137,16 @@ describe('ExercisesDao', () => {
 
     it('should include inactive exercises when specified', async () => {
       const inactiveExercise = { ...mockExercise, isActive: false };
-      jest.spyOn(prismaService.exercise, 'findUnique').mockResolvedValue(inactiveExercise);
+      jest.spyOn(supabaseApiService, 'getById').mockResolvedValue(toSupabaseExercise(inactiveExercise));
 
       const result = await dao.findById('ex-123', true);
 
-      expect(result).toEqual(inactiveExercise);
+      expect(result).toEqual(toDaoExercise(inactiveExercise));
       expect(result.isActive).toBe(false);
     });
 
     it('should throw ResponseError on database error', async () => {
-      jest.spyOn(prismaService.exercise, 'findUnique').mockRejectedValue(new Error('DB Error'));
+      jest.spyOn(supabaseApiService, 'getById').mockRejectedValue(new Error('DB Error'));
 
       await expect(dao.findById('ex-123')).rejects.toThrow(ResponseError);
     });
@@ -117,16 +154,16 @@ describe('ExercisesDao', () => {
 
   describe('findByCode', () => {
     it('should return exercise when found by code', async () => {
-      jest.spyOn(prismaService.exercise, 'findUnique').mockResolvedValue(mockExercise);
+      jest.spyOn(supabaseApiService, 'getByField').mockResolvedValue(toSupabaseExercise(mockExercise));
 
       const result = await dao.findByCode('wall_chest_opener');
 
-      expect(result).toEqual(mockExercise);
-      expect(prismaService.exercise.findUnique).toHaveBeenCalled();
+      expect(result).toEqual(toDaoExercise(mockExercise));
+      expect(supabaseApiService.getByField).toHaveBeenCalled();
     });
 
     it('should return null when code not found', async () => {
-      jest.spyOn(prismaService.exercise, 'findUnique').mockResolvedValue(null);
+      jest.spyOn(supabaseApiService, 'getByField').mockResolvedValue(null);
 
       const result = await dao.findByCode('invalid_code');
 
@@ -134,7 +171,7 @@ describe('ExercisesDao', () => {
     });
 
     it('should throw ResponseError on database error', async () => {
-      jest.spyOn(prismaService.exercise, 'findUnique').mockRejectedValue(new Error('DB Error'));
+      jest.spyOn(supabaseApiService, 'getByField').mockRejectedValue(new Error('DB Error'));
 
       await expect(dao.findByCode('wall_chest_opener')).rejects.toThrow(ResponseError);
     });
@@ -142,16 +179,16 @@ describe('ExercisesDao', () => {
 
   describe('findBySmartCriteria', () => {
     it('should find exercises by intent type', async () => {
-      jest.spyOn(prismaService.exercise, 'findMany').mockResolvedValue(mockExercises);
+      jest.spyOn(supabaseApiService, 'get').mockResolvedValue(mockExercises.map(toSupabaseExercise));
 
       const result = await dao.findBySmartCriteria({ intent: 'STRETCH' });
 
-      expect(result).toEqual(mockExercises);
-      expect(prismaService.exercise.findMany).toHaveBeenCalled();
+      expect(result).toEqual([toDaoExercise(mockExercises[0])]);
+      expect(supabaseApiService.get).toHaveBeenCalled();
     });
 
     it('should filter by difficulty', async () => {
-      jest.spyOn(prismaService.exercise, 'findMany').mockResolvedValue([mockExercises[0]]);
+      jest.spyOn(supabaseApiService, 'get').mockResolvedValue([toSupabaseExercise(mockExercises[0])]);
 
       const result = await dao.findBySmartCriteria({ difficulty: 'GREEN' });
 
@@ -160,34 +197,34 @@ describe('ExercisesDao', () => {
     });
 
     it('should filter by equipment', async () => {
-      jest.spyOn(prismaService.exercise, 'findMany').mockResolvedValue([mockExercises[0]]);
+      jest.spyOn(supabaseApiService, 'get').mockResolvedValue([toSupabaseExercise(mockExercises[0])]);
 
       const result = await dao.findBySmartCriteria({ equipment: ['wall'] });
 
       expect(result).toBeDefined();
-      expect(prismaService.exercise.findMany).toHaveBeenCalled();
+      expect(supabaseApiService.get).toHaveBeenCalled();
     });
 
     it('should filter by scenario', async () => {
-      jest.spyOn(prismaService.exercise, 'findMany').mockResolvedValue(mockExercises);
+      jest.spyOn(supabaseApiService, 'get').mockResolvedValue(mockExercises.map(toSupabaseExercise));
 
       const result = await dao.findBySmartCriteria({ scenario: 'office' });
 
       expect(result).toBeDefined();
-      expect(prismaService.exercise.findMany).toHaveBeenCalled();
+      expect(supabaseApiService.get).toHaveBeenCalled();
     });
 
     it('should filter by target muscles', async () => {
-      jest.spyOn(prismaService.exercise, 'findMany').mockResolvedValue([mockExercises[0]]);
+      jest.spyOn(supabaseApiService, 'get').mockResolvedValue([toSupabaseExercise(mockExercises[0])]);
 
       const result = await dao.findBySmartCriteria({ targetMuscles: ['CHEST'] });
 
       expect(result).toBeDefined();
-      expect(prismaService.exercise.findMany).toHaveBeenCalled();
+      expect(supabaseApiService.get).toHaveBeenCalled();
     });
 
     it('should exclude specified exercise IDs', async () => {
-      jest.spyOn(prismaService.exercise, 'findMany').mockResolvedValue([mockExercises[2]]);
+      jest.spyOn(supabaseApiService, 'get').mockResolvedValue([toSupabaseExercise(mockExercises[2])]);
 
       const result = await dao.findBySmartCriteria({
         intent: 'STRENGTH',
@@ -199,7 +236,7 @@ describe('ExercisesDao', () => {
     });
 
     it('should respect limit parameter', async () => {
-      jest.spyOn(prismaService.exercise, 'findMany').mockResolvedValue(mockExercises.slice(0, 2));
+      jest.spyOn(supabaseApiService, 'get').mockResolvedValue(mockExercises.slice(0, 2).map(toSupabaseExercise));
 
       const result = await dao.findBySmartCriteria({ limit: 2 });
 
@@ -207,7 +244,7 @@ describe('ExercisesDao', () => {
     });
 
     it('should handle empty results', async () => {
-      jest.spyOn(prismaService.exercise, 'findMany').mockResolvedValue([]);
+      jest.spyOn(supabaseApiService, 'get').mockResolvedValue([]);
 
       const result = await dao.findBySmartCriteria({ intent: 'NONEXISTENT' });
 
@@ -215,7 +252,7 @@ describe('ExercisesDao', () => {
     });
 
     it('should throw ResponseError on database error', async () => {
-      jest.spyOn(prismaService.exercise, 'findMany').mockRejectedValue(new Error('DB Error'));
+      jest.spyOn(supabaseApiService, 'get').mockRejectedValue(new Error('DB Error'));
 
       await expect(dao.findBySmartCriteria({ intent: 'STRETCH' })).rejects.toThrow(ResponseError);
     });
@@ -277,12 +314,13 @@ describe('ExercisesDao', () => {
           { difficulty: 'GREEN', _count: { id: 20 } },
           { difficulty: 'BLUE', _count: { id: 15 } },
           { difficulty: 'RED', _count: { id: 10 } }
-        ])
-        .mockResolvedValueOnce([ // byIntent
-          { intentType: 'STRETCH', _count: { id: 15 } },
-          { intentType: 'STRENGTH', _count: { id: 20 } },
-          { intentType: 'RELAX', _count: { id: 10 } }
         ]);
+
+      (prismaService.exercise.findMany as jest.Mock).mockResolvedValue([
+        { intentType: ['STRETCH'] },
+        { intentType: ['STRENGTH'] },
+        { intentType: ['STRENGTH', 'RELAX'] },
+      ]);
 
       const result = await dao.getExerciseStats();
 
@@ -290,7 +328,7 @@ describe('ExercisesDao', () => {
       expect(result.active).toBe(45);
       expect(result.inactive).toBe(5);
       expect(result.byDifficulty.GREEN).toBe(20);
-      expect(result.byIntent.STRETCH).toBe(15);
+      expect(result.byIntent.STRETCH).toBe(1);
     });
 
     it('should handle empty database', async () => {
@@ -298,9 +336,8 @@ describe('ExercisesDao', () => {
         .mockResolvedValueOnce(0)
         .mockResolvedValueOnce(0);
 
-      (prismaService.exercise.groupBy as jest.Mock)
-        .mockResolvedValueOnce([])
-        .mockResolvedValueOnce([]);
+      (prismaService.exercise.groupBy as jest.Mock).mockResolvedValueOnce([]);
+      (prismaService.exercise.findMany as jest.Mock).mockResolvedValue([]);
 
       const result = await dao.getExerciseStats();
 
