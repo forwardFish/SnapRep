@@ -67,7 +67,6 @@ class NumberedStepIndicator extends StatelessWidget {
       children: List.generate(stepTitles.length, (index) {
         final isCompleted = index < currentStep - 1;
         final isActive = index == currentStep - 1;
-        final isInactive = index > currentStep - 1;
 
         Color circleColor;
         Color textColor;

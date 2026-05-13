@@ -102,7 +102,8 @@ class _WorkoutCalendarPageState extends State<WorkoutCalendarPage> {
             icon: const Icon(Icons.chevron_left, size: 28),
             onPressed: () {
               setState(() {
-                _currentMonth = DateTime(_currentMonth.year, _currentMonth.month - 1);
+                _currentMonth =
+                    DateTime(_currentMonth.year, _currentMonth.month - 1);
               });
             },
           ),
@@ -118,7 +119,8 @@ class _WorkoutCalendarPageState extends State<WorkoutCalendarPage> {
             icon: const Icon(Icons.chevron_right, size: 28),
             onPressed: () {
               setState(() {
-                _currentMonth = DateTime(_currentMonth.year, _currentMonth.month + 1);
+                _currentMonth =
+                    DateTime(_currentMonth.year, _currentMonth.month + 1);
               });
             },
           ),
@@ -177,9 +179,8 @@ class _WorkoutCalendarPageState extends State<WorkoutCalendarPage> {
     final daysInMonth = lastDay.day;
     final startWeekday = firstDay.weekday; // 1 = Monday, 7 = Sunday
 
-    // Calculate previous month's trailing days
-    final previousMonth = DateTime(_currentMonth.year, _currentMonth.month - 1);
-    final daysInPreviousMonth = DateTime(_currentMonth.year, _currentMonth.month, 0).day;
+    final daysInPreviousMonth =
+        DateTime(_currentMonth.year, _currentMonth.month, 0).day;
 
     List<Widget> dayWidgets = [];
 
@@ -195,11 +196,13 @@ class _WorkoutCalendarPageState extends State<WorkoutCalendarPage> {
     }
 
     // Current month's days
-    final workoutDays = provider.workoutDates.toList(); // Real data from backend
+    final workoutDays =
+        provider.workoutDates.toList(); // Real data from backend
     for (int day = 1; day <= daysInMonth; day++) {
       final date = DateTime(_currentMonth.year, _currentMonth.month, day);
       final isSelected = _isSameDay(date, _selectedDate);
-      final hasWorkout = workoutDays.any((workoutDate) => _isSameDay(date, workoutDate));
+      final hasWorkout =
+          workoutDays.any((workoutDate) => _isSameDay(date, workoutDate));
       final isToday = _isSameDay(date, DateTime.now());
 
       dayWidgets.add(_buildCalendarDay(
@@ -301,7 +304,8 @@ class _WorkoutCalendarPageState extends State<WorkoutCalendarPage> {
   /// Selected Date Workouts Section
   Widget _buildSelectedDateWorkouts(MyPageProvider provider) {
     final workoutDays = provider.workoutDates.toList();
-    final hasWorkout = workoutDays.any((date) => _isSameDay(date, _selectedDate));
+    final hasWorkout =
+        workoutDays.any((date) => _isSameDay(date, _selectedDate));
 
     return Container(
       padding: const EdgeInsets.all(24),
@@ -328,7 +332,8 @@ class _WorkoutCalendarPageState extends State<WorkoutCalendarPage> {
               const Spacer(),
               if (hasWorkout)
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                   decoration: BoxDecoration(
                     color: const Color(0xFFFFD700).withOpacity(0.2),
                     borderRadius: BorderRadius.circular(12),
@@ -344,9 +349,7 @@ class _WorkoutCalendarPageState extends State<WorkoutCalendarPage> {
                 ),
             ],
           ),
-
           const SizedBox(height: 16),
-
           if (hasWorkout) ...[
             Expanded(
               child: _buildWorkoutDetails(provider),
@@ -403,7 +406,8 @@ class _WorkoutCalendarPageState extends State<WorkoutCalendarPage> {
 
   Widget _buildWorkoutDetails(MyPageProvider provider) {
     // Get workout sessions for the selected date
-    final dateKey = DateTime(_selectedDate.year, _selectedDate.month, _selectedDate.day);
+    final dateKey =
+        DateTime(_selectedDate.year, _selectedDate.month, _selectedDate.day);
     final sessions = provider.calendarData[dateKey] ?? [];
 
     if (sessions.isEmpty) {
@@ -417,7 +421,8 @@ class _WorkoutCalendarPageState extends State<WorkoutCalendarPage> {
 
     // Show the first session for the selected date
     final session = sessions.first;
-    final durationMin = (session.actualDurationSec ?? session.plannedDurationSec) ~/ 60;
+    final durationMin =
+        (session.actualDurationSec ?? session.plannedDurationSec) ~/ 60;
     final calories = session.actualCalories ?? session.estimatedCalories ?? 0;
 
     return SingleChildScrollView(
@@ -459,7 +464,8 @@ class _WorkoutCalendarPageState extends State<WorkoutCalendarPage> {
                     Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.access_time, size: 16, color: Colors.grey[600]),
+                        Icon(Icons.access_time,
+                            size: 16, color: Colors.grey[600]),
                         const SizedBox(width: 4),
                         Text(
                           '$durationMin min',
@@ -473,7 +479,8 @@ class _WorkoutCalendarPageState extends State<WorkoutCalendarPage> {
                     Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.local_fire_department, size: 16, color: Colors.grey[600]),
+                        Icon(Icons.local_fire_department,
+                            size: 16, color: Colors.grey[600]),
                         const SizedBox(width: 4),
                         Text(
                           '$calories cal',
@@ -485,7 +492,8 @@ class _WorkoutCalendarPageState extends State<WorkoutCalendarPage> {
                       ],
                     ),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 2),
                       decoration: BoxDecoration(
                         color: session.status == WorkoutSessionStatus.completed
                             ? Colors.green.withOpacity(0.1)
@@ -496,9 +504,10 @@ class _WorkoutCalendarPageState extends State<WorkoutCalendarPage> {
                         session.status.displayName,
                         style: TextStyle(
                           fontSize: 12,
-                          color: session.status == WorkoutSessionStatus.completed
-                              ? Colors.green[700]
-                              : Colors.orange[700],
+                          color:
+                              session.status == WorkoutSessionStatus.completed
+                                  ? Colors.green[700]
+                                  : Colors.orange[700],
                         ),
                       ),
                     ),
@@ -524,7 +533,8 @@ class _WorkoutCalendarPageState extends State<WorkoutCalendarPage> {
 
           // Exercise Items from real session data
           ...session.exercises.map((exercise) {
-            final isCompleted = session.status == WorkoutSessionStatus.completed;
+            final isCompleted =
+                session.status == WorkoutSessionStatus.completed;
             final details = exercise.repetitions != null
                 ? '${exercise.sets} sets × ${exercise.repetitions} reps'
                 : '${exercise.sets} sets × ${exercise.durationSeconds}s';
@@ -544,18 +554,14 @@ class _WorkoutCalendarPageState extends State<WorkoutCalendarPage> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(8),
         border: Border.all(
-          color: isCompleted
-              ? const Color(0xFFFFD700)
-              : Colors.grey[300]!,
+          color: isCompleted ? const Color(0xFFFFD700) : Colors.grey[300]!,
         ),
       ),
       child: Row(
         children: [
           Icon(
             isCompleted ? Icons.check_circle : Icons.radio_button_unchecked,
-            color: isCompleted
-                ? const Color(0xFFFFD700)
-                : Colors.grey[400],
+            color: isCompleted ? const Color(0xFFFFD700) : Colors.grey[400],
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -590,16 +596,38 @@ class _WorkoutCalendarPageState extends State<WorkoutCalendarPage> {
   // Helper methods
   String _formatMonthYear(DateTime date) {
     const months = [
-      '', 'January', 'February', 'March', 'April', 'May', 'June',
-      'July', 'August', 'September', 'October', 'November', 'December'
+      '',
+      'January',
+      'February',
+      'March',
+      'April',
+      'May',
+      'June',
+      'July',
+      'August',
+      'September',
+      'October',
+      'November',
+      'December'
     ];
     return '${months[date.month]} ${date.year}';
   }
 
   String _formatSelectedDate(DateTime date) {
     const months = [
-      '', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+      '',
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec'
     ];
     const weekdays = ['', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
     return '${weekdays[date.weekday]}, ${months[date.month]} ${date.day}';
@@ -607,7 +635,7 @@ class _WorkoutCalendarPageState extends State<WorkoutCalendarPage> {
 
   bool _isSameDay(DateTime date1, DateTime date2) {
     return date1.year == date2.year &&
-           date1.month == date2.month &&
-           date1.day == date2.day;
+        date1.month == date2.month &&
+        date1.day == date2.day;
   }
 }

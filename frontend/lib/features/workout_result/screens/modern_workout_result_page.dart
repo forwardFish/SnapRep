@@ -8,7 +8,6 @@ import '../../../core/services/exercise_service.dart';
 import '../../../core/services/token_service.dart';
 import '../../../core/services/subscription_service.dart';
 import '../../subscription/widgets/subscription_paywall_dialog.dart';
-import '../../workout_execution/screens/professional_workout_video_page_v2.dart';
 import '../../workout_execution/screens/improved_workout_video_page.dart';
 
 /// Modern Workout Result Page - Based on Design Document Section 3.2
@@ -36,8 +35,10 @@ class ModernWorkoutResultPage extends StatefulWidget {
 
 class _ModernWorkoutResultPageState extends State<ModernWorkoutResultPage>
     with TickerProviderStateMixin {
+  // ignore: unused_field
   int _currentNavIndex = 0; // Home section
   bool _isLoading = false;
+  // ignore: unused_field
   String? _error;
   late AnimationController _cardController;
   late AnimationController _previewController;

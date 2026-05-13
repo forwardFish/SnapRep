@@ -20,10 +20,12 @@ class ProfessionalWorkoutVideoPageV2 extends StatefulWidget {
   });
 
   @override
-  State<ProfessionalWorkoutVideoPageV2> createState() => _ProfessionalWorkoutVideoPageV2State();
+  State<ProfessionalWorkoutVideoPageV2> createState() =>
+      _ProfessionalWorkoutVideoPageV2State();
 }
 
-class _ProfessionalWorkoutVideoPageV2State extends State<ProfessionalWorkoutVideoPageV2>
+class _ProfessionalWorkoutVideoPageV2State
+    extends State<ProfessionalWorkoutVideoPageV2>
     with TickerProviderStateMixin {
   late AnimationController _timerController;
   late AnimationController _pulseController;
@@ -35,6 +37,7 @@ class _ProfessionalWorkoutVideoPageV2State extends State<ProfessionalWorkoutVide
   // 训练状态
   bool _isPlaying = false;
   bool _isPaused = false;
+  // ignore: unused_field
   bool _isVideoLoaded = true; // Windows平台直接设为已加载
   int _currentSet = 1;
   int _totalSets = 1; // 改为1组，更容易看到奖励卡片
@@ -42,6 +45,7 @@ class _ProfessionalWorkoutVideoPageV2State extends State<ProfessionalWorkoutVide
   int _restTimeSeconds = 5; // 改为5秒休息
   int _currentTimeRemaining = 10; // 对应练习时间
   bool _isRestTime = false;
+  // ignore: unused_field
   bool _showingRewardCard = false;
 
   // 训练统计
@@ -117,7 +121,8 @@ class _ProfessionalWorkoutVideoPageV2State extends State<ProfessionalWorkoutVide
   }
 
   void _handleTimerComplete() {
-    debugPrint('🔄 Timer completed: _isRestTime=$_isRestTime, _currentSet=$_currentSet, _totalSets=$_totalSets');
+    debugPrint(
+        '🔄 Timer completed: _isRestTime=$_isRestTime, _currentSet=$_currentSet, _totalSets=$_totalSets');
 
     if (_isRestTime) {
       // 休息完成，开始下一组或下一个动作
@@ -162,7 +167,8 @@ class _ProfessionalWorkoutVideoPageV2State extends State<ProfessionalWorkoutVide
       totalTime: Duration(seconds: _totalExerciseTime),
     );
 
-    debugPrint('🎁 Created reward card: ${rewardCard.title}, Points: ${rewardCard.points}');
+    debugPrint(
+        '🎁 Created reward card: ${rewardCard.title}, Points: ${rewardCard.points}');
 
     // 显示奖励卡片
     setState(() {
@@ -478,8 +484,7 @@ class _ProfessionalWorkoutVideoPageV2State extends State<ProfessionalWorkoutVide
                 _buildVideoThumbnail(),
 
               // 播放控制覆盖层
-              if (!_isPlaying || _isPaused)
-                _buildVideoOverlay(),
+              if (!_isPlaying || _isPaused) _buildVideoOverlay(),
 
               // Windows平台提示
               if (Platform.isWindows)
@@ -487,7 +492,8 @@ class _ProfessionalWorkoutVideoPageV2State extends State<ProfessionalWorkoutVide
                   top: 8,
                   right: 8,
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                     decoration: BoxDecoration(
                       color: Colors.black54,
                       borderRadius: BorderRadius.circular(4),
@@ -547,7 +553,8 @@ class _ProfessionalWorkoutVideoPageV2State extends State<ProfessionalWorkoutVide
                 ),
                 const SizedBox(height: 8),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                   decoration: BoxDecoration(
                     color: Colors.green.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(12),
@@ -556,7 +563,8 @@ class _ProfessionalWorkoutVideoPageV2State extends State<ProfessionalWorkoutVide
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.play_arrow, color: Colors.green, size: 16),
+                      const Icon(Icons.play_arrow,
+                          color: Colors.green, size: 16),
                       const SizedBox(width: 4),
                       const Text(
                         'PLAYING',
@@ -736,13 +744,17 @@ class _ProfessionalWorkoutVideoPageV2State extends State<ProfessionalWorkoutVide
         children: [
           // Status Text
           Text(
-            _isRestTime ? 'Rest Time' : _isPlaying ? 'Exercise Time' : 'Ready to Start',
+            _isRestTime
+                ? 'Rest Time'
+                : _isPlaying
+                    ? 'Exercise Time'
+                    : 'Ready to Start',
             style: TextStyle(
               color: _isRestTime
-                ? Colors.blue.shade600
-                : _isPlaying
-                  ? const Color(0xFFFFD700)
-                  : Colors.grey[600],
+                  ? Colors.blue.shade600
+                  : _isPlaying
+                      ? const Color(0xFFFFD700)
+                      : Colors.grey[600],
               fontSize: 18,
               fontWeight: FontWeight.w600,
             ),
@@ -763,8 +775,8 @@ class _ProfessionalWorkoutVideoPageV2State extends State<ProfessionalWorkoutVide
                     shape: BoxShape.circle,
                     border: Border.all(
                       color: _isRestTime
-                        ? Colors.blue.shade300
-                        : const Color(0xFFFFD700),
+                          ? Colors.blue.shade300
+                          : const Color(0xFFFFD700),
                       width: 4,
                     ),
                     color: Colors.grey[50],
@@ -777,8 +789,8 @@ class _ProfessionalWorkoutVideoPageV2State extends State<ProfessionalWorkoutVide
                           '$_currentTimeRemaining',
                           style: TextStyle(
                             color: _isRestTime
-                              ? Colors.blue.shade600
-                              : const Color(0xFFFFD700),
+                                ? Colors.blue.shade600
+                                : const Color(0xFFFFD700),
                             fontSize: 36,
                             fontWeight: FontWeight.bold,
                           ),
@@ -787,8 +799,8 @@ class _ProfessionalWorkoutVideoPageV2State extends State<ProfessionalWorkoutVide
                           'seconds',
                           style: TextStyle(
                             color: _isRestTime
-                              ? Colors.blue.shade400
-                              : Colors.grey[600],
+                                ? Colors.blue.shade400
+                                : Colors.grey[600],
                             fontSize: 14,
                           ),
                         ),
@@ -829,8 +841,7 @@ class _ProfessionalWorkoutVideoPageV2State extends State<ProfessionalWorkoutVide
           const SizedBox(height: 16),
 
           // Reward Preview - 简化为单次训练完成
-          if (_isPlaying)
-            _buildRewardPreview(),
+          if (_isPlaying) _buildRewardPreview(),
         ],
       ),
     );

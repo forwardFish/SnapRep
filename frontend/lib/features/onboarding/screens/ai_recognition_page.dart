@@ -24,6 +24,7 @@ class _AIRecognitionPageState extends State<AIRecognitionPage> {
   List<Equipment> _recognizedEquipment = [];
   List<Equipment> _selectedEquipment = [];
   bool _isProcessing = false;
+  // ignore: unused_field
   String? _error;
 
   // 模拟识别置信度
@@ -232,7 +233,8 @@ class _AIRecognitionPageState extends State<AIRecognitionPage> {
                     icon: const Icon(Icons.smart_toy),
                     label: const Text(
                       '开始AI识别',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                      style:
+                          TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
                     ),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF4CAF50),
@@ -335,11 +337,11 @@ class _AIRecognitionPageState extends State<AIRecognitionPage> {
                     ),
                   ),
                 ),
-
                 Expanded(
                   child: GridView.builder(
                     padding: const EdgeInsets.symmetric(horizontal: 20),
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
                       crossAxisCount: 2,
                       mainAxisSpacing: 12,
                       crossAxisSpacing: 12,
@@ -348,7 +350,8 @@ class _AIRecognitionPageState extends State<AIRecognitionPage> {
                     itemCount: _recognizedEquipment.length,
                     itemBuilder: (context, index) {
                       final equipment = _recognizedEquipment[index];
-                      final isSelected = _selectedEquipment.any((e) => e.id == equipment.id);
+                      final isSelected =
+                          _selectedEquipment.any((e) => e.id == equipment.id);
                       final confidence = _confidenceMap[equipment.id] ?? 0.85;
 
                       return AIRecognitionResultCard(
@@ -410,7 +413,8 @@ class _AIRecognitionPageState extends State<AIRecognitionPage> {
               width: double.infinity,
               height: 56,
               child: ElevatedButton(
-                onPressed: _selectedEquipment.isNotEmpty ? _continueWorkflow : null,
+                onPressed:
+                    _selectedEquipment.isNotEmpty ? _continueWorkflow : null,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: _selectedEquipment.isNotEmpty
                       ? const Color(0xFF6C5CE7)
@@ -541,7 +545,10 @@ class _AIRecognitionPageState extends State<AIRecognitionPage> {
       // 生成模拟置信度
       _confidenceMap.clear();
       for (final equipment in recognizedEquipment) {
-        _confidenceMap[equipment.id] = 0.75 + (0.2 * (recognizedEquipment.indexOf(equipment) / recognizedEquipment.length));
+        _confidenceMap[equipment.id] = 0.75 +
+            (0.2 *
+                (recognizedEquipment.indexOf(equipment) /
+                    recognizedEquipment.length));
       }
 
       setState(() {

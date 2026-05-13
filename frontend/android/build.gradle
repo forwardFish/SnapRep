@@ -91,10 +91,10 @@ allprojects {
         }
     }
 
-    // 全局强制所有Android项目使用API 35和Java 17
+    // 全局强制所有Android项目使用API 34编译和Java 17，targetSdk 仍由 app 保持 35
     afterEvaluate { project ->
         if (project.hasProperty('android')) {
-            project.android.compileSdkVersion 35
+            project.android.compileSdkVersion 34
 
             // 强制所有子项目使用Java 17
             if (project.android.hasProperty('compileOptions')) {
@@ -122,7 +122,7 @@ allprojects {
                     project.android.defaultConfig.targetSdkVersion 35
                 }
                 if (project.android.defaultConfig.hasProperty('compileSdkVersion')) {
-                    project.android.defaultConfig.compileSdkVersion 35
+                    project.android.defaultConfig.compileSdkVersion 34
                 }
             }
         }

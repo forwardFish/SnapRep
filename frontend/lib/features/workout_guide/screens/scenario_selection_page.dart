@@ -17,11 +17,13 @@ class _ScenarioSelectionPageState extends State<ScenarioSelectionPage>
     with TickerProviderStateMixin {
   // Detection mode - CAMERA FUNCTIONALITY DISABLED (kept for code compatibility)
   // User can never access camera mode as AI Scan button is hidden
+  // ignore: unused_field
   String _detectionMode = 'selection'; // Always 'selection'
 
   // Camera related - KEPT FOR CODE COMPATIBILITY (never used in practice)
   // Using dynamic types to avoid compilation errors since camera package is not imported
   dynamic _controller;
+  // ignore: unused_field
   List<dynamic> _cameras = [];
   bool _isCameraInitialized = false;
   bool _isAnalyzing = false;
@@ -131,11 +133,13 @@ class _ScenarioSelectionPageState extends State<ScenarioSelectionPage>
     );
 
     _scanAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _scanAnimationController, curve: Curves.easeInOut),
+      CurvedAnimation(
+          parent: _scanAnimationController, curve: Curves.easeInOut),
     );
 
     _pulseAnimation = Tween<double>(begin: 0.8, end: 1.2).animate(
-      CurvedAnimation(parent: _pulseAnimationController, curve: Curves.easeInOut),
+      CurvedAnimation(
+          parent: _pulseAnimationController, curve: Curves.easeInOut),
     );
 
     _pulseAnimationController.repeat(reverse: true);
@@ -661,7 +665,6 @@ class _ScenarioSelectionPageState extends State<ScenarioSelectionPage>
             ),
           ),
           const SizedBox(height: 16),
-
           SizedBox(
             height: 160,
             child: ListView.builder(
@@ -750,7 +753,8 @@ class _ScenarioSelectionPageState extends State<ScenarioSelectionPage>
             Positioned(
               bottom: -50,
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 decoration: BoxDecoration(
                   color: const Color(0xFFFFD700).withOpacity(0.9),
                   borderRadius: BorderRadius.circular(20),
@@ -864,7 +868,6 @@ class _ScenarioSelectionPageState extends State<ScenarioSelectionPage>
             ],
           ),
           const SizedBox(height: 12),
-
           Text(
             'Scene: ${result['sceneName']}',
             style: const TextStyle(
@@ -874,7 +877,6 @@ class _ScenarioSelectionPageState extends State<ScenarioSelectionPage>
             ),
           ),
           const SizedBox(height: 4),
-
           Text(
             result['sceneDescription'],
             style: TextStyle(
@@ -883,7 +885,6 @@ class _ScenarioSelectionPageState extends State<ScenarioSelectionPage>
             ),
           ),
           const SizedBox(height: 8),
-
           Text(
             'Confidence: ${(result['confidence'] * 100).toInt()}%',
             style: TextStyle(
@@ -892,7 +893,6 @@ class _ScenarioSelectionPageState extends State<ScenarioSelectionPage>
             ),
           ),
           const SizedBox(height: 16),
-
           Text(
             'Detected Equipment:',
             style: const TextStyle(
@@ -902,31 +902,33 @@ class _ScenarioSelectionPageState extends State<ScenarioSelectionPage>
             ),
           ),
           const SizedBox(height: 8),
-
           Wrap(
             spacing: 8,
             runSpacing: 8,
-            children: _detectedEquipment.map((equipment) =>
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFFD700).withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: const Color(0xFFFFD700),
-                    width: 1,
+            children: _detectedEquipment
+                .map(
+                  (equipment) => Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFFD700).withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: const Color(0xFFFFD700),
+                        width: 1,
+                      ),
+                    ),
+                    child: Text(
+                      equipment,
+                      style: const TextStyle(
+                        color: Color(0xFFFFD700),
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
                   ),
-                ),
-                child: Text(
-                  equipment,
-                  style: const TextStyle(
-                    color: Color(0xFFFFD700),
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ),
-            ).toList(),
+                )
+                .toList(),
           ),
         ],
       ),
@@ -1031,12 +1033,20 @@ class _ScenarioSelectionPageState extends State<ScenarioSelectionPage>
         child: SizedBox(
           width: double.infinity,
           child: ElevatedButton(
-            onPressed: (_selectedScenario != null) ? _onSelectionContinuePressed : null,
+            onPressed: (_selectedScenario != null)
+                ? _onSelectionContinuePressed
+                : null,
             style: ElevatedButton.styleFrom(
-              backgroundColor: (_selectedScenario != null) ? const Color(0xFFFFD700) : Colors.grey.shade300,
-              foregroundColor: (_selectedScenario != null) ? Colors.white : Colors.grey.shade500,
+              backgroundColor: (_selectedScenario != null)
+                  ? const Color(0xFFFFD700)
+                  : Colors.grey.shade300,
+              foregroundColor: (_selectedScenario != null)
+                  ? Colors.white
+                  : Colors.grey.shade500,
               elevation: (_selectedScenario != null) ? 8 : 0,
-              shadowColor: (_selectedScenario != null) ? const Color(0xFFFFD700).withOpacity(0.3) : null,
+              shadowColor: (_selectedScenario != null)
+                  ? const Color(0xFFFFD700).withOpacity(0.3)
+                  : null,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(28),
               ),
@@ -1132,7 +1142,8 @@ class _ScenarioSelectionPageState extends State<ScenarioSelectionPage>
                     children: [
                       // Badge
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
                           color: scenario['color'].withOpacity(0.9),
                           borderRadius: BorderRadius.circular(8),

@@ -20,11 +20,12 @@ class ProfessionalWorkoutVideoPage extends StatefulWidget {
   });
 
   @override
-  State<ProfessionalWorkoutVideoPage> createState() => _ProfessionalWorkoutVideoPageState();
+  State<ProfessionalWorkoutVideoPage> createState() =>
+      _ProfessionalWorkoutVideoPageState();
 }
 
-class _ProfessionalWorkoutVideoPageState extends State<ProfessionalWorkoutVideoPage>
-    with TickerProviderStateMixin {
+class _ProfessionalWorkoutVideoPageState
+    extends State<ProfessionalWorkoutVideoPage> with TickerProviderStateMixin {
   late VideoPlayerController _videoController;
   ChewieController? _chewieController;
   late AnimationController _timerController;
@@ -59,7 +60,8 @@ class _ProfessionalWorkoutVideoPageState extends State<ProfessionalWorkoutVideoP
 
   void _initializeVideo() {
     // 使用示例视频URL，实际项目中应该使用 widget.exercise.videoUrl
-    final videoUrl = _sampleVideoUrls[widget.currentExerciseIndex % _sampleVideoUrls.length];
+    final videoUrl =
+        _sampleVideoUrls[widget.currentExerciseIndex % _sampleVideoUrls.length];
 
     _videoController = VideoPlayerController.networkUrl(Uri.parse(videoUrl));
 
@@ -351,9 +353,11 @@ class _ProfessionalWorkoutVideoPageState extends State<ProfessionalWorkoutVideoP
                 ),
                 const SizedBox(height: 4),
                 LinearProgressIndicator(
-                  value: (widget.currentExerciseIndex + 1) / widget.exercises.length,
+                  value: (widget.currentExerciseIndex + 1) /
+                      widget.exercises.length,
                   backgroundColor: Colors.white24,
-                  valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFFFFD700)),
+                  valueColor:
+                      const AlwaysStoppedAnimation<Color>(Color(0xFFFFD700)),
                   minHeight: 3,
                 ),
               ],
@@ -391,7 +395,8 @@ class _ProfessionalWorkoutVideoPageState extends State<ProfessionalWorkoutVideoP
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       CircularProgressIndicator(
-                        valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFFFD700)),
+                        valueColor:
+                            AlwaysStoppedAnimation<Color>(Color(0xFFFFD700)),
                       ),
                       SizedBox(height: 16),
                       Text(
@@ -491,13 +496,17 @@ class _ProfessionalWorkoutVideoPageState extends State<ProfessionalWorkoutVideoP
         children: [
           // Status Text
           Text(
-            _isRestTime ? 'Rest Time' : _isPlaying ? 'Exercise Time' : 'Ready to Start',
+            _isRestTime
+                ? 'Rest Time'
+                : _isPlaying
+                    ? 'Exercise Time'
+                    : 'Ready to Start',
             style: TextStyle(
               color: _isRestTime
-                ? Colors.blue.shade300
-                : _isPlaying
-                  ? const Color(0xFFFFD700)
-                  : Colors.white70,
+                  ? Colors.blue.shade300
+                  : _isPlaying
+                      ? const Color(0xFFFFD700)
+                      : Colors.white70,
               fontSize: 18,
               fontWeight: FontWeight.w600,
             ),
@@ -518,8 +527,8 @@ class _ProfessionalWorkoutVideoPageState extends State<ProfessionalWorkoutVideoP
                     shape: BoxShape.circle,
                     border: Border.all(
                       color: _isRestTime
-                        ? Colors.blue.shade300
-                        : const Color(0xFFFFD700),
+                          ? Colors.blue.shade300
+                          : const Color(0xFFFFD700),
                       width: 4,
                     ),
                     color: Colors.white.withOpacity(0.05),
@@ -532,8 +541,8 @@ class _ProfessionalWorkoutVideoPageState extends State<ProfessionalWorkoutVideoP
                           '$_currentTimeRemaining',
                           style: TextStyle(
                             color: _isRestTime
-                              ? Colors.blue.shade300
-                              : const Color(0xFFFFD700),
+                                ? Colors.blue.shade300
+                                : const Color(0xFFFFD700),
                             fontSize: 48,
                             fontWeight: FontWeight.bold,
                           ),
@@ -542,8 +551,8 @@ class _ProfessionalWorkoutVideoPageState extends State<ProfessionalWorkoutVideoP
                           'seconds',
                           style: TextStyle(
                             color: _isRestTime
-                              ? Colors.blue.shade300
-                              : Colors.white70,
+                                ? Colors.blue.shade300
+                                : Colors.white70,
                             fontSize: 16,
                           ),
                         ),
@@ -575,7 +584,8 @@ class _ProfessionalWorkoutVideoPageState extends State<ProfessionalWorkoutVideoP
                   context,
                   MaterialPageRoute(
                     builder: (context) => ProfessionalWorkoutVideoPageV2(
-                      exercise: widget.exercises[widget.currentExerciseIndex - 1],
+                      exercise:
+                          widget.exercises[widget.currentExerciseIndex - 1],
                       exercises: widget.exercises,
                       currentExerciseIndex: widget.currentExerciseIndex - 1,
                     ),
@@ -611,20 +621,16 @@ class _ProfessionalWorkoutVideoPageState extends State<ProfessionalWorkoutVideoP
 
   Widget _buildMainControlButton() {
     IconData icon;
-    String label;
     VoidCallback onPressed;
 
     if (!_isPlaying) {
       icon = Icons.play_arrow;
-      label = 'Start';
       onPressed = _startExercise;
     } else if (_isPaused) {
       icon = Icons.play_arrow;
-      label = 'Resume';
       onPressed = _resumeExercise;
     } else {
       icon = Icons.pause;
-      label = 'Pause';
       onPressed = _pauseExercise;
     }
 

@@ -15,7 +15,8 @@ class SubscriptionPaywallDialog extends StatefulWidget {
   });
 
   @override
-  State<SubscriptionPaywallDialog> createState() => _SubscriptionPaywallDialogState();
+  State<SubscriptionPaywallDialog> createState() =>
+      _SubscriptionPaywallDialogState();
 }
 
 class _SubscriptionPaywallDialogState extends State<SubscriptionPaywallDialog> {
@@ -237,7 +238,8 @@ class _SubscriptionPaywallDialogState extends State<SubscriptionPaywallDialog> {
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: isSelected ? const Color(0xFF6C5CE7) : const Color(0xFFE0E0E0),
+            color:
+                isSelected ? const Color(0xFF6C5CE7) : const Color(0xFFE0E0E0),
             width: isSelected ? 2 : 1,
           ),
           boxShadow: [
@@ -272,10 +274,14 @@ class _SubscriptionPaywallDialogState extends State<SubscriptionPaywallDialog> {
                           if (isRecommended) ...[
                             const SizedBox(width: 8),
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 4),
                               decoration: BoxDecoration(
                                 gradient: const LinearGradient(
-                                  colors: [Color(0xFFFFD700), Color(0xFFFFA500)],
+                                  colors: [
+                                    Color(0xFFFFD700),
+                                    Color(0xFFFFA500)
+                                  ],
                                 ),
                                 borderRadius: BorderRadius.circular(8),
                               ),
@@ -345,7 +351,8 @@ class _SubscriptionPaywallDialogState extends State<SubscriptionPaywallDialog> {
                     if (savings != null) ...[
                       const SizedBox(height: 4),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 6, vertical: 2),
                         decoration: BoxDecoration(
                           color: const Color(0xFF00B894),
                           borderRadius: BorderRadius.circular(4),
@@ -465,7 +472,8 @@ class _SubscriptionPaywallDialogState extends State<SubscriptionPaywallDialog> {
               TextButton(
                 onPressed: () => _showTerms(),
                 style: TextButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   minimumSize: Size.zero,
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 ),
@@ -482,7 +490,8 @@ class _SubscriptionPaywallDialogState extends State<SubscriptionPaywallDialog> {
               TextButton(
                 onPressed: () => _showPrivacy(),
                 style: TextButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   minimumSize: Size.zero,
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 ),
@@ -507,14 +516,15 @@ class _SubscriptionPaywallDialogState extends State<SubscriptionPaywallDialog> {
     setState(() => isLoading = true);
 
     try {
-      final success = await SubscriptionService().startFreeTrial();
+      await SubscriptionService().startFreeTrial();
 
       if (!mounted) return;
 
       // 试用开始成功
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('🎉 Free trial started! Enjoy 7 days of premium access.'),
+          content:
+              Text('🎉 Free trial started! Enjoy 7 days of premium access.'),
           backgroundColor: Color(0xFF00B894),
           duration: Duration(seconds: 5),
         ),

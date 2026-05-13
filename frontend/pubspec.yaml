@@ -82,7 +82,11 @@ flutter:
   # Assets configuration
   assets:
     - assets/images/
-    - assets/images/fallbacks/
+    - assets/images/body/
+    - assets/images/guide_step1_visuals/
+    - assets/images/onboarding/
+    - assets/images/workout_result/
+    - assets/backup/old/camera_room_chair.png
     - assets/videos/
 
   # To add assets to your application, add an assets section, like this:

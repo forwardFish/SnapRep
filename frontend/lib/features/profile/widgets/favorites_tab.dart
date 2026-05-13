@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../../core/models/workout_session.dart';
-import '../../../core/models/exercise.dart';
 
 /// 收藏Tab - 显示收藏的训练计划和动作
 class FavoritesTab extends StatefulWidget {
@@ -83,7 +81,8 @@ class _FavoritesTabState extends State<FavoritesTab> {
         if (_mockFavoriteExercises.isEmpty)
           _buildEmptyState('No favorite exercises yet', Icons.favorite_border)
         else
-          ..._mockFavoriteExercises.map((exercise) => _buildExerciseCard(exercise)),
+          ..._mockFavoriteExercises
+              .map((exercise) => _buildExerciseCard(exercise)),
       ],
     );
   }
@@ -331,9 +330,11 @@ class _FavoritesTabState extends State<FavoritesTab> {
                           ),
                           const SizedBox(width: 12),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 6, vertical: 2),
                             decoration: BoxDecoration(
-                              color: _getDifficultyColor(exercise['difficulty']).withOpacity(0.1),
+                              color: _getDifficultyColor(exercise['difficulty'])
+                                  .withOpacity(0.1),
                               borderRadius: BorderRadius.circular(4),
                             ),
                             child: Text(
@@ -341,7 +342,8 @@ class _FavoritesTabState extends State<FavoritesTab> {
                               style: TextStyle(
                                 fontSize: 10,
                                 fontWeight: FontWeight.w600,
-                                color: _getDifficultyColor(exercise['difficulty']),
+                                color:
+                                    _getDifficultyColor(exercise['difficulty']),
                               ),
                             ),
                           ),

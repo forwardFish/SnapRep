@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../models/equipment.dart';
-import '../models/scenario.dart';
 
 /// 训练配置状态管理
 /// 管理整个训练流程的选择状态和数据传递

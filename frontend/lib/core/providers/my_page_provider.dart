@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/share_card.dart';
 import '../models/workout_session.dart';
-import '../models/workout_intent.dart';
-import '../models/target_muscle.dart';
 import '../services/api_service.dart';
 
 /// 我的页面状态管理Provider
@@ -75,14 +73,20 @@ class MyPageProvider with ChangeNotifier {
   bool get hasHistory => _workoutHistory.isNotEmpty;
   bool get isUserLoggedIn => _userId != null && _userId!.isNotEmpty;
 
-  int get commonCards => _allCards.where((c) => c.rarity.level == RarityLevel.common).length;
-  int get uncommonCards => _allCards.where((c) => c.rarity.level == RarityLevel.uncommon).length;
-  int get rareCards => _allCards.where((c) => c.rarity.level == RarityLevel.rare).length;
-  int get epicCards => _allCards.where((c) => c.rarity.level == RarityLevel.epic).length;
-  int get legendaryCards => _allCards.where((c) => c.rarity.level == RarityLevel.legendary).length;
+  int get commonCards =>
+      _allCards.where((c) => c.rarity.level == RarityLevel.common).length;
+  int get uncommonCards =>
+      _allCards.where((c) => c.rarity.level == RarityLevel.uncommon).length;
+  int get rareCards =>
+      _allCards.where((c) => c.rarity.level == RarityLevel.rare).length;
+  int get epicCards =>
+      _allCards.where((c) => c.rarity.level == RarityLevel.epic).length;
+  int get legendaryCards =>
+      _allCards.where((c) => c.rarity.level == RarityLevel.legendary).length;
 
   List<WorkoutSession> get selectedDateSessions {
-    final dateKey = DateTime(_selectedDate.year, _selectedDate.month, _selectedDate.day);
+    final dateKey =
+        DateTime(_selectedDate.year, _selectedDate.month, _selectedDate.day);
     return _calendarData[dateKey] ?? [];
   }
 
@@ -186,7 +190,8 @@ class MyPageProvider with ChangeNotifier {
         _allCards = cardsData;
         _totalCards = _allCards.length;
         _applyCardFilters();
-        debugPrint('✅ Card collection loaded from API: ${_allCards.length} cards');
+        debugPrint(
+            '✅ Card collection loaded from API: ${_allCards.length} cards');
       } else {
         debugPrint('ℹ️ No cards found in API response');
         _allCards = [];
@@ -231,7 +236,8 @@ class MyPageProvider with ChangeNotifier {
       if (historyData.isNotEmpty) {
         _workoutHistory = historyData;
         _buildCalendarData();
-        debugPrint('✅ Workout history loaded from API: ${_workoutHistory.length} sessions');
+        debugPrint(
+            '✅ Workout history loaded from API: ${_workoutHistory.length} sessions');
       } else {
         debugPrint('ℹ️ No workout history found in API response');
         _workoutHistory = [];
@@ -266,7 +272,8 @@ class MyPageProvider with ChangeNotifier {
       // 调用API获取用户的训练日期集合
       final dates = await _apiService.getUserWorkoutDates();
       _workoutDates = dates;
-      debugPrint('✅ Workout dates loaded: ${_workoutDates.length} unique dates');
+      debugPrint(
+          '✅ Workout dates loaded: ${_workoutDates.length} unique dates');
     } catch (e) {
       debugPrint('❌ Failed to load workout dates: $e');
       _workoutDates = {};
@@ -282,7 +289,8 @@ class MyPageProvider with ChangeNotifier {
       }
 
       // 系列筛选
-      if (_selectedSeries != null && card.rarity.equipmentSeries != _selectedSeries) {
+      if (_selectedSeries != null &&
+          card.rarity.equipmentSeries != _selectedSeries) {
         return false;
       }
 
@@ -367,6 +375,7 @@ class MyPageProvider with ChangeNotifier {
         'isReplicate': true,
         'originalSessionId': sessionId,
       };
+      debugPrint('Replicate params prepared: $replicateParams');
 
       // TODO: 通过路由跳转到动作结果页
       // AppRoutes.replicateWorkout(context, originalParams: replicateParams);
@@ -382,6 +391,7 @@ class MyPageProvider with ChangeNotifier {
     debugPrint('📤 Sharing card: $cardId');
 
     try {
+      // ignore: unused_local_variable
       final card = _allCards.firstWhere((c) => c.id == cardId);
 
       // TODO: 调用系统分享
@@ -404,6 +414,7 @@ class MyPageProvider with ChangeNotifier {
     debugPrint('💾 Saving card to gallery: $cardId');
 
     try {
+      // ignore: unused_local_variable
       final card = _allCards.firstWhere((c) => c.id == cardId);
 
       // TODO: 下载图片并保存到相册

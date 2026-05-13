@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/providers/my_page_provider.dart';
 import '../../../core/services/supabase_service.dart';
@@ -35,7 +34,8 @@ class _MyPageState extends State<MyPage> {
     });
 
     // Listen to auth state changes
-    _authSubscription = SupabaseService.instance.client.auth.onAuthStateChange.listen((data) {
+    _authSubscription =
+        SupabaseService.instance.client.auth.onAuthStateChange.listen((data) {
       final AuthChangeEvent event = data.event;
       if (event == AuthChangeEvent.signedIn) {
         debugPrint('✅ User signed in, refreshing profile data');
@@ -978,9 +978,6 @@ class _MyPageState extends State<MyPage> {
   }
 
   Widget _buildWeeklyCalendarGrid(DateTime startOfWeek, DateTime today) {
-    // Day abbreviations
-    final dayHeaders = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-
     // Generate 7 days starting from startOfWeek
     final weekDays =
         List.generate(7, (index) => startOfWeek.add(Duration(days: index)));
@@ -1018,7 +1015,8 @@ class _MyPageState extends State<MyPage> {
               children: weekDays.map((date) {
                 final isToday = _isSameDay(date, today);
                 // 检查这个日期是否有训练记录
-                final hasWorkout = workoutDates.any((workoutDate) => _isSameDay(date, workoutDate));
+                final hasWorkout = workoutDates
+                    .any((workoutDate) => _isSameDay(date, workoutDate));
 
                 return Expanded(
                   child: GestureDetector(
@@ -1029,7 +1027,8 @@ class _MyPageState extends State<MyPage> {
                                 arguments: {'date': date, 'isToday': isToday});
                           }
                         : null,
-                    child: _buildWeeklyCalendarDay(date.day, hasWorkout, isToday),
+                    child:
+                        _buildWeeklyCalendarDay(date.day, hasWorkout, isToday),
                   ),
                 );
               }).toList(),
@@ -1271,7 +1270,8 @@ class _MyPageState extends State<MyPage> {
       },
     };
 
-    final colors = rarityColors[card.rarity.level] ?? rarityColors[RarityLevel.common]!;
+    final colors =
+        rarityColors[card.rarity.level] ?? rarityColors[RarityLevel.common]!;
 
     return Container(
       decoration: BoxDecoration(
@@ -1292,12 +1292,14 @@ class _MyPageState extends State<MyPage> {
           Expanded(
             child: Container(
               decoration: BoxDecoration(
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+                borderRadius:
+                    const BorderRadius.vertical(top: Radius.circular(20)),
                 color: Colors.grey[200],
               ),
               child: card.imageUrl.isNotEmpty
                   ? ClipRRect(
-                      borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+                      borderRadius:
+                          const BorderRadius.vertical(top: Radius.circular(20)),
                       child: Image.network(
                         card.imageUrl,
                         fit: BoxFit.cover,
@@ -1331,7 +1333,8 @@ class _MyPageState extends State<MyPage> {
               children: [
                 // Rarity Badge
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
                     color: colors['bg'],
                     borderRadius: BorderRadius.circular(8),
@@ -1352,7 +1355,6 @@ class _MyPageState extends State<MyPage> {
       ),
     );
   }
-
 
   String _getCurrentTime() {
     final now = DateTime.now();
